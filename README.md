@@ -6,6 +6,4 @@
 
 [![codecov.io](http://codecov.io/github/ffreyer/BinningAnalysis.jl/coverage.svg?branch=master)](http://codecov.io/github/ffreyer/BinningAnalysis.jl?branch=master)
 
-Install the package with
-
-Pkg.clone("git://github.com/ffreyer/BinningAnalysis.jl.git")
+Install the package with `Pkg.clone("git://github.com/ffreyer/BinningAnalysis.jl.git")`
