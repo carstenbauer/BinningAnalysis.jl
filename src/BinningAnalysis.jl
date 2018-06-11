@@ -155,8 +155,8 @@ end
 Calculates the autocorrelation time tau for a given binning level.
 """
 function tau(B::BinnerA, lvl::Int64)
-    var_0 = var(B, 0)
-    var_l = var(B, lvl)
+    var_0 = varN(B, 0)
+    var_l = varN(B, lvl)
     0.5 * (var_l / var_0 - 1)
 end
 
