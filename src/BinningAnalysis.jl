@@ -166,7 +166,7 @@ end
 
 Calculates the autocorrelation time tau for each level of the Binning Analysis.
 """
-function all_vars(B::BinnerA{N}) where {N}
+function all_taus(B::BinnerA{N}) where {N}
     [tau(B, lvl) for lvl in 1:N-1 if B.count[lvl+1] > 0]
 end
 
@@ -175,7 +175,7 @@ end
 
 Calculates the standard error for a given level.
 """
-std_error(B::BinnerA, lvl::Int64) = sqrt(varN(B, lvl)
+std_error(B::BinnerA, lvl::Int64) = sqrt(varN(B, lvl))
 
 
 """
@@ -207,8 +207,8 @@ end
 
 
 export BinnerA, push!
-export mean, var, varN, tau
-export all_means, all_vars, all_varNs, all_taus
+export mean, var, varN, tau, std_error
+export all_means, all_vars, all_varNs, all_taus, all_std_errors
 export convergence, has_converged
 
 end # module
