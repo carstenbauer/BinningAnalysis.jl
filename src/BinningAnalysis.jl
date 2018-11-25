@@ -1,6 +1,11 @@
 module BinningAnalysis
 
-import Base: push!, mean, var
+@static if VERSION < v"0.7"
+    import Base: mean, var
+else
+    import Statistics: mean, var
+end
+import Base.push!
 
 
 # This is a Node in the Binning Analysis tree that averages two values. There
@@ -29,11 +34,12 @@ end
 """
     BinnerA([, N = 32])
 
-Creates a new Binning Analysis which can take 2^(N-1) values. Returns a Binning Analysis object. Use push! to add values.
+Creates a new Binning Analysis which can take 2^(N-1) values. Returns a Binning
+Analysis object. Use push! to add values.
 """
 function BinnerA(N::Int64 = 32)
     BinnerA{N}(
-        ([Compressor(0.0, 0) for i in 1:N]...),
+        tuple([Compressor(0.0, UInt8(0)) for i in 1:N]...),
         zeros(Float64, N),
         zeros(Float64, N),
         zeros(Int64, N)
@@ -42,7 +48,7 @@ end
 
 
 """
-    push!(BinningAnalysis, value)
+    push!(BinnerA, value)
 
 Pushes a new value into the Binning Analysis.
 """
@@ -84,15 +90,20 @@ function push!(B::BinnerA{N}, lvl::Int64, value::Float64) where {N}
 end
 
 
+################################################################################
+# Statistics
+################################################################################
+
 
 """
-    varN(BinningAnalysis[, lvl])
+    varN(BinnerA[, lvl])
 
-Calculates the variance/N of a given level (default being the last) in the Binning Analysis.
+Calculates the variance/N of a given level (default being the last) in the
+Binning Analysis.
 """
 function varN(B::BinnerA, lvl::Int64=length(B.count)-1)
     # lvl = 1 <=> original values
-    return (
+    (
         (B.x2_sum[lvl+1] / B.count[lvl+1]) -
         (B.x_sum[lvl+1] / B.count[lvl+1])^2
     ) / (B.count[lvl+1] - 1)
@@ -100,9 +111,10 @@ end
 
 
 """
-    var(BinningAnalysis[, lvl])
+    var(BinnerA[, lvl])
 
-Calculates the variance of a given level (default being the last) in the Binning Analysis.
+Calculates the variance of a given level (default being the last) in the
+Binning Analysis.
 """
 function var(B::BinnerA, lvl::Int64=length(B.count)-1)
     (B.x2_sum[lvl+1] / B.count[lvl+1]) - (B.x_sum[lvl+1] / B.count[lvl+1])^2
@@ -110,7 +122,7 @@ end
 
 
 """
-    all_vars(BinningAnalysis)
+    all_vars(BinnerA)
 
 Calculates the variance for each level of the Binning Analysis.
 """
@@ -120,7 +132,7 @@ end
 
 
 """
-    all_varNs(BinningAnalysis)
+    all_varNs(BinnerA)
 
 Calculates the variance/N for each level of the Binning Analysis.
 """
@@ -130,9 +142,10 @@ end
 
 
 """
-    mean(BinningAnalysis[, lvl])
+    mean(BinnerA[, lvl])
 
-Calculates the mean for a given level (default being the last) in the Binning Analysis
+Calculates the mean for a given level (default being the last) in the
+Binning Analysis.
 """
 function mean(B::BinnerA, lvl::Int64=length(B.count)-1)
     return B.x_sum[lvl+1] / B.count[lvl+1]
@@ -140,7 +153,7 @@ end
 
 
 """
-    all_means(BinningAnalysis)
+    all_means(BinnerA)
 
 Calculates the mean for each level of the Binning Analysis.
 """
@@ -150,7 +163,7 @@ end
 
 
 """
-    tau(BinningAnalysis, lvl)
+    tau(BinnerA, lvl)
 
 Calculates the autocorrelation time tau for a given binning level.
 """
@@ -162,7 +175,7 @@ end
 
 
 """
-    all_taus(BinningAnalysis)
+    all_taus(BinnerA)
 
 Calculates the autocorrelation time tau for each level of the Binning Analysis.
 """
@@ -171,7 +184,7 @@ function all_taus(B::BinnerA{N}) where {N}
 end
 
 """
-    std_error(BinningAnalysis, lvl)
+    std_error(BinnerA, lvl)
 
 Calculates the standard error for a given level.
 """
@@ -179,7 +192,7 @@ std_error(B::BinnerA, lvl::Int64) = sqrt(varN(B, lvl))
 
 
 """
-    all_std_errors(BinningAnalysis)
+    all_std_errors(BinnerA)
 
 Calculates the standard error for each level of the Binning Analysis.
 """
@@ -187,17 +200,18 @@ all_std_errors(B::BinnerA) = map(sqrt, all_varNs(B))
 
 
 """
-    convergence(BinningAnalysis, lvl)
+    convergence(BinnerA, lvl)
 
-Computes the difference between the variance of this lvl and the last, normalized
-to the last lvl. If this value tends to 0, the Binning Analysis has converged.
+Computes the difference between the variance of this lvl and the last,
+normalized to the last lvl. If this value tends to 0, the Binning Analysis has
+converged.
 """
 function convergence(B::BinnerA, lvl::Int64)
     abs((varN(B, lvl) - varN(B, lvl-1)) / varN(B, lvl-1))
 end
 
 """
-    has_converged(BinningAnalysis, lvl[, threshhold = 0.05])
+    has_converged(BinnerA, lvl[, threshhold = 0.05])
 
 Returns true if the Binning Analysis has converged for a given lvl.
 """

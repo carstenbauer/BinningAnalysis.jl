@@ -1,5 +1,5 @@
 using BinningAnalysis
-@static if VERSION < v"0.7.0-DEV.2005"
+@static if VERSION < v"0.7"
     using Base.Test
 else
     using Test
@@ -7,14 +7,14 @@ end
 
 # write your own tests here
 @testset "Checking converging data" begin
-    BA = BinningAnalysis()
+    BA = BinnerA()
 
     # block of maximally correlated values:
     N_corr = 16
 
     # number of blocks
     N_blocks = 131_072 # 2^17
-    
+
     for _ in 1:N_blocks
         x = rand()
         for __ in 1:N_corr
