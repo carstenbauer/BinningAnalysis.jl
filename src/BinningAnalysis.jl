@@ -34,7 +34,7 @@ end
 """
     BinnerA([, N = 32])
 
-Creates a new Binning Analysis which can take 2^(N-1) values. Returns a Binning
+Creates a new Binning Analysis which can take 2^N-1 values. Returns a Binning
 Analysis object. Use push! to add values.
 """
 function BinnerA(N::Int64 = 32)
