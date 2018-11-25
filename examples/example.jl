@@ -2,6 +2,7 @@ using PyPlot, BinningAnalysis
 
 function make_plot(xs, label)
     figure()
+    title(label)
     plot(eachindex(xs), xs)
     xlabel("Binnging level")
     ylabel(label)
