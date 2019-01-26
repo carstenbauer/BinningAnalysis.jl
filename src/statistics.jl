@@ -18,19 +18,19 @@ function varN(
     ) / B.count[lvl+1]
 end
 
-# function varN(
-#         B::BinnerA{N, T},
-#         lvl::Int64 = length(B.count)-1
-#     ) where {N, T <: Complex}
-#
-#     # lvl = 1 <=> original values
-#     (
-#         (real(B.x2_sum[lvl+1]) + imag(B.x2_sum[lvl+1])) /
-#             (B.count[lvl+1] - 1) -
-#         (real(B.x_sum[lvl+1])^2 + imag(B.x_sum[lvl+1])^2) /
-#             ((B.count[lvl+1] - 1) * B.count[lvl+1])
-#     ) / B.count[lvl+1]
-# end
+function varN(
+        B::BinnerA{N, T},
+        lvl::Int64 = length(B.count)-1
+    ) where {N, T <: Complex}
+
+    # lvl = 1 <=> original values
+    (
+        (real(B.x2_sum[lvl+1]) + imag(B.x2_sum[lvl+1])) /
+            (B.count[lvl+1] - 1) -
+        (real(B.x_sum[lvl+1])^2 + imag(B.x_sum[lvl+1])^2) /
+            ((B.count[lvl+1] - 1) * B.count[lvl+1])
+    ) / B.count[lvl+1]
+end
 
 
 """
@@ -48,16 +48,16 @@ function var(
     B.x_sum[lvl+1]^2 / ((B.count[lvl+1] - 1) * B.count[lvl+1])
 end
 
-# function var(
-#         B::BinnerA{N, T},
-#         lvl::Int64 = length(B.count)-1
-#     ) where {N, T <: Complex}
-#
-#     (real(B.x2_sum[lvl+1]) + imag(B.x2_sum[lvl+1])) /
-#         (B.count[lvl+1] - 1) -
-#     (real(B.x_sum[lvl+1])^2 + imag(B.x_sum[lvl+1])^2) /
-#         ((B.count[lvl+1] - 1) * B.count[lvl+1])
-# end
+function var(
+        B::BinnerA{N, T},
+        lvl::Int64 = length(B.count)-1
+    ) where {N, T <: Complex}
+
+    (real(B.x2_sum[lvl+1]) + imag(B.x2_sum[lvl+1])) /
+        (B.count[lvl+1] - 1) -
+    (real(B.x_sum[lvl+1])^2 + imag(B.x_sum[lvl+1])^2) /
+        ((B.count[lvl+1] - 1) * B.count[lvl+1])
+end
 
 
 """
