@@ -7,7 +7,7 @@ end
 
 # write your own tests here
 @testset "Checking converging data" begin
-    BA = BinnerA()
+    BA = BinningAnalysis()
 
     # block of maximally correlated values:
     N_corr = 16
@@ -46,7 +46,7 @@ end
     # Due to the different (mathematically equivalent) versions of the variance
     # calculated here, the values are onyl approximately the same. (Float error)
     xs = rand(ComplexF64, 1_000_000)
-    BA = BinnerA(ComplexF64)
+    BA = BinningAnalysis(ComplexF64)
 
     # Test small set (off by one errors are large here)
     for x in xs[1:10]; push!(BA, x) end

@@ -8,7 +8,7 @@ mutable struct Compressor{T}
 end
 
 
-struct BinnerA{N, T}
+struct BinningAnalysis{N, T}
     # list of Compressors, one per level
     compressors::NTuple{N, Compressor{T}}
 
@@ -22,13 +22,13 @@ end
 
 
 """
-    BinnerA([, N = 32])
+    BinningAnalysis([, N = 32])
 
 Creates a new Binning Analysis which can take 2^N-1 values. Returns a Binning
 Analysis object. Use push! to add values.
 """
-function BinnerA(T::Type = Float64, N::Int64 = 32)
-    BinnerA{N, T}(
+function BinningAnalysis(T::Type = Float64, N::Int64 = 32)
+    BinningAnalysis{N, T}(
         tuple([Compressor{T}(zero(T), UInt8(0)) for i in 1:N]...),
         zeros(T, N),
         zeros(T, N),
@@ -38,11 +38,11 @@ end
 
 
 """
-    push!(BinnerA, value)
+    push!(BinningAnalysis, value)
 
 Pushes a new value into the Binning Analysis.
 """
-function push!(B::BinnerA{N, T}, value::T) where {N, T}
+function push!(B::BinningAnalysis{N, T}, value::T) where {N, T}
     push!(B, 1, value)
 end
 
@@ -52,7 +52,7 @@ _square(x::Complex) = Complex(real(x)^2, imag(x)^2)
 _square(x::AbstractArray) = map(_square, x)
 
 # recursion, back-end function
-function push!(B::BinnerA{N, T}, lvl::Int64, value::T) where {N, T}
+function push!(B::BinningAnalysis{N, T}, lvl::Int64, value::T) where {N, T}
     C = B.compressors[lvl]
 
     # any value propagating through this function is new to lvl. Therefore we

@@ -5,7 +5,7 @@ function performance_test(N = 28, start=1)
 
     for i in start:N
         # NOTE using the default level here actually performs better
-        BA = BinnerA(i+1)
+        BA = BinningAnalysis(i+1)
         xs = rand(2^i)
         GC.gc()
 
