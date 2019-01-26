@@ -22,10 +22,12 @@ end
 
 
 """
-    BinningAnalysis([, N = 32])
+    BinningAnalysis([T = Float64, N = 32])
 
-Creates a new Binning Analysis which can take 2^N-1 values. Returns a Binning
-Analysis object. Use push! to add values.
+Creates a new Binning Analysis which can take 2^N-1 values of type T. Returns a
+Binning Analysis object.
+
+Values can be added using `push!(BinningAnalysis, value)`.
 """
 function BinningAnalysis(T::Type = Float64, N::Int64 = 32)
     BinningAnalysis{N, T}(
@@ -34,6 +36,21 @@ function BinningAnalysis(T::Type = Float64, N::Int64 = 32)
         zeros(T, N),
         zeros(Int64, N)
     )
+end
+
+
+# TODO typing?
+"""
+    append!(BinningAnalysis, values)
+
+Adds an array of values to the Binning Analysis by applying push! to each
+element.
+"""
+function append!(B::BinningAnalysis, values::AbstractArray)
+    for value in values
+        push!(B, value)
+    end
+    nothing
 end
 
 

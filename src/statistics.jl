@@ -1,12 +1,11 @@
 """
-    varN(BinningAnalysis[, lvl])
+    varN(BinningAnalysis[, lvl = 0])
 
-Calculates the variance/N of a given level (default being the last) in the
-Binning Analysis.
+Calculates the variance/N of a given level in the Binning Analysis.
 """
 function varN(
         B::BinningAnalysis{N, T},
-        lvl::Int64 = length(B.count)-1
+        lvl::Int64 = 0
     ) where {N, T <: Real}
 
     # lvl = 1 <=> original values
@@ -20,7 +19,7 @@ end
 
 function varN(
         B::BinningAnalysis{N, T},
-        lvl::Int64 = length(B.count)-1
+        lvl::Int64 = 0
     ) where {N, T <: Complex}
 
     # lvl = 1 <=> original values
@@ -34,14 +33,13 @@ end
 
 
 """
-    var(BinningAnalysis[, lvl])
+    var(BinningAnalysis[, lvl = 0])
 
-Calculates the variance of a given level (default being the last) in the
-Binning Analysis.
+Calculates the variance of a given level in the Binning Analysis.
 """
 function var(
         B::BinningAnalysis{N, T},
-        lvl::Int64 = length(B.count)-1
+        lvl::Int64 = 0
     ) where {N, T <: Real}
 
     B.x2_sum[lvl+1] / (B.count[lvl+1] - 1) -
@@ -50,7 +48,7 @@ end
 
 function var(
         B::BinningAnalysis{N, T},
-        lvl::Int64 = length(B.count)-1
+        lvl::Int64 = 0
     ) where {N, T <: Complex}
 
     (real(B.x2_sum[lvl+1]) + imag(B.x2_sum[lvl+1])) /
@@ -66,7 +64,7 @@ end
 Calculates the variance for each level of the Binning Analysis.
 """
 function all_vars(B::BinningAnalysis{N}) where {N}
-    [var(B, lvl) for lvl in 1:N-1 if B.count[lvl+1] > 0]
+    [var(B, lvl) for lvl in 0:N-1 if B.count[lvl+1] > 0]
 end
 
 
@@ -76,7 +74,7 @@ end
 Calculates the variance/N for each level of the Binning Analysis.
 """
 function all_varNs(B::BinningAnalysis{N}) where {N}
-    [varN(B, lvl) for lvl in 1:N-1 if B.count[lvl+1] > 0]
+    [varN(B, lvl) for lvl in 0:N-1 if B.count[lvl+1] > 0]
 end
 
 
@@ -85,12 +83,11 @@ end
 
 # NOTE works for all
 """
-    mean(BinningAnalysis[, lvl])
+    mean(BinningAnalysis[, lvl=0])
 
-Calculates the mean for a given level (default being the last) in the
-Binning Analysis.
+Calculates the mean for a given level in the Binning Analysis.
 """
-function mean(B::BinningAnalysis{N}, lvl::Int64 = length(B.count)-1) where {N}
+function mean(B::BinningAnalysis{N}, lvl::Int64 = 0) where {N}
     B.x_sum[lvl+1] / B.count[lvl+1]
 end
 
@@ -102,7 +99,7 @@ end
 Calculates the mean for each level of the Binning Analysis.
 """
 function all_means(B::BinningAnalysis{N}) where {N}
-    [mean(B, lvl) for lvl in 1:N-1 if B.count[lvl+1] > 0]
+    [mean(B, lvl) for lvl in 0:N-1 if B.count[lvl+1] > 0]
 end
 
 
@@ -127,7 +124,7 @@ end
 Calculates the autocorrelation time tau for each level of the Binning Analysis.
 """
 function all_taus(B::BinningAnalysis{N}) where {N}
-    [tau(B, lvl) for lvl in 1:N-1 if B.count[lvl+1] > 0]
+    [tau(B, lvl) for lvl in 0:N-1 if B.count[lvl+1] > 0]
 end
 
 

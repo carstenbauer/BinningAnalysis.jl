@@ -4,7 +4,7 @@ function performance_test(N = 28, start=1)
     timings = Float64[]
 
     for i in start:N
-        # NOTE using the default level here actually performs better
+        # NOTE using the default size here actually performs better
         BA = BinningAnalysis(i+1)
         xs = rand(2^i)
         GC.gc()
