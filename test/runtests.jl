@@ -40,3 +40,21 @@ end
         @test x ≈ means[1]
     end
 end
+
+@testset "Check variance for Complex values" begin
+    # NOTE
+    # Due to the different (mathematically equivalent) versions of the variance
+    # calculated here, the values are onyl approximately the same. (Float error)
+    xs = rand(ComplexF64, 1_000_000)
+    BA = BinnerA(ComplexF64)
+
+    # Test small set (off by one errors are large here)
+    for x in xs[1:10]; push!(BA, x) end
+    @test var(BA, 0) ≈ var(xs[1:10])
+    @test varN(BA, 0) ≈ var(xs[1:10])/10
+
+    # Test full set
+    for x in xs[11:end]; push!(BA, x) end
+    @test var(BA, 0) ≈ var(xs)
+    @test varN(BA, 0) ≈ var(xs)/1_000_000
+end
