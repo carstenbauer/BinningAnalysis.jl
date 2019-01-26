@@ -4,7 +4,7 @@
 Calculates the variance/N of a given level in the Binning Analysis.
 """
 function varN(
-        B::BinningAnalysis{N, T},
+        B::BinnerA{N, T},
         lvl::Int64 = 0
     ) where {N, T <: Real}
 
@@ -18,7 +18,7 @@ function varN(
 end
 
 function varN(
-        B::BinningAnalysis{N, T},
+        B::BinnerA{N, T},
         lvl::Int64 = 0
     ) where {N, T <: Complex}
 
@@ -38,7 +38,7 @@ end
 Calculates the variance of a given level in the Binning Analysis.
 """
 function var(
-        B::BinningAnalysis{N, T},
+        B::BinnerA{N, T},
         lvl::Int64 = 0
     ) where {N, T <: Real}
 
@@ -47,7 +47,7 @@ function var(
 end
 
 function var(
-        B::BinningAnalysis{N, T},
+        B::BinnerA{N, T},
         lvl::Int64 = 0
     ) where {N, T <: Complex}
 
@@ -63,7 +63,7 @@ end
 
 Calculates the variance for each level of the Binning Analysis.
 """
-function all_vars(B::BinningAnalysis{N}) where {N}
+function all_vars(B::BinnerA{N}) where {N}
     [var(B, lvl) for lvl in 0:N-1 if B.count[lvl+1] > 0]
 end
 
@@ -73,7 +73,7 @@ end
 
 Calculates the variance/N for each level of the Binning Analysis.
 """
-function all_varNs(B::BinningAnalysis{N}) where {N}
+function all_varNs(B::BinnerA{N}) where {N}
     [varN(B, lvl) for lvl in 0:N-1 if B.count[lvl+1] > 0]
 end
 
@@ -87,7 +87,7 @@ end
 
 Calculates the mean for a given level in the Binning Analysis.
 """
-function mean(B::BinningAnalysis{N}, lvl::Int64 = 0) where {N}
+function mean(B::BinnerA{N}, lvl::Int64 = 0) where {N}
     B.x_sum[lvl+1] / B.count[lvl+1]
 end
 
@@ -98,7 +98,7 @@ end
 
 Calculates the mean for each level of the Binning Analysis.
 """
-function all_means(B::BinningAnalysis{N}) where {N}
+function all_means(B::BinnerA{N}) where {N}
     [mean(B, lvl) for lvl in 0:N-1 if B.count[lvl+1] > 0]
 end
 
@@ -111,7 +111,7 @@ end
 
 Calculates the autocorrelation time tau for a given binning level.
 """
-function tau(B::BinningAnalysis, lvl::Int64)
+function tau(B::BinnerA, lvl::Int64)
     var_0 = varN(B, 0)
     var_l = varN(B, lvl)
     0.5 * (var_l / var_0 - 1)
@@ -123,7 +123,7 @@ end
 
 Calculates the autocorrelation time tau for each level of the Binning Analysis.
 """
-function all_taus(B::BinningAnalysis{N}) where {N}
+function all_taus(B::BinnerA{N}) where {N}
     [tau(B, lvl) for lvl in 0:N-1 if B.count[lvl+1] > 0]
 end
 
@@ -136,7 +136,7 @@ end
 
 Calculates the standard error for a given level.
 """
-std_error(B::BinningAnalysis, lvl::Int64) = sqrt(varN(B, lvl))
+std_error(B::BinnerA, lvl::Int64) = sqrt(varN(B, lvl))
 
 
 """
@@ -144,7 +144,7 @@ std_error(B::BinningAnalysis, lvl::Int64) = sqrt(varN(B, lvl))
 
 Calculates the standard error for each level of the Binning Analysis.
 """
-all_std_errors(B::BinningAnalysis) = map(sqrt, all_varNs(B))
+all_std_errors(B::BinnerA) = map(sqrt, all_varNs(B))
 
 
 """
@@ -154,7 +154,7 @@ Computes the difference between the variance of this lvl and the last,
 normalized to the last lvl. If this value tends to 0, the Binning Analysis has
 converged.
 """
-function convergence(B::BinningAnalysis, lvl::Int64)
+function convergence(B::BinnerA, lvl::Int64)
     abs((varN(B, lvl) - varN(B, lvl-1)) / varN(B, lvl-1))
 end
 
@@ -163,6 +163,6 @@ end
 
 Returns true if the Binning Analysis has converged for a given lvl.
 """
-function has_converged(B::BinningAnalysis, lvl::Int64, threshhold::Float64 = 0.05)
+function has_converged(B::BinnerA, lvl::Int64, threshhold::Float64 = 0.05)
     convergence(B, lvl) <= threshhold
 end
