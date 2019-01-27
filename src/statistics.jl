@@ -31,6 +31,34 @@ function varN(
     ) / B.count[lvl+1]
 end
 
+function varN(
+        B::BinnerA{N, <: AbstractArray{T, D}},
+        lvl::Int64 = 0
+    ) where {N, D, T <: Real}
+
+    # lvl = 1 <=> original values
+    # correct variance:
+    # (∑ xᵢ^2) / (N-1) - (∑ xᵢ)(∑ xᵢ) / (N(N-1))
+    @. (
+        B.x2_sum[lvl+1] / (B.count[lvl+1] - 1) -
+        B.x_sum[lvl+1]^2 / ((B.count[lvl+1] - 1) * B.count[lvl+1])
+    ) / B.count[lvl+1]
+end
+
+function varN(
+        B::BinnerA{N, <: AbstractArray{T, D}},
+        lvl::Int64 = 0
+    ) where {N, D, T <: Complex}
+
+    # lvl = 1 <=> original values
+    @. (
+        (real(B.x2_sum[lvl+1]) + imag(B.x2_sum[lvl+1])) /
+            (B.count[lvl+1] - 1) -
+        (real(B.x_sum[lvl+1])^2 + imag(B.x_sum[lvl+1])^2) /
+            ((B.count[lvl+1] - 1) * B.count[lvl+1])
+    ) / B.count[lvl+1]
+end
+
 
 """
     var(BinningAnalysis[, lvl = 0])
@@ -52,6 +80,26 @@ function var(
     ) where {N, T <: Complex}
 
     (real(B.x2_sum[lvl+1]) + imag(B.x2_sum[lvl+1])) /
+        (B.count[lvl+1] - 1) -
+    (real(B.x_sum[lvl+1])^2 + imag(B.x_sum[lvl+1])^2) /
+        ((B.count[lvl+1] - 1) * B.count[lvl+1])
+end
+
+function var(
+        B::BinnerA{N, <: AbstractArray{T, D}},
+        lvl::Int64 = 0
+    ) where {N, D, T <: Real}
+
+    @. B.x2_sum[lvl+1] / (B.count[lvl+1] - 1) -
+    B.x_sum[lvl+1]^2 / ((B.count[lvl+1] - 1) * B.count[lvl+1])
+end
+
+function var(
+        B::BinnerA{N, <: AbstractArray{T, D}},
+        lvl::Int64 = 0
+    ) where {N, D, T <: Complex}
+
+    @. (real(B.x2_sum[lvl+1]) + imag(B.x2_sum[lvl+1])) /
         (B.count[lvl+1] - 1) -
     (real(B.x_sum[lvl+1])^2 + imag(B.x_sum[lvl+1])^2) /
         ((B.count[lvl+1] - 1) * B.count[lvl+1])
@@ -87,7 +135,7 @@ end
 
 Calculates the mean for a given level in the Binning Analysis.
 """
-function mean(B::BinnerA{N}, lvl::Int64 = 0) where {N}
+function mean(B::BinnerA, lvl::Int64 = 0)
     B.x_sum[lvl+1] / B.count[lvl+1]
 end
 
@@ -136,7 +184,12 @@ end
 
 Calculates the standard error for a given level.
 """
-std_error(B::BinnerA, lvl::Int64) = sqrt(varN(B, lvl))
+function std_error(B::BinnerA{N, T}, lvl::Int64) where {N, T <: Number}
+    sqrt(varN(B, lvl))
+end
+function std_error(B::BinnerA{N, T}, lvl::Int64) where {N, T <: AbstractArray}
+    sqrt.(varN(B, lvl))
+end
 
 
 """
@@ -144,7 +197,12 @@ std_error(B::BinnerA, lvl::Int64) = sqrt(varN(B, lvl))
 
 Calculates the standard error for each level of the Binning Analysis.
 """
-all_std_errors(B::BinnerA) = map(sqrt, all_varNs(B))
+function all_std_errors(B::BinnerA{N, T}) where {N, T <: Number}
+    map(sqrt, all_varNs(B))
+end
+function all_std_errors(B::BinnerA{N, T}) where {N, T <: AbstractArray}
+    map(x -> sqrt.(x), all_varNs(B))
+end
 
 
 """
@@ -154,8 +212,11 @@ Computes the difference between the variance of this lvl and the last,
 normalized to the last lvl. If this value tends to 0, the Binning Analysis has
 converged.
 """
-function convergence(B::BinnerA, lvl::Int64)
+function convergence(B::BinnerA{N, T}, lvl::Int64) where {N, T <: Number}
     abs((varN(B, lvl) - varN(B, lvl-1)) / varN(B, lvl-1))
+end
+function convergence(B::BinnerA{N, T}, lvl::Int64) where {N, T <: AbstractArray}
+    mean(abs.((varN(B, lvl) .- varN(B, lvl-1)) ./ varN(B, lvl-1)))
 end
 
 """

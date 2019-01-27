@@ -20,20 +20,40 @@ struct BinnerA{N, T}
     count::Vector{Int64}
 end
 
-
 """
     BinnerA([T = Float64, N = 32])
 
-Creates a new Binning Analysis which can take 2^N-1 values of type T. Returns a
-Binning Analysis object.
+Creates a Binning Analysis which can take 2^N-1 value sof type T.
+"""
+BinnerA(T::Type = Float64, N::Int64 = 32) = BinnerA(zero(T), N)
+
+# TODO
+# Currently, the Binning Analysis requires a "zero" to initialize x_sum and
+# x2_sum. It's not necessary for the Compressors.
+# Since Arrays do not have a static size, we cannot generate a fitting zero
+# automatically. So currently we let the user supply it.
+# Other possibilities:
+# > generate x_sum, x2_sum with #undef
+# bad: requires many checks (if isassigned ... else ...)
+# > force StaticArrays (and/or tuples)
+# good: faster for small arrays
+# bad: requires user to use another package
+# > initialize is first push!
+# bad: also requires frequent checks (if first push ... else ...)
+# ...?
+"""
+    BinnerA([zero = 0.0, N = 32])
+
+Creates a new Binning Analysis which can take 2^N-1 values of type T. The type
+is inherited by the given zero. Returns a Binning Analysis object.
 
 Values can be added using `push!(BinnerA, value)`.
 """
-function BinnerA(T::Type = Float64, N::Int64 = 32)
+function BinnerA(_zero::T = zero(Float64), N::Int64 = 32) where {T}
     BinnerA{N, T}(
-        tuple([Compressor{T}(zero(T), UInt8(0)) for i in 1:N]...),
-        zeros(T, N),
-        zeros(T, N),
+        tuple([Compressor{T}(copy(_zero), UInt8(0)) for i in 1:N]...),
+        [copy(_zero) for _ in 1:N],
+        [copy(_zero) for _ in 1:N],
         zeros(Int64, N)
     )
 end
@@ -69,7 +89,7 @@ _square(x::Complex) = Complex(real(x)^2, imag(x)^2)
 _square(x::AbstractArray) = map(_square, x)
 
 # recursion, back-end function
-function push!(B::BinnerA{N, T}, lvl::Int64, value::T) where {N, T}
+function push!(B::BinnerA{N, T}, lvl::Int64, value::T) where {N, T <: Number}
     C = B.compressors[lvl]
 
     # any value propagating through this function is new to lvl. Therefore we
@@ -94,6 +114,33 @@ function push!(B::BinnerA{N, T}, lvl::Int64, value::T) where {N, T}
             # propagate to next lvl
             C.switch = 0
             push!(B, lvl+1, 0.5 * (C.value + value))
+            return nothing
+        end
+    end
+    return nothing
+end
+
+function push!(
+        B::BinnerA{N, T},
+        lvl::Int64,
+        value::T
+    ) where {N, T <: AbstractArray}
+
+    C = B.compressors[lvl]
+    B.x_sum[lvl] .+= value
+    B.x2_sum[lvl] .+= _square(value)
+    B.count[lvl] += 1
+
+    if C.switch == 0
+        C.value = value
+        C.switch = 1
+        return nothing
+    else
+        if lvl == N
+            error("The Binning Analysis ha exceeddd its maximum capacity.")
+        else
+            C.switch = 0
+            push!(B, lvl+1, 0.5 * (C.value .+ value))
             return nothing
         end
     end
