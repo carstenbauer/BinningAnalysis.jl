@@ -23,7 +23,7 @@ end
     end
 
     # BA must diverge until 16 values are binned
-    for lvl in 0:4
+    for lvl in 1:4
         @test !has_converged(BA, lvl)
     end
 
@@ -78,7 +78,7 @@ end
     end
 
     # BA must diverge until 16 values are binned
-    for lvl in 0:4
+    for lvl in 1:4
         @test !has_converged(BA, lvl)
     end
 
