@@ -74,7 +74,7 @@ end
 Calculates the variance for each level of the Binning Analysis.
 """
 function all_vars(B::LogBinner{N}) where {N}
-    [var(B, lvl) for lvl in 0:N-1 if B.count[lvl+1] > 0]
+    [var(B, lvl) for lvl in 0:N-1 if B.count[lvl+1] > 1]
 end
 
 
@@ -84,7 +84,7 @@ end
 Calculates the variance/N for each level of the Binning Analysis.
 """
 function all_varNs(B::LogBinner{N}) where {N}
-    [varN(B, lvl) for lvl in 0:N-1 if B.count[lvl+1] > 0]
+    [varN(B, lvl) for lvl in 0:N-1 if B.count[lvl+1] > 1]
 end
 
 
@@ -109,7 +109,7 @@ end
 Calculates the mean for each level of the Binning Analysis.
 """
 function all_means(B::LogBinner{N}) where {N}
-    [mean(B, lvl) for lvl in 0:N-1 if B.count[lvl+1] > 0]
+    [mean(B, lvl) for lvl in 0:N-1 if B.count[lvl+1] > 1]
 end
 
 
@@ -134,7 +134,7 @@ end
 Calculates the autocorrelation time tau for each level of the Binning Analysis.
 """
 function all_taus(B::LogBinner{N}) where {N}
-    [tau(B, lvl) for lvl in 0:N-1 if B.count[lvl+1] > 0]
+    [tau(B, lvl) for lvl in 0:N-1 if B.count[lvl+1] > 1]
 end
 
 
