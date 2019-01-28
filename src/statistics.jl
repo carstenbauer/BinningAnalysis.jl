@@ -3,60 +3,10 @@
 
 Calculates the variance/N of a given level in the Binning Analysis.
 """
-function varN(
-        B::LogBinner{N, T},
-        lvl::Int64 = 0
-    ) where {N, T <: Real}
+function varN(B::LogBinner, lvl::Int64 = 0)
 
-    # lvl = 1 <=> original values
-    # correct variance:
-    # (∑ xᵢ^2) / (N-1) - (∑ xᵢ)(∑ xᵢ) / (N(N-1))
-    (
-        B.x2_sum[lvl+1] / (B.count[lvl+1] - 1) -
-        B.x_sum[lvl+1]^2 / ((B.count[lvl+1] - 1) * B.count[lvl+1])
-    ) / B.count[lvl+1]
-end
-
-function varN(
-        B::LogBinner{N, T},
-        lvl::Int64 = 0
-    ) where {N, T <: Complex}
-
-    # lvl = 1 <=> original values
-    (
-        (real(B.x2_sum[lvl+1]) + imag(B.x2_sum[lvl+1])) /
-            (B.count[lvl+1] - 1) -
-        (real(B.x_sum[lvl+1])^2 + imag(B.x_sum[lvl+1])^2) /
-            ((B.count[lvl+1] - 1) * B.count[lvl+1])
-    ) / B.count[lvl+1]
-end
-
-function varN(
-        B::LogBinner{N, <: AbstractArray{T, D}},
-        lvl::Int64 = 0
-    ) where {N, D, T <: Real}
-
-    # lvl = 1 <=> original values
-    # correct variance:
-    # (∑ xᵢ^2) / (N-1) - (∑ xᵢ)(∑ xᵢ) / (N(N-1))
-    @. (
-        B.x2_sum[lvl+1] / (B.count[lvl+1] - 1) -
-        B.x_sum[lvl+1]^2 / ((B.count[lvl+1] - 1) * B.count[lvl+1])
-    ) / B.count[lvl+1]
-end
-
-function varN(
-        B::LogBinner{N, <: AbstractArray{T, D}},
-        lvl::Int64 = 0
-    ) where {N, D, T <: Complex}
-
-    # lvl = 1 <=> original values
-    @. (
-        (real(B.x2_sum[lvl+1]) + imag(B.x2_sum[lvl+1])) /
-            (B.count[lvl+1] - 1) -
-        (real(B.x_sum[lvl+1])^2 + imag(B.x_sum[lvl+1])^2) /
-            ((B.count[lvl+1] - 1) * B.count[lvl+1])
-    ) / B.count[lvl+1]
+    n = B.count[lvl+1]
+    var(B, lvl) / n
 end
 
 
@@ -70,8 +20,14 @@ function var(
         lvl::Int64 = 0
     ) where {N, T <: Real}
 
-    B.x2_sum[lvl+1] / (B.count[lvl+1] - 1) -
-    B.x_sum[lvl+1]^2 / ((B.count[lvl+1] - 1) * B.count[lvl+1])
+    n = B.count[lvl+1]
+    X = B.x_sum[lvl+1]
+    X2 = B.x2_sum[lvl+1]
+
+    # lvl = 1 <=> original values
+    # correct variance:
+    # (∑ xᵢ^2) / (N-1) - (∑ xᵢ)(∑ xᵢ) / (N(N-1))
+    X2 / (n - 1) - X^2 / (n*(n - 1))
 end
 
 function var(
@@ -79,10 +35,12 @@ function var(
         lvl::Int64 = 0
     ) where {N, T <: Complex}
 
-    (real(B.x2_sum[lvl+1]) + imag(B.x2_sum[lvl+1])) /
-        (B.count[lvl+1] - 1) -
-    (real(B.x_sum[lvl+1])^2 + imag(B.x_sum[lvl+1])^2) /
-        ((B.count[lvl+1] - 1) * B.count[lvl+1])
+    n = B.count[lvl+1]
+    X = B.x_sum[lvl+1]
+    X2 = B.x2_sum[lvl+1]
+
+    # lvl = 1 <=> original values
+    (real(X2) + imag(X2)) / (n - 1) - (real(X)^2 + imag(X)^2) / (n*(n - 1))
 end
 
 function var(
@@ -90,8 +48,11 @@ function var(
         lvl::Int64 = 0
     ) where {N, D, T <: Real}
 
-    @. B.x2_sum[lvl+1] / (B.count[lvl+1] - 1) -
-    B.x_sum[lvl+1]^2 / ((B.count[lvl+1] - 1) * B.count[lvl+1])
+    n = B.count[lvl+1]
+    X = B.x_sum[lvl+1]
+    X2 = B.x2_sum[lvl+1]
+
+    @. X2 / (n - 1) - X^2 / (n*(n - 1))
 end
 
 function var(
@@ -99,10 +60,11 @@ function var(
         lvl::Int64 = 0
     ) where {N, D, T <: Complex}
 
-    @. (real(B.x2_sum[lvl+1]) + imag(B.x2_sum[lvl+1])) /
-        (B.count[lvl+1] - 1) -
-    (real(B.x_sum[lvl+1])^2 + imag(B.x_sum[lvl+1])^2) /
-        ((B.count[lvl+1] - 1) * B.count[lvl+1])
+    n = B.count[lvl+1]
+    X = B.x_sum[lvl+1]
+    X2 = B.x2_sum[lvl+1]
+
+    @. (real(X2) + imag(X2)) / (n - 1) - (real(X)^2 + imag(X)^2) / (n*(n - 1))
 end
 
 
