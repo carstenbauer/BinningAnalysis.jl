@@ -1,10 +1,6 @@
 module BinningAnalysis
 
-@static if VERSION < v"0.7"
-    import Base: mean, var
-else
-    import Statistics: mean, var
-end
+import Statistics: mean, var
 import Base.push!
 
 
