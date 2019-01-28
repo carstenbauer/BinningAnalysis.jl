@@ -128,3 +128,27 @@ end
         @test means[i] ≈ means[1]
     end
 end
+
+
+
+@testset "Type promotion" begin
+    Bf = LogBinner(zero(1.)) # Float64 LogBinner
+    Bc = LogBinner(zero(im)) # Float64 LogBinner
+
+    # Check that this doesn't throw (TODO: is there a better way?)
+    @test (append!(Bf, rand(1:10, 10000)); true)
+    @test (append!(Bc, rand(10000)); true)
+end
+
+
+
+
+@testset "Sum-type heuristic" begin
+    # numbers
+    @test typeof(LogBinner(zero(Int64))) == LogBinner{32,Float64}
+    @test typeof(LogBinner(zero(ComplexF16))) == LogBinner{32,ComplexF64}
+
+    # arrays
+    @test typeof(LogBinner(zeros(Int64, 2,2))) == LogBinner{32,Matrix{Float64}}
+    @test typeof(LogBinner(zeros(ComplexF16, 2,2))) == LogBinner{32,Matrix{ComplexF64}}
+end
