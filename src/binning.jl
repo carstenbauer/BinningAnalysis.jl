@@ -4,7 +4,7 @@
 # switch indicates whether value should be written to or averaging should happen.
 mutable struct Compressor{T}
     value::T
-    switch::UInt8
+    switch::Bool
 end
 
 
@@ -51,7 +51,7 @@ Values can be added using `push!(LogBinner, value)`.
 """
 function LogBinner(_zero::T = zero(Float64), N::Int64 = 32) where {T}
     LogBinner{N, T}(
-        tuple([Compressor{T}(copy(_zero), UInt8(0)) for i in 1:N]...),
+        tuple([Compressor{T}(copy(_zero), false) for i in 1:N]...),
         [copy(_zero) for _ in 1:N],
         [copy(_zero) for _ in 1:N],
         zeros(Int64, N)
@@ -100,10 +100,10 @@ function push!(B::LogBinner{N, T}, lvl::Int64, value::T) where {N, T <: Number}
     B.x2_sum[lvl] += _square(value)
     B.count[lvl] += 1
 
-    if C.switch == 0
+    if !C.switch
         # Compressor has space -> save value
         C.value = value
-        C.switch = 1
+        C.switch = true
         return nothing
     else
         # Do averaging
@@ -112,7 +112,7 @@ function push!(B::LogBinner{N, T}, lvl::Int64, value::T) where {N, T <: Number}
             error("The Binning Analysis ha exceeddd its maximum capacity.")
         else
             # propagate to next lvl
-            C.switch = 0
+            C.switch = false
             push!(B, lvl+1, 0.5 * (C.value + value))
             return nothing
         end
@@ -131,15 +131,15 @@ function push!(
     B.x2_sum[lvl] .+= _square(value)
     B.count[lvl] += 1
 
-    if C.switch == 0
+    if !C.switch
         C.value = value
-        C.switch = 1
+        C.switch = true
         return nothing
     else
         if lvl == N
             error("The Binning Analysis ha exceeddd its maximum capacity.")
         else
-            C.switch = 0
+            C.switch = false
             push!(B, lvl+1, 0.5 * (C.value .+ value))
             return nothing
         end
