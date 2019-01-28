@@ -109,7 +109,7 @@ function push!(B::LogBinner{N, T}, lvl::Int64, value::T) where {N, T <: Number}
         # Do averaging
         if lvl == N
             # No more propagation possible -> throw error
-            error("The Binning Analysis ha exceeddd its maximum capacity.")
+            throw(OverflowError("The Binning Analysis ha exceeddd its maximum capacity."))
         else
             # propagate to next lvl
             C.switch = false
@@ -137,7 +137,7 @@ function push!(
         return nothing
     else
         if lvl == N
-            error("The Binning Analysis ha exceeddd its maximum capacity.")
+            throw(OverflowError("The Binning Analysis ha exceeddd its maximum capacity."))
         else
             C.switch = false
             push!(B, lvl+1, 0.5 * (C.value .+ value))
