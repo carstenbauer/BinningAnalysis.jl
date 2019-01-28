@@ -86,7 +86,7 @@ end
 
 _square(x) = x^2
 _square(x::Complex) = Complex(real(x)^2, imag(x)^2)
-_square(x::AbstractArray) = map(_square, x)
+_square(x::AbstractArray) = _square.(x)
 
 # recursion, back-end function
 function push!(B::LogBinner{N, T}, lvl::Int64, value::T) where {N, T <: Number}
