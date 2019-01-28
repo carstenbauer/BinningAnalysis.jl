@@ -1,5 +1,5 @@
 function _println_header(io::IO, B::LogBinner{N,T}) where {N, T}
-    "LogBinner{$(N),$(T)}"
+    println("LogBinner{$(N),$(T)}")
 end
 
 function _println_body(io::IO, B::LogBinner{N,T}) where {N, T}
