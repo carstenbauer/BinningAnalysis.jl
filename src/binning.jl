@@ -50,8 +50,16 @@ is inherited by the given zero. Returns a Binning Analysis object.
 Values can be added using `push!(LogBinner, value)`.
 """
 function LogBinner(_zero::T = zero(Float64), N::Int64 = 32) where {T}
-    LogBinner{N, T}(
-        tuple([Compressor{T}(copy(_zero), false) for i in 1:N]...),
+    # heuristic to set sum type (#2)
+    D = ndims(_zero)
+    S = if eltype(T)<:Real
+        D > 0 ? Array{Float64, D} : Float64
+    else
+        D > 0 ? Array{ComplexF64, D} : ComplexF64
+    end
+
+    LogBinner{N, S}(
+        tuple([Compressor{S}(copy(_zero), false) for i in 1:N]...),
         [copy(_zero) for _ in 1:N],
         [copy(_zero) for _ in 1:N],
         zeros(Int64, N)
@@ -79,8 +87,10 @@ end
 
 Pushes a new value into the Binning Analysis.
 """
-function push!(B::LogBinner{N, T}, value::T) where {N, T}
-    push!(B, 1, value)
+function push!(B::LogBinner{N, T}, value::S) where {N, T, S}
+    ndims(T) == ndims(S) || throw(DimensionMismatch("Expected $(ndims(T)) dimensions but got $(ndims(S))."))
+
+    _push!(B, 1, value)
 end
 
 
@@ -89,7 +99,7 @@ _square(x::Complex) = Complex(real(x)^2, imag(x)^2)
 _square(x::AbstractArray) = _square.(x)
 
 # recursion, back-end function
-function push!(B::LogBinner{N, T}, lvl::Int64, value::T) where {N, T <: Number}
+function _push!(B::LogBinner{N, T}, lvl::Int64, value::S) where {N, T <: Number, S}
     C = B.compressors[lvl]
 
     # any value propagating through this function is new to lvl. Therefore we
@@ -113,18 +123,18 @@ function push!(B::LogBinner{N, T}, lvl::Int64, value::T) where {N, T <: Number}
         else
             # propagate to next lvl
             C.switch = false
-            push!(B, lvl+1, 0.5 * (C.value + value))
+            _push!(B, lvl+1, 0.5 * (C.value + value))
             return nothing
         end
     end
     return nothing
 end
 
-function push!(
+function _push!(
         B::LogBinner{N, T},
         lvl::Int64,
-        value::T
-    ) where {N, T <: AbstractArray}
+        value::S
+    ) where {N, T <: AbstractArray, S}
 
     C = B.compressors[lvl]
     B.x_sum[lvl] .+= value
@@ -140,7 +150,7 @@ function push!(
             throw(OverflowError("The Binning Analysis ha exceeddd its maximum capacity."))
         else
             C.switch = false
-            push!(B, lvl+1, 0.5 * (C.value .+ value))
+            _push!(B, lvl+1, 0.5 * (C.value .+ value))
             return nothing
         end
     end
