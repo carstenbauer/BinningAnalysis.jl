@@ -3,7 +3,7 @@ using Test
 
 
 @testset "Checking converging data (Real)" begin
-    BA = BinnerA()
+    BA = LogBinner()
 
     # block of maximally correlated values:
     N_corr = 16
@@ -42,7 +42,7 @@ end
     # Due to the different (mathematically equivalent) versions of the variance
     # calculated here, the values are onyl approximately the same. (Float error)
     xs = rand(ComplexF64, 1_000_000)
-    BA = BinnerA(ComplexF64)
+    BA = LogBinner(ComplexF64)
 
     # Test small set (off by one errors are large here)
     for x in xs[1:10]; push!(BA, x) end
@@ -58,7 +58,7 @@ end
 
 
 @testset "Checking converging data (Complex)" begin
-    BA = BinnerA(ComplexF64)
+    BA = LogBinner(ComplexF64)
 
     # block of maximally correlated values:
     N_corr = 16
@@ -95,7 +95,7 @@ end
 
 
 @testset "Checking converging data (Vector)" begin
-    BA = BinnerA(zeros(3))
+    BA = LogBinner(zeros(3))
 
     # block of maximally correlated values:
     N_corr = 16

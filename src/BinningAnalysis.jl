@@ -5,7 +5,7 @@ import Base.push!
 
 
 include("binning.jl")
-export BinnerA, push!
+export LogBinner, push!
 
 include("statistics.jl")
 export mean, var, varN, tau, std_error

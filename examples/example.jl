@@ -10,7 +10,7 @@ end
 
 
 # Create Binning Analysis
-BA = BinnerA()
+BA = LogBinner()
 
 # Get some data
 N_corr = 16
