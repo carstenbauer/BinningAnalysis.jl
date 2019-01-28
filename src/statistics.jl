@@ -155,11 +155,11 @@ end
 
 
 """
-    tau(BinningAnalysis, lvl)
+    tau(BinningAnalysis[, lvl=0])
 
 Calculates the autocorrelation time tau for a given binning level.
 """
-function tau(B::BinnerA, lvl::Int64)
+function tau(B::BinnerA, lvl::Int64 = 0)
     var_0 = varN(B, 0)
     var_l = varN(B, lvl)
     0.5 * (var_l / var_0 - 1)
@@ -180,14 +180,14 @@ end
 
 
 """
-    std_error(BinningAnalysis, lvl)
+    std_error(BinningAnalysis[, lvl=0])
 
 Calculates the standard error for a given level.
 """
-function std_error(B::BinnerA{N, T}, lvl::Int64) where {N, T <: Number}
+function std_error(B::BinnerA{N, T}, lvl::Int64=0) where {N, T <: Number}
     sqrt(varN(B, lvl))
 end
-function std_error(B::BinnerA{N, T}, lvl::Int64) where {N, T <: AbstractArray}
+function std_error(B::BinnerA{N, T}, lvl::Int64=0) where {N, T <: AbstractArray}
     sqrt.(varN(B, lvl))
 end
 
