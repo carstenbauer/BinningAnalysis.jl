@@ -31,7 +31,7 @@ using Test
     # has_converged
 
     # means should be consistent
-    means = all_means(BA)
+    means = BinningAnalysis.all_means(BA)
     for x in means
         @test x ≈ means[1]
     end
@@ -86,7 +86,7 @@ end
     # has_converged
 
     # means should be consistent
-    means = all_means(BA)
+    means = BinningAnalysis.all_means(BA)
     for x in means
         @test x ≈ means[1]
     end
@@ -123,7 +123,7 @@ end
     # has_converged
 
     # means should be consistent
-    means = all_means(BA)
+    means = BinningAnalysis.all_means(BA)
     for i in eachindex(means)
         @test means[i] ≈ means[1]
     end
