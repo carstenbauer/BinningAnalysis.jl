@@ -5,7 +5,7 @@ function performance_test(N = 28, start=1)
 
     for i in start:N
         # NOTE using the default size here actually performs better
-        BA = BinnerA(i+1)
+        BA = LogBinner(i+1)
         xs = rand(2^i)
         GC.gc()
 

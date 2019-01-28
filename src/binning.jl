@@ -4,11 +4,11 @@
 # switch indicates whether value should be written to or averaging should happen.
 mutable struct Compressor{T}
     value::T
-    switch::UInt8
+    switch::Bool
 end
 
 
-struct BinnerA{N, T}
+struct LogBinner{N, T}
     # list of Compressors, one per level
     compressors::NTuple{N, Compressor{T}}
 
@@ -21,11 +21,11 @@ struct BinnerA{N, T}
 end
 
 """
-    BinnerA([T = Float64, N = 32])
+    LogBinner([T = Float64, N = 32])
 
 Creates a Binning Analysis which can take 2^N-1 value sof type T.
 """
-BinnerA(T::Type = Float64, N::Int64 = 32) = BinnerA(zero(T), N)
+LogBinner(T::Type = Float64, N::Int64 = 32) = LogBinner(zero(T), N)
 
 # TODO
 # Currently, the Binning Analysis requires a "zero" to initialize x_sum and
@@ -42,16 +42,24 @@ BinnerA(T::Type = Float64, N::Int64 = 32) = BinnerA(zero(T), N)
 # bad: also requires frequent checks (if first push ... else ...)
 # ...?
 """
-    BinnerA([zero = 0.0, N = 32])
+    LogBinner([zero = 0.0, N = 32])
 
 Creates a new Binning Analysis which can take 2^N-1 values of type T. The type
 is inherited by the given zero. Returns a Binning Analysis object.
 
-Values can be added using `push!(BinnerA, value)`.
+Values can be added using `push!(LogBinner, value)`.
 """
-function BinnerA(_zero::T = zero(Float64), N::Int64 = 32) where {T}
-    BinnerA{N, T}(
-        tuple([Compressor{T}(copy(_zero), UInt8(0)) for i in 1:N]...),
+function LogBinner(_zero::T = zero(Float64), N::Int64 = 32) where {T}
+    # heuristic to set sum type (#2)
+    D = ndims(_zero)
+    S = if eltype(T)<:Real
+        D > 0 ? Array{Float64, D} : Float64
+    else
+        D > 0 ? Array{ComplexF64, D} : ComplexF64
+    end
+
+    LogBinner{N, S}(
+        tuple([Compressor{S}(copy(_zero), false) for i in 1:N]...),
         [copy(_zero) for _ in 1:N],
         [copy(_zero) for _ in 1:N],
         zeros(Int64, N)
@@ -61,12 +69,12 @@ end
 
 # TODO typing?
 """
-    append!(BinnerA, values)
+    append!(LogBinner, values)
 
 Adds an array of values to the Binning Analysis by applying push! to each
 element.
 """
-function append!(B::BinnerA, values::AbstractArray)
+function append!(B::LogBinner, values::AbstractArray)
     for value in values
         push!(B, value)
     end
@@ -75,21 +83,23 @@ end
 
 
 """
-    push!(BinnerA, value)
+    push!(LogBinner, value)
 
 Pushes a new value into the Binning Analysis.
 """
-function push!(B::BinnerA{N, T}, value::T) where {N, T}
-    push!(B, 1, value)
+function push!(B::LogBinner{N, T}, value::S) where {N, T, S}
+    ndims(T) == ndims(S) || throw(DimensionMismatch("Expected $(ndims(T)) dimensions but got $(ndims(S))."))
+
+    _push!(B, 1, value)
 end
 
 
 _square(x) = x^2
 _square(x::Complex) = Complex(real(x)^2, imag(x)^2)
-_square(x::AbstractArray) = map(_square, x)
+_square(x::AbstractArray) = _square.(x)
 
 # recursion, back-end function
-function push!(B::BinnerA{N, T}, lvl::Int64, value::T) where {N, T <: Number}
+function _push!(B::LogBinner{N, T}, lvl::Int64, value::S) where {N, T <: Number, S}
     C = B.compressors[lvl]
 
     # any value propagating through this function is new to lvl. Therefore we
@@ -100,47 +110,47 @@ function push!(B::BinnerA{N, T}, lvl::Int64, value::T) where {N, T <: Number}
     B.x2_sum[lvl] += _square(value)
     B.count[lvl] += 1
 
-    if C.switch == 0
+    if !C.switch
         # Compressor has space -> save value
         C.value = value
-        C.switch = 1
+        C.switch = true
         return nothing
     else
         # Do averaging
         if lvl == N
             # No more propagation possible -> throw error
-            error("The Binning Analysis ha exceeddd its maximum capacity.")
+            throw(OverflowError("The Binning Analysis ha exceeddd its maximum capacity."))
         else
             # propagate to next lvl
-            C.switch = 0
-            push!(B, lvl+1, 0.5 * (C.value + value))
+            C.switch = false
+            _push!(B, lvl+1, 0.5 * (C.value + value))
             return nothing
         end
     end
     return nothing
 end
 
-function push!(
-        B::BinnerA{N, T},
+function _push!(
+        B::LogBinner{N, T},
         lvl::Int64,
-        value::T
-    ) where {N, T <: AbstractArray}
+        value::S
+    ) where {N, T <: AbstractArray, S}
 
     C = B.compressors[lvl]
     B.x_sum[lvl] .+= value
     B.x2_sum[lvl] .+= _square(value)
     B.count[lvl] += 1
 
-    if C.switch == 0
+    if !C.switch
         C.value = value
-        C.switch = 1
+        C.switch = true
         return nothing
     else
         if lvl == N
-            error("The Binning Analysis ha exceeddd its maximum capacity.")
+            throw(OverflowError("The Binning Analysis ha exceeddd its maximum capacity."))
         else
-            C.switch = 0
-            push!(B, lvl+1, 0.5 * (C.value .+ value))
+            C.switch = false
+            _push!(B, lvl+1, 0.5 * (C.value .+ value))
             return nothing
         end
     end

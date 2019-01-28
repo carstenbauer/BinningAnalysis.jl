@@ -21,9 +21,9 @@ where N is the number of values pushed.
 
 ```julia
 # Create a new binning analysis.
-binner = BinnerA()
+binner = LogBinner()
 # On default, 2^32-1 values can be added to the binner. This value can be
-# changed by passing an integer to BinnerA, e.g. BinnerA(64) for a capacity
+# changed by passing an integer to LogBinner, e.g. LogBinner(64) for a capacity
 # of 2^64-1
 
 for value in data
