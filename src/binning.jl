@@ -26,7 +26,8 @@ end
 Base.eltype(B::LogBinner{N,T}) where {N,T} = T
 Base.length(B::LogBinner) = B.count[1]
 Base.ndims(B::LogBinner{N,T}) where {N,T} = ndims(eltype(B))
-Base.isempty(B::LogBinner) = B.count[1] == 0
+Base.isempty(B::LogBinner) = length(B) == 0
+
 
 
 """
@@ -48,8 +49,8 @@ function Base.empty!(B::LogBinner)
             B.x2_sum[i] = z
         else 
             # arrays
-            fill!(B.x_sum, z)
-            fill!(B.x2_sum, z)
+            fill!(B.x_sum[i], z)
+            fill!(B.x2_sum[i], z)
         end
     end
 
