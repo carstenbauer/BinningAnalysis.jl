@@ -152,3 +152,18 @@ end
     @test typeof(LogBinner(zeros(Int64, 2,2))) == LogBinner{32,Matrix{Float64}}
     @test typeof(LogBinner(zeros(ComplexF16, 2,2))) == LogBinner{32,Matrix{ComplexF64}}
 end
+
+
+
+@testset "Indexing Bounds" begin
+    BA = LogBinner(zero(Float64), 1)
+    for func in [:var, :varN, :mean, :tau]
+        # check if func(BA, 0) throws BoundsError
+        # It should as level 1 is now the initial level
+        @test_throws BoundsError @eval $func($BA, 0)
+        # Check that level 1 exists
+        @test (@eval $func($BA, 1); true)
+        # Check that level 2 throws BoundsError
+        @test_throws BoundsError @eval $func($BA, 2)
+    end
+end
