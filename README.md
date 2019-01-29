@@ -11,8 +11,8 @@
 This package implements the following statistical binning tools,
 
 * Logarithmic Binning
-* Full Binning
-* Jackknife
+<!-- * Full Binning -->
+<!-- * Jackknife -->
 
 
 As per usual, you can install the package with `] add https://github.com/crstnbr/BinningAnalysis.jl`.
