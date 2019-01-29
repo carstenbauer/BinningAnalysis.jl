@@ -20,6 +20,16 @@ struct LogBinner{N, T}
     count::Vector{Int64}
 end
 
+
+
+# Overload some basic Base functions
+Base.eltype(B::LogBinner{N,T}) where {N,T} = T
+Base.isempty(B::LogBinner) = B.count[1] == 0
+Base.length(B::LogBinner) = B.count[1]
+Base.ndims(B::LogBinner{N,T}) where {N,T} = ndims(eltype(B))
+
+
+
 """
     LogBinner([T = Float64, N = 32])
 

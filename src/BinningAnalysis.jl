@@ -1,7 +1,7 @@
 module BinningAnalysis
 
 import Statistics: mean, var
-import Base: push!, append!, show, summary
+import Base: push!, append!, show, summary, eltype, isempty, length, ndims
 
 include("binning.jl")
 export LogBinner, push!, append!
