@@ -25,7 +25,7 @@ end
 
 Creates a Binning Analysis which can take 2^N-1 value sof type T.
 """
-LogBinner(T::Type = Float64, N::Int64 = 32) = LogBinner(zero(T), N)
+LogBinner(::Type{T} = Float64, N::Int64 = 32) where T = LogBinner(zero(T), N)
 
 # TODO
 # Currently, the Binning Analysis requires a "zero" to initialize x_sum and
@@ -49,7 +49,7 @@ is inherited by the given zero. Returns a Binning Analysis object.
 
 Values can be added using `push!(LogBinner, value)`.
 """
-function LogBinner(_zero::T = zero(Float64), N::Int64 = 32) where {T}
+function LogBinner(_zero::T, N::Int64 = 32) where {T}
     # heuristic to set sum type (#2)
     D = ndims(_zero)
     S = if eltype(T)<:Real
