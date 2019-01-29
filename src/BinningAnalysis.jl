@@ -1,10 +1,11 @@
 module BinningAnalysis
 
 import Statistics: mean, var
-import Base: push!, append!, show, summary, eltype, isempty, length, ndims
+import Base: push!, append!, show, summary, eltype,
+            isempty, length, ndims, empty!
 
 include("binning.jl")
-export LogBinner, push!, append!
+export LogBinner
 
 include("statistics.jl")
 export mean, var, varN, tau, std_error
