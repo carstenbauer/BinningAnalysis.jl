@@ -1,28 +1,28 @@
 """
-    varN(BinningAnalysis[, lvl = 0])
+    varN(BinningAnalysis[, lvl = 1])
 
 Calculates the variance/N of a given level in the Binning Analysis.
 """
-function varN(B::LogBinner, lvl::Int64 = 0)
+function varN(B::LogBinner, lvl::Int64 = 1)
 
-    n = B.count[lvl+1]
+    n = B.count[lvl]
     var(B, lvl) / n
 end
 
 
 """
-    var(BinningAnalysis[, lvl = 0])
+    var(BinningAnalysis[, lvl = 1])
 
 Calculates the variance of a given level in the Binning Analysis.
 """
 function var(
         B::LogBinner{N, T},
-        lvl::Int64 = 0
+        lvl::Int64 = 1
     ) where {N, T <: Real}
 
-    n = B.count[lvl+1]
-    X = B.x_sum[lvl+1]
-    X2 = B.x2_sum[lvl+1]
+    n = B.count[lvl]
+    X = B.x_sum[lvl]
+    X2 = B.x2_sum[lvl]
 
     # lvl = 1 <=> original values
     # correct variance:
@@ -32,12 +32,12 @@ end
 
 function var(
         B::LogBinner{N, T},
-        lvl::Int64 = 0
+        lvl::Int64 = 1
     ) where {N, T <: Complex}
 
-    n = B.count[lvl+1]
-    X = B.x_sum[lvl+1]
-    X2 = B.x2_sum[lvl+1]
+    n = B.count[lvl]
+    X = B.x_sum[lvl]
+    X2 = B.x2_sum[lvl]
 
     # lvl = 1 <=> original values
     (real(X2) + imag(X2)) / (n - 1) - (real(X)^2 + imag(X)^2) / (n*(n - 1))
@@ -45,24 +45,24 @@ end
 
 function var(
         B::LogBinner{N, <: AbstractArray{T, D}},
-        lvl::Int64 = 0
+        lvl::Int64 = 1
     ) where {N, D, T <: Real}
 
-    n = B.count[lvl+1]
-    X = B.x_sum[lvl+1]
-    X2 = B.x2_sum[lvl+1]
+    n = B.count[lvl]
+    X = B.x_sum[lvl]
+    X2 = B.x2_sum[lvl]
 
     @. X2 / (n - 1) - X^2 / (n*(n - 1))
 end
 
 function var(
         B::LogBinner{N, <: AbstractArray{T, D}},
-        lvl::Int64 = 0
+        lvl::Int64 = 1
     ) where {N, D, T <: Complex}
 
-    n = B.count[lvl+1]
-    X = B.x_sum[lvl+1]
-    X2 = B.x2_sum[lvl+1]
+    n = B.count[lvl]
+    X = B.x_sum[lvl]
+    X2 = B.x2_sum[lvl]
 
     @. (real(X2) + imag(X2)) / (n - 1) - (real(X)^2 + imag(X)^2) / (n*(n - 1))
 end
@@ -74,7 +74,7 @@ end
 Calculates the variance for each level of the Binning Analysis.
 """
 function all_vars(B::LogBinner{N}) where {N}
-    [var(B, lvl) for lvl in 0:N-1 if B.count[lvl+1] > 1]
+    [var(B, lvl) for lvl in 1:N if B.count[lvl] > 1]
 end
 
 
@@ -84,7 +84,7 @@ end
 Calculates the variance/N for each level of the Binning Analysis.
 """
 function all_varNs(B::LogBinner{N}) where {N}
-    [varN(B, lvl) for lvl in 0:N-1 if B.count[lvl+1] > 1]
+    [varN(B, lvl) for lvl in 1:N if B.count[lvl] > 1]
 end
 
 
@@ -93,12 +93,12 @@ end
 
 # NOTE works for all
 """
-    mean(BinningAnalysis[, lvl=0])
+    mean(BinningAnalysis[, lvl=1])
 
 Calculates the mean for a given level in the Binning Analysis.
 """
-function mean(B::LogBinner, lvl::Int64 = 0)
-    B.x_sum[lvl+1] / B.count[lvl+1]
+function mean(B::LogBinner, lvl::Int64 = 1)
+    B.x_sum[lvl] / B.count[lvl]
 end
 
 
@@ -109,7 +109,7 @@ end
 Calculates the mean for each level of the Binning Analysis.
 """
 function all_means(B::LogBinner{N}) where {N}
-    [mean(B, lvl) for lvl in 0:N-1 if B.count[lvl+1] > 1]
+    [mean(B, lvl) for lvl in 1:N if B.count[lvl] > 1]
 end
 
 
@@ -117,12 +117,12 @@ end
 
 
 """
-    tau(BinningAnalysis[, lvl=0])
+    tau(BinningAnalysis[, lvl=1])
 
 Calculates the autocorrelation time tau for a given binning level.
 """
-function tau(B::LogBinner, lvl::Int64 = 0)
-    var_0 = varN(B, 0)
+function tau(B::LogBinner, lvl::Int64 = 1)
+    var_0 = varN(B, 1)
     var_l = varN(B, lvl)
     0.5 * (var_l / var_0 - 1)
 end
@@ -134,7 +134,7 @@ end
 Calculates the autocorrelation time tau for each level of the Binning Analysis.
 """
 function all_taus(B::LogBinner{N}) where {N}
-    [tau(B, lvl) for lvl in 0:N-1 if B.count[lvl+1] > 1]
+    [tau(B, lvl) for lvl in 1:N if B.count[lvl] > 1]
 end
 
 
@@ -191,10 +191,10 @@ normalized to the last lvl. If this value tends to 0, the Binning Analysis has
 converged.
 """
 function convergence(B::LogBinner{N, T}, lvl::Int64) where {N, T <: Number}
-    abs((varN(B, lvl) - varN(B, lvl-1)) / varN(B, lvl-1))
+    abs((varN(B, lvl+1) - varN(B, lvl)) / varN(B, lvl))
 end
 function convergence(B::LogBinner{N, T}, lvl::Int64) where {N, T <: AbstractArray}
-    mean(abs.((varN(B, lvl) .- varN(B, lvl-1)) ./ varN(B, lvl-1)))
+    mean(abs.((varN(B, lvl+1) .- varN(B, lvl)) ./ varN(B, lvl)))
 end
 
 """

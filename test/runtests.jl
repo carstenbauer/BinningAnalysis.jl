@@ -46,13 +46,13 @@ end
 
     # Test small set (off by one errors are large here)
     for x in xs[1:10]; push!(BA, x) end
-    @test var(BA, 0) ≈ var(xs[1:10])
-    @test varN(BA, 0) ≈ var(xs[1:10])/10
+    @test var(BA, 1) ≈ var(xs[1:10])
+    @test varN(BA, 1) ≈ var(xs[1:10])/10
 
     # Test full set
     for x in xs[11:end]; push!(BA, x) end
-    @test var(BA, 0) ≈ var(xs)
-    @test varN(BA, 0) ≈ var(xs)/1_000_000
+    @test var(BA, 1) ≈ var(xs)
+    @test varN(BA, 1) ≈ var(xs)/1_000_000
 end
 
 
