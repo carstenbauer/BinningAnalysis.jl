@@ -1,10 +1,14 @@
-# BinningAnalysis
+# BinningAnalysis.jl
 
-[![Build Status](https://travis-ci.org/ffreyer/BinningAnalysis.jl.svg?branch=master)](https://travis-ci.org/ffreyer/BinningAnalysis.jl)
-[![Coverage Status](https://coveralls.io/repos/ffreyer/BinningAnalysis.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/ffreyer/BinningAnalysis.jl?branch=master)
-[![codecov.io](http://codecov.io/github/ffreyer/BinningAnalysis.jl/coverage.svg?branch=master)](http://codecov.io/github/ffreyer/BinningAnalysis.jl?branch=master)
+[![travis][travis-img]](https://travis-ci.org/crstnbr/BinningAnalysis.jl)
+[![appveyor][appveyor-img]](https://ci.appveyor.com/project/crstnbr/binninganalysis-jl/branch/master)
+[![codecov][codecov-img]](http://codecov.io/github/crstnbr/BinningAnalysis.jl?branch=master)
 
-Install the package with `Pkg.add("https://github.com/ffreyer/BinningAnalysis.jl.git")`
+[travis-img]: https://img.shields.io/travis/crstnbr/BinningAnalysis.jl/master.svg?label=Linux
+[appveyor-img]: https://img.shields.io/appveyor/ci/crstnbr/binninganalysis-jl/master.svg?label=Windows
+[codecov-img]: https://img.shields.io/codecov/c/github/crstnbr/BinningAnalysis.jl/master.svg?label=codecov
+
+Install the package with `] add https://github.com/ffreyer/BinningAnalysis.jl.git`.
 
 ---
 
