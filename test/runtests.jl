@@ -6,7 +6,7 @@ using Test
     @testset "Checking converging data (Real)" begin
         BA = LogBinner()
 
-        # block of maximally correlated values:
+        # block of maximally correlated values:https://github.com/notifications
         N_corr = 16
 
         # number of blocks
@@ -92,8 +92,7 @@ using Test
             @test x ≈ means[1]
         end
     end
-
-
+    
 
     @testset "Checking converging data (Vector)" begin
         BA = LogBinner(zeros(3))
@@ -129,9 +128,8 @@ using Test
             @test means[i] ≈ means[1]
         end
     end
-
-
-
+      
+      
     @testset "Type promotion" begin
         Bf = LogBinner(zero(1.)) # Float64 LogBinner
         Bc = LogBinner(zero(im)) # Float64 LogBinner
@@ -191,6 +189,7 @@ using Test
     end
 
 
+  
     @testset "Indexing Bounds" begin
         BA = LogBinner(zero(Float64), 1)
         for func in [:var, :varN, :mean, :tau]
@@ -204,7 +203,8 @@ using Test
         end
     end
 
-
+  
+  
     @testset "_select_lvl_for_std_error" begin
         BA = LogBinner()
         # Empty Binner

@@ -3,9 +3,9 @@ function _println_header(io::IO, B::LogBinner{N,T}) where {N, T}
 end
 
 function _println_body(io::IO, B::LogBinner{N,T}) where {N, T}
-    n = B.count[1]
+    n = length(B)
     print("| Count: ", n)
-    if n > 0
+    if n > 0 && ndims(B) == 0
         print("\n| Mean: ", round.(mean(B), digits=5))
         print("\n| StdError: ", round.(std_error(B), digits=5))
     end
