@@ -20,6 +20,58 @@ struct LogBinner{N, T}
     count::Vector{Int64}
 end
 
+
+
+# Overload some basic Base functions
+Base.eltype(B::LogBinner{N,T}) where {N,T} = T
+Base.length(B::LogBinner) = B.count[1]
+Base.ndims(B::LogBinner{N,T}) where {N,T} = ndims(eltype(B))
+Base.isempty(B::LogBinner) = length(B) == 0
+
+
+
+"""
+    empty!(B::LogBinner)
+
+Clear the binner, i.e. reset it to its inital state.
+"""
+function Base.empty!(B::LogBinner)
+    !isempty(B) || return
+
+    # get zero
+    z = zero(eltype(eltype(B)))
+
+    # reset x_sum and x2_sum to all zeros
+    @inbounds for i in eachindex(B.x_sum)
+        if ndims(B) == 0 # compile time
+            # numbers
+            B.x_sum[i] = z
+            B.x2_sum[i] = z
+        else 
+            # arrays
+            fill!(B.x_sum[i], z)
+            fill!(B.x2_sum[i], z)
+        end
+    end
+
+    # reset counts
+    fill!(B.count, 0)
+
+    # reset compressors
+    for c in B.compressors
+        if ndims(B) == 0 # compile time
+            c.value = z
+        else
+            fill!(c.value, z)
+        end
+        c.switch = false
+    end
+
+    nothing
+end
+
+
+
 """
     LogBinner([T = Float64, N = 32])
 
