@@ -8,7 +8,7 @@
 [appveyor-img]: https://img.shields.io/appveyor/ci/crstnbr/binninganalysis-jl/master.svg?label=Windows
 [codecov-img]: https://img.shields.io/codecov/c/github/crstnbr/BinningAnalysis.jl/master.svg?label=codecov
 
-Install the package with `] add https://github.com/ffreyer/BinningAnalysis.jl.git`.
+Install the package with `] add https://github.com/crstnbr/BinningAnalysis.jl.git`.
 
 ---
 
