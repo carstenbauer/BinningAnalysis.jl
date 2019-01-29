@@ -167,3 +167,31 @@ end
         @test_throws BoundsError @eval $func($BA, 2)
     end
 end
+
+
+@testset "_select_lvl_for_std_error" begin
+    BA = LogBinner()
+    # Empty Binner
+    @test BinningAnalysis._select_lvl_for_std_error(BA) == 1
+    @test isnan(std_error(BA, BinningAnalysis._select_lvl_for_std_error(BA)))
+
+    # One Element should still return NaN (due to 1/(n-1))
+    push!(BA, rand())
+    @test BinningAnalysis._select_lvl_for_std_error(BA) == 1
+    @test isnan(std_error(BA, BinningAnalysis._select_lvl_for_std_error(BA)))
+
+    # Two elements should return some value
+    push!(BA, rand())
+    @test BinningAnalysis._select_lvl_for_std_error(BA) == 1
+    @test !isnan(std_error(BA, BinningAnalysis._select_lvl_for_std_error(BA)))
+
+    # same behavior up to (including) 63 values (31 binned in first binned lvl)
+    append!(BA, rand(61))
+    @test BinningAnalysis._select_lvl_for_std_error(BA) == 1
+    @test !isnan(std_error(BA, BinningAnalysis._select_lvl_for_std_error(BA)))
+
+    # at 64 or more values, the lvl should be increasing
+    push!(BA, rand())
+    @test BinningAnalysis._select_lvl_for_std_error(BA) == 2
+    @test !isnan(std_error(BA, BinningAnalysis._select_lvl_for_std_error(BA)))
+end
