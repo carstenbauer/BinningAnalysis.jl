@@ -141,15 +141,34 @@ end
 ################################################################################
 
 
+# Heuristic for selecting the level with the (presumably) most reliable
+# standard error estimate:
+# Take the highest lvl with at least 32 bins.
+# (Chose 32 based on https://doi.org/10.1119/1.3247985)
+function _select_lvl_for_std_error(B::LogBinner{N,T})::Int64 where {N, T}
+    n = B.count[1]
+    n == 0 && (return 0)
+    max_bs = n / 32
+
+     i = findlast(bs -> bs <= max_bs, 2 .^ (0:N))
+    isnothing(i) ? 1 : i
+end
+
+ """
+    std_error(BinningAnalysis[, lvl=0])
+
+Calculates the standard error for a given level.
+"""
+function std_error(B::LogBinner{N, T}, lvl::Int64=_select_lvl_for_std_error(B)) where {N, T <: Number}
+    sqrt(varN(B, lvl))
+end
+
 """
     std_error(BinningAnalysis[, lvl=0])
 
 Calculates the standard error for a given level.
 """
-function std_error(B::LogBinner{N, T}, lvl::Int64=0) where {N, T <: Number}
-    sqrt(varN(B, lvl))
-end
-function std_error(B::LogBinner{N, T}, lvl::Int64=0) where {N, T <: AbstractArray}
+function std_error(B::LogBinner{N, T}, lvl::Int64=_select_lvl_for_std_error(B)) where {N, T <: AbstractArray}
     sqrt.(varN(B, lvl))
 end
 
