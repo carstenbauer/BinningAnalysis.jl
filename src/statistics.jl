@@ -146,11 +146,8 @@ end
 # Take the highest lvl with at least 32 bins.
 # (Chose 32 based on https://doi.org/10.1119/1.3247985)
 function _select_lvl_for_std_error(B::LogBinner{N,T})::Int64 where {N, T}
-    n = B.count[1]
-    n == 0 && (return 0)
-    max_bs = n / 32
-
-     i = findlast(bs -> bs <= max_bs, 2 .^ (0:N))
+    B.count[1] == 0 && (return 0) # return 0 if no values have been pushed
+    i = findlast(x -> x >= 32, B.count)
     isnothing(i) ? 1 : i
 end
 
