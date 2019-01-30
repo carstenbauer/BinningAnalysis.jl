@@ -56,5 +56,5 @@ for lvl in 1:20
     else
         "ro"
     end
-    plot([lvl], [varNs[lvl]], tag)
+    plot([lvl-1], [varNs[lvl]], tag)
 end
