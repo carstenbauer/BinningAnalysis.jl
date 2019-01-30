@@ -5,7 +5,7 @@ import Base: push!, append!, show, summary, eltype,
             isempty, length, ndims, empty!
 
 include("binning.jl")
-export LogBinner
+export LogBinner, capacity
 
 include("statistics.jl")
 export mean, var, varN, tau, std_error

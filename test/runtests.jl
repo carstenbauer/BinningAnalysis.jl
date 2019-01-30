@@ -3,6 +3,55 @@ using Test
 
 
 @testset "All Tests" begin
+    @testset "Constructors and basic properties" begin
+        # numbers
+        for T in (Float64, ComplexF64)
+            B = LogBinner(T)
+
+            @test length(B) == 0
+            @test ndims(B) == 0
+            @test isempty(B)
+            @test eltype(B) == T
+            @test capacity(B) == 2^32 - 1
+            @test BinningAnalysis.nlevels(B) == 32
+
+            append!(B, rand(1000))
+            @test length(B) == 1000
+            @test !isempty(B)
+
+            empty!(B)
+            @test length(B) == 0
+            @test isempty(B)
+        end
+
+        # arrays
+        for T in (Float64, ComplexF64)
+            B = LogBinner(zeros(T, 2, 3))
+
+            @test length(B) == 0
+            @test ndims(B) == 2
+            @test isempty(B)
+            @test eltype(B) == Array{T, 2}
+            @test capacity(B) == 2^32 - 1
+            @test BinningAnalysis.nlevels(B) == 32
+
+            append!(B, [rand(T, 2,3) for _ in 1:1000])
+            @test length(B) == 1000
+            @test !isempty(B)
+            empty!(B)
+            @test length(B) == 0
+            @test isempty(B)
+        end
+
+        # Constructor arguments
+        B = LogBinner(capacity=12345)
+        @test capacity(B) == 16383
+        @test_throws ArgumentError LogBinner(capacity=0)
+        @test_throws ArgumentError LogBinner(capacity=-1)
+    end
+
+
+
     @testset "Checking converging data (Real)" begin
         BA = LogBinner()
 
@@ -151,47 +200,9 @@ using Test
     end
 
 
-    @testset "Basic Base functions" begin
-        # numbers
-        for T in (Float64, ComplexF64)
-            B = LogBinner(T)
-
-            @test length(B) == 0
-            @test ndims(B) == 0
-            @test isempty(B)
-            @test eltype(B) == T
-
-            append!(B, rand(1000))
-            @test length(B) == 1000
-            @test !isempty(B)
-
-            empty!(B)
-            @test length(B) == 0
-            @test isempty(B)
-        end
-
-        # arrays
-        for T in (Float64, ComplexF64)
-            B = LogBinner(zeros(T, 2, 3))
-
-            @test length(B) == 0
-            @test ndims(B) == 2
-            @test isempty(B)
-            @test eltype(B) == Array{T, 2}
-
-            append!(B, [rand(T, 2,3) for _ in 1:1000])
-            @test length(B) == 1000
-            @test !isempty(B)
-            empty!(B)
-            @test length(B) == 0
-            @test isempty(B)
-        end
-    end
-
-
 
     @testset "Indexing Bounds" begin
-        BA = LogBinner(zero(Float64), 1)
+        BA = LogBinner(zero(Float64); capacity=1)
         for func in [:var, :varN, :mean, :tau]
             # check if func(BA, 0) throws BoundsError
             # It should as level 1 is now the initial level
