@@ -205,30 +205,30 @@ using Test
 
 
 
-    @testset "_select_lvl_for_std_error" begin
+    @testset "_reliable_level" begin
         BA = LogBinner()
         # Empty Binner
-        @test BinningAnalysis._select_lvl_for_std_error(BA) == 1
-        @test isnan(std_error(BA, BinningAnalysis._select_lvl_for_std_error(BA)))
+        @test BinningAnalysis._reliable_level(BA) == 1
+        @test isnan(std_error(BA, BinningAnalysis._reliable_level(BA)))
 
         # One Element should still return NaN (due to 1/(n-1))
         push!(BA, rand())
-        @test BinningAnalysis._select_lvl_for_std_error(BA) == 1
-        @test isnan(std_error(BA, BinningAnalysis._select_lvl_for_std_error(BA)))
+        @test BinningAnalysis._reliable_level(BA) == 1
+        @test isnan(std_error(BA, BinningAnalysis._reliable_level(BA)))
 
         # Two elements should return some value
         push!(BA, rand())
-        @test BinningAnalysis._select_lvl_for_std_error(BA) == 1
-        @test !isnan(std_error(BA, BinningAnalysis._select_lvl_for_std_error(BA)))
+        @test BinningAnalysis._reliable_level(BA) == 1
+        @test !isnan(std_error(BA, BinningAnalysis._reliable_level(BA)))
 
         # same behavior up to (including) 63 values (31 binned in first binned lvl)
         append!(BA, rand(61))
-        @test BinningAnalysis._select_lvl_for_std_error(BA) == 1
-        @test !isnan(std_error(BA, BinningAnalysis._select_lvl_for_std_error(BA)))
+        @test BinningAnalysis._reliable_level(BA) == 1
+        @test !isnan(std_error(BA, BinningAnalysis._reliable_level(BA)))
 
         # at 64 or more values, the lvl should be increasing
         push!(BA, rand())
-        @test BinningAnalysis._select_lvl_for_std_error(BA) == 2
-        @test !isnan(std_error(BA, BinningAnalysis._select_lvl_for_std_error(BA)))
+        @test BinningAnalysis._reliable_level(BA) == 2
+        @test !isnan(std_error(BA, BinningAnalysis._reliable_level(BA)))
     end
 end
