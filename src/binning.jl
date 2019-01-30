@@ -72,12 +72,27 @@ end
 
 
 
-"""
-    LogBinner([T = Float64, N = 32])
+_nlvls2capacity(N::Int) = 2^N - 1
+_capacity2nlvls(capacity::Int) = ceil(Int, log(2, capacity + 1))
 
-Creates a Binning Analysis which can take 2^N-1 value sof type T.
 """
-LogBinner(::Type{T} = Float64, N::Int64 = 32) where T = LogBinner(zero(T), N)
+    capacity(B)
+
+Capacity of the binner, i.e. how many values can be handled before overflowing.
+"""
+capacity(B::LogBinner{N, T}) where {N,T} = _nlvls2capacity(N)
+nlevels(B::LogBinner{N, T}) where {N,T} = N
+
+
+
+"""
+    LogBinner([::Type{T}, capacity::Int])
+
+Creates a `LogBinner` which can handle (at least) `capacity` many values of type `T`.
+
+The default is `T = Float64` and `capacity = 2^32-1 ≈ 4e9`.
+"""
+LogBinner(::Type{T} = Float64; kw...) where T = LogBinner(zero(T); kw...)
 
 # TODO
 # Currently, the Binning Analysis requires a "zero" to initialize x_sum and
@@ -94,14 +109,22 @@ LogBinner(::Type{T} = Float64, N::Int64 = 32) where T = LogBinner(zero(T), N)
 # bad: also requires frequent checks (if first push ... else ...)
 # ...?
 """
-    LogBinner([zero = 0.0, N = 32])
+    LogBinner([zero_element, capacity::Int])
 
-Creates a new Binning Analysis which can take 2^N-1 values of type T. The type
-is inherited by the given zero. Returns a Binning Analysis object.
+Creates a new `LogBinner` which can take (at least) `capacity` many values of type `T`. The type
+is inherited by the given `zero_element`.
 
-Values can be added using `push!(LogBinner, value)`.
+Values can be added using `push!` and `append!`.
 """
-function LogBinner(_zero::T, N::Int64 = 32) where {T}
+function LogBinner(_zero::T;
+        capacity::Int64 = _nlvls2capacity(32)
+        ) where {T}
+
+    # check keyword args
+    capacity <= 0 && throw(ArgumentError("`capacity` must be finite and positive."))
+
+    N = _capacity2nlvls(capacity)
+
     # heuristic to set sum type (#2)
     D = ndims(_zero)
     S = if eltype(T)<:Real
@@ -123,8 +146,7 @@ end
 """
     append!(LogBinner, values)
 
-Adds an array of values to the Binning Analysis by applying push! to each
-element.
+Adds an array of values to the binner by `push!`ing each element.
 """
 function append!(B::LogBinner, values::AbstractArray)
     for value in values
