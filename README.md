@@ -21,10 +21,10 @@ As per usual, you can install the package with `] add https://github.com/crstnbr
 ### Performance
 
 * Logarithmic Binning
-  * Size complexity: $O(\log_2(N))$
-  * Time complexity: $O(N)$
+  * Size complexity: O(log<sub>2</sub>(N))
+  * Time complexity: O(N)
 
-where $N$ is the number of values pushed.
+where `N` is the number of values pushed.
 
 ---
 
