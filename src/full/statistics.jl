@@ -2,24 +2,24 @@
 
 
 """
-    binning_error(X)
+    full_binning_error(X)
 
 Estimate of the standard error of the time series mean by performing a full binning analysis.
 
 "Full" binning means that we bin the data multiple times, considering all bin sizes compatible
 with the length of `X`.
 """
-function binning_error end
+function full_binning_error end
 
-binning_error(X::AbstractVector{<:Number}) = _binning_error(X)
-binning_error(X::AbstractArray{<:Number}) = begin nd = ndims(X); dropdims(mapslices(xi->binning_error(xi), X, dims=nd), dims=nd) end
-binning_error(X::AbstractVector{<:AbstractArray}) = binning_error(cat(X..., dims=ndims(X[1])+1))
-
-
+full_binning_error(X::AbstractVector{<:Number}) = _full_binning_error(X)
+full_binning_error(X::AbstractArray{<:Number}) = begin nd = ndims(X); dropdims(mapslices(xi->full_binning_error(xi), X, dims=nd), dims=nd) end
+full_binning_error(X::AbstractVector{<:AbstractArray}) = full_binning_error(cat(X..., dims=ndims(X[1])+1))
 
 
-@inline _binning_error(X::AbstractVector{<:Real}) = _std_error_from_R_function(X)
-@inline function _binning_error(X::AbstractVector{<:Complex})
+
+
+@inline _full_binning_error(X::AbstractVector{<:Real}) = _std_error_from_R_function(X)
+@inline function _full_binning_error(X::AbstractVector{<:Complex})
     std_err_real = _std_error_from_R_function(real(X))
     std_err_imag = _std_error_from_R_function(imag(X))
     sqrt(std_err_real^2 + std_err_imag^2)

@@ -22,7 +22,7 @@ export convergence, has_converged
 
 # "Full" binning
 include("full/statistics.jl")
-export binning_error
+export full_binning_error
 export all_binning_errors
 
 

@@ -15,7 +15,7 @@ function std_error(x::AbstractVector{T}; method::Symbol=:log) where T <: Number
         append!(B, x)
         return std_error(B)
     elseif method == :full
-        return binning_error(x)
+        return full_binning_error(x)
     elseif method == :jackknife
         return jackknife(mean, x)
     else
