@@ -18,7 +18,6 @@ export convergence, has_converged
 
 # FullBinner
 include("full/binning.jl")
-include("full/cosmetics.jl")
 export FullBinner
 export timeseries
 
