@@ -28,11 +28,6 @@ include("full/statistics.jl")
 export FullBinner, std_error, all_binning_errors
 
 
-# TSBuffer
-# include("full/tsbuffer.jl")
-# export TSBuffer, timeseries, ts
-
-
 # Jackknife resampling
 include("Jackknife.jl")
 @reexport using .Jackknife
