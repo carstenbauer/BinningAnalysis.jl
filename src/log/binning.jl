@@ -113,7 +113,7 @@ nlevels(B::LogBinner{N, T}) where {N,T} = N
 
 
 """
-    LogBinner([::Type{T}, capacity::Int])
+    LogBinner([::Type{T}; capacity::Int])
 
 Creates a `LogBinner` which can handle (at least) `capacity` many values of type `T`.
 
@@ -136,10 +136,10 @@ LogBinner(::Type{T} = Float64; kw...) where T = LogBinner(zero(T); kw...)
 # bad: also requires frequent checks (if first push ... else ...)
 # ...?
 """
-    LogBinner([zero_element, capacity::Int])
+    LogBinner([zero_element::T; capacity::Int])
 
 Creates a new `LogBinner` which can take (at least) `capacity` many values of type `T`. The type
-is inherited by the given `zero_element`.
+and size is inherited by the given `zero_element`.
 
 Values can be added using `push!` and `append!`.
 """
