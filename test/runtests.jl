@@ -3,244 +3,35 @@ using Test, Statistics
 
 
 @testset "All Tests" begin
-    @testset "Constructors and basic properties" begin
-        # numbers
-        for T in (Float64, ComplexF64)
-            B = LogBinner(T)
-
-            @test length(B) == 0
-            @test ndims(B) == 0
-            @test isempty(B)
-            @test eltype(B) == T
-            @test capacity(B) == 2^32 - 1
-            @test BinningAnalysis.nlevels(B) == 32
-
-            append!(B, rand(1000))
-            @test length(B) == 1000
-            @test !isempty(B)
-
-            empty!(B)
-            @test length(B) == 0
-            @test isempty(B)
-        end
-
-        # arrays
-        for T in (Float64, ComplexF64)
-            B = LogBinner(zeros(T, 2, 3))
-
-            @test length(B) == 0
-            @test ndims(B) == 2
-            @test isempty(B)
-            @test eltype(B) == Array{T, 2}
-            @test capacity(B) == 2^32 - 1
-            @test BinningAnalysis.nlevels(B) == 32
-
-            append!(B, [rand(T, 2,3) for _ in 1:1000])
-            @test length(B) == 1000
-            @test !isempty(B)
-            empty!(B)
-            @test length(B) == 0
-            @test isempty(B)
-        end
-
-        # Constructor arguments
-        B = LogBinner(capacity=12345)
-        @test capacity(B) == 16383
-        @test_throws ArgumentError LogBinner(capacity=0)
-        @test_throws ArgumentError LogBinner(capacity=-1)
+    
+    @testset "Logarithmic Binning" begin
+        include("logbinning.jl")
     end
 
 
-
-    @testset "Checking converging data (Real)" begin
-        BA = LogBinner()
-
-        # block of maximally correlated values:
-        N_corr = 16
-
-        # number of blocks
-        N_blocks = 131_072 # 2^17
-
-        for _ in 1:N_blocks
-            x = rand()
-            for __ in 1:N_corr
-                push!(BA, x)
-            end
-        end
-
-        # BA must diverge until 16 values are binned
-        for lvl in 1:4
-            @test !has_converged(BA, lvl)
-        end
-
-        # Afterwards it must converge (for a while)
-        for lvl in 5:8
-            @test has_converged(BA, lvl)
-        end
-        # Later values may fluctuate due to small samples / small threshold in
-        # has_converged
-
-        # means should be consistent
-        means = BinningAnalysis.all_means(BA)
-        for x in means
-            @test x ≈ means[1]
-        end
-    end
-
-    @testset "Check variance for Complex values" begin
-        # NOTE
-        # Due to the different (mathematically equivalent) versions of the variance
-        # calculated here, the values are onyl approximately the same. (Float error)
-        xs = rand(ComplexF64, 1_000_000)
-        BA = LogBinner(ComplexF64)
-
-        # Test small set (off by one errors are large here)
-        for x in xs[1:10]; push!(BA, x) end
-        @test var(BA, 1) ≈ var(xs[1:10])
-        @test varN(BA, 1) ≈ var(xs[1:10])/10
-
-        # Test full set
-        for x in xs[11:end]; push!(BA, x) end
-        @test var(BA, 1) ≈ var(xs)
-        @test varN(BA, 1) ≈ var(xs)/1_000_000
+    @testset "Full Binning" begin
+        include("fullbinning.jl")
     end
 
 
+    @testset "Generic functions" begin
+        x = [0.0561823, 0.846613, 0.813439, 0.357134, 0.157445, 0.103298, 0.948842, 0.629425, 0.290206, 0.00695332, 0.869828, 0.949165, 0.897995, 0.916239, 0.457564, 0.349827, 0.398683, 0.264218, 0.72754, 0.934315, 0.666448, 0.134813, 0.364933, 0.829088, 0.256443, 0.595029, 0.172097, 0.241686, 0.489935, 0.239663, 0.391291, 0.00751015, 0.138935, 0.0569876, 0.571786, 0.694996, 0.798602, 0.923308, 0.73978, 0.414774, 0.835145, 0.731303, 0.271647, 0.707796, 0.00348624, 0.0905812, 0.316176, 0.921054, 0.131037, 0.599667, 0.805071, 0.440813, 0.086516, 0.363658, 0.476161, 0.931257, 0.28974, 0.78717, 0.60822, 0.144024, 0.214432, 0.061922, 0.626495, 0.512072, 0.758078, 0.840485, 0.242576, 0.147441, 0.599222, 0.993569, 0.0365044, 0.0983033, 0.713144, 0.422394, 0.480044, 0.968745, 0.518475, 0.431319, 0.4432, 0.526007, 0.612975, 0.468387, 0.262145, 0.888011, 0.105744, 0.325821, 0.769525, 0.289073, 0.336083, 0.443037, 0.489698, 0.141654, 0.915284, 0.319068, 0.341001, 0.704346, 0.0794996, 0.0412352, 0.70016, 0.0195158]
+        @test isapprox(std_error(x), std_error(x; method=:log))
+        @test isapprox(std_error(x; method=:log), 0.03384198827323159)
+        @test isapprox(std_error(x; method=:full), 0.030761063167290947)
+        @test isapprox(std_error(x; method=:jackknife), 0.029551526503551463)
 
-    @testset "Checking converging data (Complex)" begin
-        BA = LogBinner(ComplexF64)
-
-        # block of maximally correlated values:
-        N_corr = 16
-
-        # number of blocks
-        N_blocks = 131_072 # 2^17
-
-        for _ in 1:N_blocks
-            x = rand(ComplexF64)
-            for __ in 1:N_corr
-                push!(BA, x)
-            end
-        end
-
-        # BA must diverge until 16 values are binned
-        for lvl in 1:4
-            @test !has_converged(BA, lvl)
-        end
-
-        # Afterwards it must converge (for a while)
-        for lvl in 5:8
-            @test has_converged(BA, lvl)
-        end
-        # Later values may fluctuate due to small samples / small threshold in
-        # has_converged
-
-        # means should be consistent
-        means = BinningAnalysis.all_means(BA)
-        for x in means
-            @test x ≈ means[1]
-        end
-    end
+        x = x .+ 1im
+        @test isapprox(std_error(x), std_error(x; method=:log))
+        @test isapprox(std_error(x; method=:log), 0.0338419882732316)
+        @test isapprox(std_error(x; method=:full), 0.03076106316729094)
+        @test isapprox(std_error(x; method=:jackknife), 0.029551526503551445)
 
 
-    @testset "Checking converging data (Vector)" begin
-        BA = LogBinner(zeros(3))
-
-        # block of maximally correlated values:
-        N_corr = 16
-
-        # number of blocks
-        N_blocks = 131_072 # 2^17
-
-        for _ in 1:N_blocks
-            x = rand(Float64, 3)
-            for __ in 1:N_corr
-                push!(BA, x)
-            end
-        end
-
-        # BA must diverge until 16 values are binned
-        for lvl in 1:4
-            @test !has_converged(BA, lvl)
-        end
-
-        # Afterwards it must converge (for a while)
-        for lvl in 5:8
-            @test has_converged(BA, lvl)
-        end
-        # Later values may fluctuate due to small samples / small threshold in
-        # has_converged
-
-        # means should be consistent
-        means = BinningAnalysis.all_means(BA)
-        for i in eachindex(means)
-            @test means[i] ≈ means[1]
-        end
-    end
-
-
-    @testset "Type promotion" begin
-        Bf = LogBinner(zero(1.)) # Float64 LogBinner
-        Bc = LogBinner(zero(im)) # Float64 LogBinner
-
-        # Check that this doesn't throw (TODO: is there a better way?)
-        @test (append!(Bf, rand(1:10, 10000)); true)
-        @test (append!(Bc, rand(10000)); true)
-    end
-
-
-    @testset "Sum-type heuristic" begin
-        # numbers
-        @test typeof(LogBinner(zero(Int64))) == LogBinner{32,Float64}
-        @test typeof(LogBinner(zero(ComplexF16))) == LogBinner{32,ComplexF64}
-
-        # arrays
-        @test typeof(LogBinner(zeros(Int64, 2,2))) == LogBinner{32,Matrix{Float64}}
-        @test typeof(LogBinner(zeros(ComplexF16, 2,2))) == LogBinner{32,Matrix{ComplexF64}}
-    end
-
-
-
-    @testset "Indexing Bounds" begin
-        BA = LogBinner(zero(Float64); capacity=1)
-        for func in [:var, :varN, :mean, :tau]
-            # check if func(BA, 0) throws BoundsError
-            # It should as level 1 is now the initial level
-            @test_throws BoundsError @eval $func($BA, 0)
-            # Check that level 1 exists
-            @test (@eval $func($BA, 1); true)
-            # Check that level 2 throws BoundsError
-            @test_throws BoundsError @eval $func($BA, 2)
-        end
-    end
-
-
-
-    @testset "_reliable_level" begin
-        BA = LogBinner()
-        # Empty Binner
-        @test BinningAnalysis._reliable_level(BA) == 1
-        @test isnan(std_error(BA, BinningAnalysis._reliable_level(BA)))
-
-        # One Element should still return NaN (due to 1/(n-1))
-        push!(BA, rand())
-        @test BinningAnalysis._reliable_level(BA) == 1
-        @test isnan(std_error(BA, BinningAnalysis._reliable_level(BA)))
-
-        # Two elements should return some value
-        push!(BA, rand())
-        @test BinningAnalysis._reliable_level(BA) == 1
-        @test !isnan(std_error(BA, BinningAnalysis._reliable_level(BA)))
-
-        # same behavior up to (including) 63 values (31 binned in first binned lvl)
-        append!(BA, rand(61))
-        @test BinningAnalysis._reliable_level(BA) == 1
-        @test !isnan(std_error(BA, BinningAnalysis._reliable_level(BA)))
-
-        # at 64 or more values, the lvl should be increasing
-        push!(BA, rand())
-        @test BinningAnalysis._reliable_level(BA) == 2
-        @test !isnan(std_error(BA, BinningAnalysis._reliable_level(BA)))
+        x = Array{Float64,2}[[0.311954 0.476706 0.314101; 0.420978 0.478085 0.0194284], [0.491386 0.493583 0.295477; 0.136896 0.1634 0.84641], [0.318536 0.705903 0.121377; 0.764174 0.240484 0.25894], [0.286923 0.172458 0.392881; 0.124348 0.140628 0.730131], [0.287451 0.221914 0.382938; 0.29568 0.249575 0.87685]]
+        @test isapprox(std_error(x), std_error(x; method=:log))
+        @test isapprox(std_error(x, method=:log), [0.03856212859659066 0.09765048982846934 0.04879645809318544; 0.11744109653881814 0.05978167652935139 0.1722342286233907])
+        @test isapprox(std_error(x, method=:full), [0.03856212859659072 0.09765048982846936 0.048796458093185405; 0.11744109653881814 0.05978167652935137 0.17223422862339066])
     end
 
 

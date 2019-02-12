@@ -32,7 +32,7 @@ function R_value(X::AbstractVector{T}, binsize::Int) where T<:Real
     # end
 
     blocksigma2 = 1/(n_bins-1)*sum((blockmeans .- mean(X)).^2)
-    return binsize * blocksigma2 / var(X)
+    return blocksigma2 != 0 ? binsize * blocksigma2 / var(X) : 0.0
 end
 
 
