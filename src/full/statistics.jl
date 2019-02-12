@@ -22,6 +22,20 @@ function std_error(F::FullBinner{<:AbstractArray})
 end
 
 
+"""
+    tau(F::FullBinner[, std_error])
+
+Calculate the autocorrelation time tau.
+
+If `std_error` is provided, no binning is necessary (much faster).
+"""
+function tau(F::FullBinner) end
+
+tau(F::FullBinner{<:AbstractArray}, stderr = std_error(F)) = 0.5*(stderr.^2 * length(F) ./ var(F) .- 1)
+tau(F::FullBinner{<:Number}, stderr = std_error(F)) = 0.5*(stderr^2 * length(F) / var(F) - 1)
+_tau(Rvalue::Float64) = (Rvalue - 1)/2
+
+
 
 
 @inline _std_error(X::AbstractVector{<:Real}) = _std_error_from_R_function(X)
