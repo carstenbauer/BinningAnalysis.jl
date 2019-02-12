@@ -8,7 +8,6 @@ using Reexport
 
 # LogBinner
 include("log/binning.jl")
-include("log/cosmetics.jl")
 include("log/statistics.jl")
 export LogBinner, capacity
 export mean, var, varN, tau, std_error

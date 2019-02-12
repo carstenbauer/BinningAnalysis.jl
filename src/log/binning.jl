@@ -30,6 +30,33 @@ Base.isempty(B::LogBinner) = length(B) == 0
 
 
 
+
+
+function _print_header(io::IO, B::LogBinner{N,T}) where {N, T}
+    print(io, "LogBinner{$(N),$(T)}")
+    nothing
+end
+
+function _println_body(io::IO, B::LogBinner{N,T}) where {N, T}
+    n = length(B)
+    println(io)
+    print(io, "| Count: ", n)
+    if n > 0 && ndims(B) == 0
+        print(io, "\n| Mean: ", round.(mean(B), digits=5))
+        print(io, "\n| StdError: ", round.(std_error(B), digits=5))
+    end
+    nothing
+end
+
+# short version (shows up in arrays etc.)
+Base.show(io::IO, B::LogBinner{N,T}) where {N, T} = print(io, "LogBinner{$(N),$(T)}()")
+# verbose version (shows up in the REPL)
+Base.show(io::IO, m::MIME"text/plain", B::LogBinner) = (_print_header(io, B); _println_body(io, B))
+
+
+
+
+
 """
     empty!(B::LogBinner)
 
