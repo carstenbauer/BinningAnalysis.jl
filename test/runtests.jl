@@ -1,5 +1,5 @@
 using BinningAnalysis
-using Test, Statistics
+using Test, Statistics, Random
 
 
 @testset "All Tests" begin
