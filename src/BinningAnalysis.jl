@@ -1,8 +1,8 @@
 module BinningAnalysis
 
 import Statistics: mean, var
-import Base: push!, append!, show, summary, eltype,
-            isempty, length, ndims, empty!
+# import Base: push!, append!, show, summary, eltype,
+            # isempty, length, ndims, empty!
 
 using Reexport
 
@@ -16,10 +16,12 @@ export all_vars, all_varNs, all_taus, all_std_errors
 export convergence, has_converged
 
 
-# FullBinner
-include("full/binning.jl")
-export FullBinner
-export timeseries
+# "Full" binning
+
+
+# TSBuffer
+include("full/tsbuffer.jl")
+export TSBuffer, timeseries, ts
 
 
 
