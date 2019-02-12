@@ -175,7 +175,7 @@ end
 
 Adds an array of values to the binner by `push!`ing each element.
 """
-function append!(B::LogBinner, values::AbstractArray)
+function Base.append!(B::LogBinner, values::AbstractArray)
     for value in values
         push!(B, value)
     end
@@ -188,7 +188,7 @@ end
 
 Pushes a new value into the Binning Analysis.
 """
-function push!(B::LogBinner{N, T}, value::S) where {N, T, S}
+function Base.push!(B::LogBinner{N, T}, value::S) where {N, T, S}
     ndims(T) == ndims(S) || throw(DimensionMismatch("Expected $(ndims(T)) dimensions but got $(ndims(S))."))
 
     _push!(B, 1, value)
