@@ -14,6 +14,36 @@ FullBinner(::Type{T} = Float64) where T = FullBinner(Vector{T}(undef, 0))
 
 
 
+
+function _print_header(io::IO, B::FullBinner{T,A}) where {T, A}
+    print(io, "FullBinner{$(T),$(A)}")
+    nothing
+end
+
+function _println_body(io::IO, B::FullBinner{T,A}) where {T, A}
+    n = length(B)
+    println(io)
+    print(io, "| Count: ", n)
+    if n > 0 && T <: Number
+        print(io, "\n| Mean: ", round.(mean(B), digits=5))
+        # print(io, "\n| StdError: ", round.(std_error(B), digits=5))
+    end
+    nothing
+end
+
+# short version (shows up in arrays etc.)
+Base.show(io::IO, B::FullBinner{T,A}) where {T, A} = print(io, "FullBinner{$(T),$(A)}()")
+# verbose version (shows up in the REPL)
+Base.show(io::IO, m::MIME"text/plain", B::FullBinner) = (_print_header(io, B); _println_body(io, B))
+
+
+
+
+
+
+
+
+
 #####
 # Calculation of error coefficient (function) R. (Ch. 3.4 in QMC book)
 #####
