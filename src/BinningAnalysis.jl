@@ -1,9 +1,6 @@
 module BinningAnalysis
 
 import Statistics: mean, var
-import Base: push!, append!, show, summary, eltype,
-            isempty, length, ndims, empty!
-
 using Reexport, Lazy, RecursiveArrayTools
 
 
