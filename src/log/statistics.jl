@@ -1,23 +1,24 @@
 """
-    varN(BinningAnalysis[, lvl = 1])
+    varN(B::LogBinner[, lvl])
 
 Calculates the variance/N of a given level in the Binning Analysis.
 """
-function varN(B::LogBinner, lvl::Int64 = _reliable_level(B))
-
+function varN(B::LogBinner, lvl::Integer = _reliable_level(B))
     n = B.count[lvl]
     var(B, lvl) / n
 end
 
 
 """
-    var(BinningAnalysis[, lvl = 1])
+    var(B::LogBinner[, lvl])
 
 Calculates the variance of a given level in the Binning Analysis.
 """
+function var(B::LogBinner) end
+
 function var(
         B::LogBinner{N, T},
-        lvl::Int64 = _reliable_level(B)
+        lvl::Integer = _reliable_level(B)
     ) where {N, T <: Real}
 
     n = B.count[lvl]
@@ -32,7 +33,7 @@ end
 
 function var(
         B::LogBinner{N, T},
-        lvl::Int64 = _reliable_level(B)
+        lvl::Integer = _reliable_level(B)
     ) where {N, T <: Complex}
 
     n = B.count[lvl]
@@ -45,7 +46,7 @@ end
 
 function var(
         B::LogBinner{N, <: AbstractArray{T, D}},
-        lvl::Int64 = _reliable_level(B)
+        lvl::Integer = _reliable_level(B)
     ) where {N, D, T <: Real}
 
     n = B.count[lvl]
@@ -57,7 +58,7 @@ end
 
 function var(
         B::LogBinner{N, <: AbstractArray{T, D}},
-        lvl::Int64 = _reliable_level(B)
+        lvl::Integer = _reliable_level(B)
     ) where {N, D, T <: Complex}
 
     n = B.count[lvl]
@@ -69,7 +70,7 @@ end
 
 
 """
-    all_vars(BinningAnalysis)
+    all_vars(B::LogBinner)
 
 Calculates the variance for each level of the Binning Analysis.
 """
@@ -79,7 +80,7 @@ end
 
 
 """
-    all_varNs(BinningAnalysis)
+    all_varNs(B::LogBinner)
 
 Calculates the variance/N for each level of the Binning Analysis.
 """
@@ -93,20 +94,20 @@ end
 
 # NOTE works for all
 """
-    mean(BinningAnalysis[, lvl=1])
+    mean(B::LogBinner[, lvl])
 
 Calculates the mean for a given level in the Binning Analysis.
 """
-function mean(B::LogBinner, lvl::Int64 = 1)
+function mean(B::LogBinner, lvl::Integer = 1)
     B.x_sum[lvl] / B.count[lvl]
 end
 
 
 # NOTE works for all
 """
-    all_means(BinningAnalysis)
+    all_means(B::LogBinner)
 
-Calculates the mean for each level of the Binning Analysis.
+Calculates the mean for each level of the `LogBinner`.
 """
 function all_means(B::LogBinner{N}) where {N}
     [mean(B, lvl) for lvl in 1:N if B.count[lvl] > 1]
@@ -117,11 +118,11 @@ end
 
 
 """
-    tau(BinningAnalysis[, lvl=1])
+    tau(B::LogBinner[, lvl])
 
-Calculates the autocorrelation time tau for a given binning level.
+Calculates the autocorrelation time tau.
 """
-function tau(B::LogBinner, lvl::Int64 = _reliable_level(B))
+function tau(B::LogBinner, lvl::Integer = _reliable_level(B))
     var_0 = varN(B, 1)
     var_l = varN(B, lvl)
     0.5 * (var_l / var_0 - 1)
@@ -129,9 +130,9 @@ end
 
 
 """
-    all_taus(BinningAnalysis)
+    all_taus(B::LogBinner)
 
-Calculates the autocorrelation time tau for each level of the Binning Analysis.
+Calculates the autocorrelation time tau for each level of the `LogBinner`.
 """
 function all_taus(B::LogBinner{N}) where {N}
     [tau(B, lvl) for lvl in 1:N if B.count[lvl] > 1]
@@ -152,29 +153,28 @@ function _reliable_level(B::LogBinner{N,T})::Int64 where {N, T}
 end
 
  """
-    std_error(BinningAnalysis[, lvl=0])
+    std_error(B::LogBinner[, lvl])
 
-Calculates the standard error for a given level.
+Calculates the standard error of the mean.
 """
-function std_error(B::LogBinner{N, T}, lvl::Int64=_reliable_level(B)) where {N, T <: Number}
+function std_error(B::LogBinner) end
+
+function std_error(B::LogBinner{N, T}, lvl::Integer=_reliable_level(B)) where {N, T <: Number}
     sqrt(varN(B, lvl))
 end
-
-"""
-    std_error(BinningAnalysis[, lvl=0])
-
-Calculates the standard error for a given level.
-"""
-function std_error(B::LogBinner{N, T}, lvl::Int64=_reliable_level(B)) where {N, T <: AbstractArray}
+function std_error(B::LogBinner{N, T}, lvl::Integer=_reliable_level(B)) where {N, T <: AbstractArray}
     sqrt.(varN(B, lvl))
 end
 
 
 """
-    all_std_errors(BinningAnalysis)
+    all_std_errors(B::LogBinner)
 
 Calculates the standard error for each level of the Binning Analysis.
 """
+function all_std_errors(B::LogBinner) end
+
+
 function all_std_errors(B::LogBinner{N, T}) where {N, T <: Number}
     sqrt.(all_varNs(B))
 end
@@ -184,24 +184,27 @@ end
 
 
 """
-    convergence(BinningAnalysis, lvl)
+    convergence(B::LogBinner, lvl)
 
 Computes the difference between the variance of this lvl and the last,
 normalized to the last lvl. If this value tends to 0, the Binning Analysis has
 converged.
 """
-function convergence(B::LogBinner{N, T}, lvl::Int64=_reliable_level(B)) where {N, T <: Number}
+function convergence(B::LogBinner) end
+
+
+function convergence(B::LogBinner{N, T}, lvl::Integer=_reliable_level(B)) where {N, T <: Number}
     abs((varN(B, lvl+1) - varN(B, lvl)) / varN(B, lvl))
 end
-function convergence(B::LogBinner{N, T}, lvl::Int64=_reliable_level(B)) where {N, T <: AbstractArray}
+function convergence(B::LogBinner{N, T}, lvl::Integer=_reliable_level(B)) where {N, T <: AbstractArray}
     mean(abs.((varN(B, lvl+1) .- varN(B, lvl)) ./ varN(B, lvl)))
 end
 
 """
-    has_converged(BinningAnalysis, lvl[, threshhold = 0.05])
+    has_converged(B::LogBinner, lvl[, threshhold = 0.05])
 
 Returns true if the Binning Analysis has converged for a given lvl.
 """
-function has_converged(B::LogBinner, lvl::Int64=_reliable_level(B), threshhold::Float64 = 0.05)
+function has_converged(B::LogBinner, lvl::Integer=_reliable_level(B), threshhold::Float64 = 0.05)
     convergence(B, lvl) <= threshhold
 end

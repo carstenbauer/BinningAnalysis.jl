@@ -136,7 +136,7 @@ LogBinner(::Type{T} = Float64; kw...) where T = LogBinner(zero(T); kw...)
 # bad: also requires frequent checks (if first push ... else ...)
 # ...?
 """
-    LogBinner([zero_element::T; capacity::Int])
+    LogBinner(zero_element::T[; capacity::Int])
 
 Creates a new `LogBinner` which can take (at least) `capacity` many values of type `T`. The type
 and size is inherited by the given `zero_element`.
