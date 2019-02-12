@@ -1,10 +1,14 @@
 module BinningAnalysis
 
 import Statistics: mean, var
-# import Base: push!, append!, show, summary, eltype,
-            # isempty, length, ndims, empty!
+import Base: push!, append!, show, summary, eltype,
+            isempty, length, ndims, empty!
 
 using Reexport
+
+
+include("generic.jl")
+
 
 # LogBinner
 include("log/binning.jl")
@@ -17,6 +21,9 @@ export convergence, has_converged
 
 
 # "Full" binning
+include("full/statistics.jl")
+export binning_error
+export all_binning_errors
 
 
 # TSBuffer
@@ -28,6 +35,9 @@ export TSBuffer, timeseries, ts
 # Jackknife
 include("Jackknife.jl")
 @reexport using .Jackknife
+
+
+
 
 
 end # module
