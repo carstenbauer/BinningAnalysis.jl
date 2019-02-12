@@ -1,10 +1,8 @@
 # This is an attempt of implementing a time series buffer.
-# Basically we want to augment an array `ts_buffer` with some
+# Basically we want to augment an array with some
 # preallocation logic.
 # 
-# For "full binning", we operate on the full time series anyway,
-# hence we should provide full binning tools for any one-dimensional
-# (maybe <:AbstractArray) container.
+# This might replace the thin wrapper in binning.jl.
 #
 # Note that TSBuffer is not quite <: AbstractArray yet,
 # see https://docs.julialang.org/en/latest/manual/interfaces/#man-interface-array-1

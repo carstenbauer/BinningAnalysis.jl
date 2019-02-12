@@ -2,24 +2,30 @@
 
 
 """
-    full_binning_error(X)
+    std_error(F::FullBinner)
 
 Estimate of the standard error of the time series mean by performing a full binning analysis.
 
 "Full" binning means that we bin the data multiple times, considering all bin sizes compatible
-with the length of `X`.
+with the length of the time series.
 """
-function full_binning_error end
+function std_error end
 
-full_binning_error(X::AbstractVector{<:Number}) = _full_binning_error(X)
-full_binning_error(X::AbstractArray{<:Number}) = begin nd = ndims(X); dropdims(mapslices(xi->full_binning_error(xi), X, dims=nd), dims=nd) end
-full_binning_error(X::AbstractVector{<:AbstractArray}) = full_binning_error(cat(X..., dims=ndims(X[1])+1))
+std_error(F::FullBinner{<:Number}) = _std_error(F)
+function std_error(F::FullBinner{<:AbstractArray})
+    v = VectorOfArray(F)
+    r = similar(F[1], real(eltype(v))) # std error is always real
+    @inbounds for i in eachindex(F[1])
+        r[i] = _std_error(v[i,:]) # TODO: maybe a view might be faster here
+    end
+    return r
+end
 
 
 
 
-@inline _full_binning_error(X::AbstractVector{<:Real}) = _std_error_from_R_function(X)
-@inline function _full_binning_error(X::AbstractVector{<:Complex})
+@inline _std_error(X::AbstractVector{<:Real}) = _std_error_from_R_function(X)
+@inline function _std_error(X::AbstractVector{<:Complex})
     std_err_real = _std_error_from_R_function(real(X))
     std_err_imag = _std_error_from_R_function(imag(X))
     sqrt(std_err_real^2 + std_err_imag^2)
@@ -57,13 +63,16 @@ Only bin size that lead to at least 32 bins are considered.
 """
 function all_binning_errors end
 
-function all_binning_errors(X::AbstractVector{<:Real})
+all_binning_errors(F::FullBinner{<:Number}) = _all_binning_errors(F)
+
+
+function _all_binning_errors(X::AbstractVector{<:Real})
     bss, Rs, means = R_function(X; min_nbins=32)
     return bss, _R2std_error.(Ref(X), Rs), _R2std_error.(Ref(X), means)
 end
-function all_binning_errors(X::AbstractVector{<:Complex})
-    bss_real, stds_real, cum_stds_real = all_binning_errors(real(X))
-    bss_imag, stds_imag, cum_stds_imag = all_binning_errors(imag(X))
+function _all_binning_errors(X::AbstractVector{<:Complex})
+    bss_real, stds_real, cum_stds_real = _all_binning_errors(real(X))
+    bss_imag, stds_imag, cum_stds_imag = _all_binning_errors(imag(X))
     # @assert bss_real == bss_imag
     stds = sqrt.(stds_real.^2 .+ stds_imag.^2)
     cum_stds = sqrt.(cum_stds_real.^2 .+ cum_stds_imag.^2)
@@ -101,62 +110,3 @@ function isconverged(X::AbstractVector{T}, means::AbstractVector) where T<:Real
     return @views maximum(abs.(diff(means[start:end])))<1e-3 # convergence condition
 end
 isconverged(X::AbstractVector{<:Complex}) = isconverged(real(X)) && isconverged(imag(X)) # check if that's really what we want here
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#####
-# Calculation of error coefficient (function) R. (Ch. 3.4 in QMC book)
-#####
-"""
-Groups datapoints in bins of fixed binsize and returns error coefficient R. (Eq. 3.20)
-"""
-function R_value(X::AbstractVector{T}, binsize::Int) where T<:Real
-    N = length(X)
-    n_bins = div(N,binsize)
-    lastbs = rem(N,binsize)
-
-    @views blockmeans = vec(mean(reshape(X[1:n_bins*binsize], (binsize,n_bins)), dims=1))
-    # if lastbs != 0
-    #     vcat(blockmeans, mean(X[n_bins*binsize+1:end]))
-    #     n_bins += 1
-    # end
-
-    blocksigma2 = 1/(n_bins-1)*sum((blockmeans .- mean(X)).^2)
-    return binsize * blocksigma2 / var(X)
-end
-
-
-_R2std_error(X, Rvalue) = sqrt(Rvalue*var(X)/length(X))
-
-
-"""
-Groups datapoints in bins of varying size `bs`.
-Returns the used binsizes `bss`, the error coefficient function values `R(bss)` (Eq. 3.20), and 
-the cumulative error coefficients `<R>(bss)`. The function should feature a plateau, 
-i.e. `R(bs_p) ~ R(bs)` for `bs >= bs_p`. (Fig. 3.3)
-
-Optional keyword `min_nbins`. Only bin sizes used that lead to at least `min_nbins` bins.
-"""
-function R_function(X::AbstractVector{T}; min_nbins=32) where T<:Real
-    max_binsize = floor(Int, length(X)/min_nbins)
-    binsizes = 1:max_binsize
-
-    R = Vector{Float64}(undef, length(binsizes))
-    @inbounds for bs in binsizes
-        R[bs] = R_value(X, bs)
-    end
-
-    means = @views mean.([R[1:i] for i in 1:max_binsize])
-    return binsizes, R, means
-end

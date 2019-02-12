@@ -4,13 +4,15 @@ import Statistics: mean, var
 import Base: push!, append!, show, summary, eltype,
             isempty, length, ndims, empty!
 
-using Reexport
+using Reexport, Lazy, RecursiveArrayTools
 
 
+# Generic functions
 include("generic.jl")
+export std_error
 
 
-# LogBinner
+# Logarithmic binning
 include("log/binning.jl")
 include("log/cosmetics.jl")
 include("log/statistics.jl")
@@ -21,18 +23,17 @@ export convergence, has_converged
 
 
 # "Full" binning
+include("full/binning.jl")
 include("full/statistics.jl")
-export full_binning_error
-export all_binning_errors
+export FullBinner, std_error, all_binning_errors
 
 
 # TSBuffer
-include("full/tsbuffer.jl")
-export TSBuffer, timeseries, ts
+# include("full/tsbuffer.jl")
+# export TSBuffer, timeseries, ts
 
 
-
-# Jackknife
+# Jackknife resampling
 include("Jackknife.jl")
 @reexport using .Jackknife
 
