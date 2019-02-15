@@ -5,6 +5,8 @@ Inspired by https://github.com/ararslan/Jackknife.jl.
 """
 module Jackknife
 
+using Statistics
+import Statistics: mean, var
 
 """
     leaveoneout(g::Function, samples::AbstractVector{<:Number}...)
@@ -36,6 +38,27 @@ function leaveoneout(g::Function, samples::AbstractVector{<:Number}...)
         [(full_sample_sum - sample[i]) * invN1 for i in eachindex(sample)]
     end
     g.(red_sample_means...)
+end
+
+
+"""
+    var(g::Function, samples::AbstractVector...)
+
+Compute the jackknife estimate of the variance of `g(<a>, <b>, ...)` for a set
+of samples (time series) `[a_1, ..., a_N]`, `[b_1, ..., b_N]`, etc.
+
+For more details, see also [`leaveoneout](@ref).
+"""
+function var(g::Function, samples::AbstractVector{<:Number}...)
+    _var(leaveoneout(g, samples...))
+end
+_var(gis::AbstractVector{<:Complex}) = _var(real(gis)) + _var(imag(gis))
+function _var(reduced_results::AbstractVector{<:Real})
+    # With N values each sample, N subsamples are created and N reduced_results
+    # are calculated.
+    N = length(reduced_results)
+    # Eq. (3.35) in QMC Methods book
+    return var(reduced_results) * (N - 1)^2 / N
 end
 
 
