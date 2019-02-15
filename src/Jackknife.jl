@@ -5,9 +5,9 @@ Inspired by https://github.com/ararslan/Jackknife.jl.
 """
 module Jackknife
 
-using Statistics
-import Statistics: mean, var
 
+
+import Statistics: mean, var
 
 export jackknife_full, jackknife
 
@@ -160,143 +160,6 @@ function estimate(
     n = length(reduced_results)
     return n * g(map(mean, samples)...) - (n - 1) * mean(reduced_results)
 end
-
-
-
-
-# old code below
-
-
-using EllipsisNotation
-# import Statistics: mean, var
-
-# export jackknife_full, jackknife
-
-
-"""
-    jackknife_full(g::Function, x::AbstractArray) -> je, jstd
-
-Jackknife estimate `je` and standard error `jstd` of `g(<a>,<b>,...)`.
-
-Columns of `x` are time series of random variables, i.e. `x[i,1] = a_i`
-and `x[i,2] = b_i`. For a given matrix input `x` the function `g`
-must produce a scalar, for example `g(x) = @views mean(x[:,1])^2 - mean(x[:,2].^2)`.
-"""
-function old_jackknife_full(g::Function, x::AbstractArray{<:Number})
-    gis = old_leaveoneout(g,x)
-    return old_estimate(g,x,gis), old_bias(g,x,gis), old_std_error(g,x,gis)
-end
-
-old_jackknife_full(g::Function, xs...) = old_jackknife_full(g, hcat(xs...))
-
-
-
-
-"""
-    jackknife(g::Function, x::AbstractArray) -> jstd
-
-Jackknife standard error `jstd` of `g(<a>,<b>,...)`.
-
-Columns of `x` are time series of random variables, i.e. `x[i,1] = a_i`
-and `x[i,2] = b_i`. For a given matrix input `x` the function `g`
-must produce a scalar, for example `g(x) = @views mean(x[:,1])^2 - mean(x[:,2].^2)`.
-"""
-function old_jackknife(g::Function, x::AbstractArray{<:Number})
-    gis = old_leaveoneout(g,x)
-    return old_std_error(g,x,gis)
-end
-
-old_jackknife(g::Function, xs...) = old_jackknife(g, hcat(xs...))
-
-
-
-
-"""
-    leaveoneout(g::Function, x::AbstractArray)
-
-Estimate `g(<a>,<b>,...)` systematically omitting each time index one
-at a time. The result is a vector with the resulting jackknife block
-values `g_i(x_[])`.
-
-Columns of `x` are time series of random variables, i.e. `x[i,1] = a_i`
-and `x[i,2] = b_i`. For a given matrix input `x` the function `g`
-must produce a scalar, for example `g(x) = @views mean(x[:,1])^2 - mean(x[:,2].^2)`.
-"""
-function old_leaveoneout(g::Function, x::AbstractArray{<:Number})
-    size(x,1) > 1 || throw(ArgumentError("The sample must have size > 1"))
-    return @views [g(circshift(x, -i)[2:end,..]) for i in 0:size(x,1)-1]
-end
-
-
-
-
-
-"""
-    var(g::Function, x::AbstractArray)
-
-Compute the jackknife estimate of the variance of `g(<a>,<b>,...)`, where `g` is given as a
-function that computes a point estimate (scalar) when passed a matrix `x`. Columns of `x`
-are time series of the random variables.
-
-For more details, see also [`leaveoneout](@ref).
-"""
-function old_var(g::Function, x::AbstractArray{<:Number}, gis::AbstractVector{<:Real})
-    n = size(x,1)
-    return var(gis) * (n - 1)^2 / n # Eq. (3.35) in QMC Methods book
-end
-old_var(g::Function, x::AbstractArray{<:Number}) = old_var(g,x,leaveoneout(g, x))
-old_var(g::Function, x::AbstractArray{<:Number}, gis::AbstractVector{<:Complex}) = old_var(g,x,real(gis)) + var(g,x,imag(gis))
-
-
-
-
-
-"""
-    std_error(g::Function, x::AbstractArray)
-
-Compute the jackknife estimate of the one sigma error of `g(<a>,<b>,...)`, where `g` is given as a
-function that computes a point estimate (scalar) when passed a matrix `x`. Columns of `x`
-are time series of the random variables.
-
-For more details, see also [`leaveoneout](@ref).
-"""
-old_std_error(g::Function, x::AbstractArray{<:Number}, gis::AbstractVector{<:Real}) = sqrt(old_var(g,x, gis))
-old_std_error(g::Function, x::AbstractArray{<:Number}, gis::AbstractVector{<:Complex}) = sqrt(old_std_error(g,x,real(gis))^2 + old_std_error(g,x,imag(gis))^2)
-old_std_error(g::Function, x::AbstractArray{<:Number}) = old_std_error(g,x,leaveoneout(g,x))
-
-
-
-
-
-"""
-    bias(g::Function, x::AbstractArray)
-
-Compute the jackknife estimate of the bias of `g(<a>,<b>,...)`, which computes a point
-estimate when passed a matrix `x`. Columns of `x` are time series of the random variables.
-
-For more details, see also [`leaveoneout](@ref).
-"""
-function old_bias(g::Function, x::AbstractArray{<:Number}, gis::AbstractVector{<:Number}=old_leaveoneout(g, x))
-    return (size(x,1) - 1) * (mean(gis) - g(x)) # Basically Eq. (3.33)
-end
-
-
-
-
-
-"""
-    estimate(g::Function, x)
-
-Compute the bias-corrected jackknife estimate of `g(<a>,<b>,...)`, which computes a
-point estimate when passed a matrix `x`. Columns of `x` are time series of the random variables.
-
-For more details, see also [`leaveoneout](@ref).
-"""
-function old_estimate(g::Function, x::AbstractArray{<:Number}, gis::AbstractVector{<:Number}=old_leaveoneout(g, x))
-    n = size(x,1)
-    return n * g(x) - (n - 1) * mean(gis) # Eq. (3.34) in QMC Methods book
-end
-
 
 
 
