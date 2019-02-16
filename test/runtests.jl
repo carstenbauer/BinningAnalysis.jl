@@ -3,7 +3,7 @@ using Test, Statistics, Random
 
 
 @testset "All Tests" begin
-    
+
     @testset "Logarithmic Binning" begin
         include("logbinning.jl")
     end
@@ -37,26 +37,28 @@ using Test, Statistics, Random
 
 
     @testset "Jackknife" begin
-        g(x) = @views mean(x[:,1])^2 - mean(x[:,2].^2) # example function
+        g(x1, x2) = x1^2 - x2
 
         # Real
         ts = [0.00124803, 0.643089, 0.183268, 0.799899, 0.0857666, 0.955348, 0.165763, 0.765998, 0.63942, 0.308818]
         ts2 = [0.606857, 0.0227746, 0.805997, 0.978731, 0.0853112, 0.311463, 0.628918, 0.0190664, 0.515998, 0.0223728]
-        @test jackknife_full(x -> mean(x), ts) == (0.45486176300000025, 0.0, 0.10834619757501414)
-        @test jackknife_full(x -> mean(1 ./ x), ts) == (83.4370988407286, 0.0, 79.76537738034833)
-        @test jackknife_full(g, ts, ts2) == (-0.07916794438503649, 0.011738898528964592, 0.14501699232741938)
-        @test jackknife_full(g, hcat(ts, ts2)) == jackknife_full(g, ts, ts2)
+        @test all(jackknife_full(identity, ts) .≈ (0.45486176300000025, 0.0, 0.10834619757501414))
+        @test all(jackknife_full(identity, 1 ./ ts) .≈ (83.4370988407286, 0.0, 79.76537738034833))
+        @test all(jackknife_full(g, ts, ts2.^2) .≈ (-0.07916794438503649, 0.011738898528964592, 0.14501699232741938))
+        @test all(jackknife_full(g, hcat(ts, ts2.^2)) .≈ jackknife_full(g, ts, ts2.^2))
 
-        @test isapprox(jackknife(mean, ts), std(ts)/sqrt(length(ts))) # check consistency with Julia's Statistics
+        # check consistency with Julia's Statistics
+        @test jackknife(identity, ts) ≈ std(ts)/sqrt(length(ts))
 
         # Complex
         ts = Complex{Float64}[0.0259924+0.674798im, 0.329853+0.558688im, 0.821612+0.142805im, 0.0501703+0.801068im, 0.0309707+0.877745im, 0.937856+0.852463im, 0.669084+0.606286im, 0.887004+0.431615im, 0.763452+0.210563im, 0.678384+0.428294im]
         ts2 = Complex{Float64}[0.138147+0.11007im, 0.484956+0.127761im, 0.986078+0.702827im, 0.45161+0.878256im, 0.768398+0.954537im, 0.228518+0.260732im, 0.256892+0.437918im, 0.647672+0.749172im, 0.0587658+0.408715im, 0.0792651+0.288578im]
-        @test jackknife_full(x -> mean(x), ts) == (0.519437840000001 + 0.5584324999999994im, -9.992007221626409e-16 + 0.0im, 0.1428607353199917)
-        @test jackknife_full(x -> mean(1 ./ x), ts) == (0.6727428408881817 - 0.8112743686359876im, -9.992007221626409e-16 + 1.9984014443252818e-15im, 0.20473472232587642)
-        @test jackknife_full(g, ts, ts2) == (0.021446672721215643 + 0.06979705636190503im, 0.007300401672734998 - 0.01055311354806504im, 0.2752976586383889)
-        @test jackknife_full(g, hcat(ts, ts2)) == jackknife_full(g, ts, ts2)
+        @test all(jackknife_full(identity, ts) .≈ (0.519437840000001 + 0.5584324999999994im, -9.992007221626409e-16 + 0.0im, 0.1428607353199917))
+        @test all(jackknife_full(identity, 1 ./ ts) .≈ (0.6727428408881817 - 0.8112743686359876im, -9.992007221626409e-16 + 1.9984014443252818e-15im, 0.20473472232587642))
+        @test all(jackknife_full(g, ts, ts2.^2) .≈ (0.021446672721215643 + 0.06979705636190503im, 0.007300401672734998 - 0.01055311354806504im, 0.2752976586383889))
+        @test all(jackknife_full(g, hcat(ts, ts2.^2)) .≈ jackknife_full(g, ts, ts2.^2))
 
-        @test isapprox(jackknife(mean, ts), std(ts)/sqrt(length(ts))) # check consistency with Julia's Statistics
+        # check consistency with Julia's Statistics
+        @test jackknife(identity, ts) ≈ std(ts)/sqrt(length(ts))
     end
 end
