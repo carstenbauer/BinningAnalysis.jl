@@ -1,4 +1,4 @@
-# BinningAnalysis.jl
+![logo](https://github.com/crstnbr/BinningAnalysis.jl/blob/master/docs/src/assets/logo_with_text.png)
 
 [![travis][travis-img]](https://travis-ci.org/crstnbr/BinningAnalysis.jl)
 [![appveyor][appveyor-img]](https://ci.appveyor.com/project/crstnbr/binninganalysis-jl/branch/master)
