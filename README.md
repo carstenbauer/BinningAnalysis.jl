@@ -3,10 +3,12 @@
 [![travis][travis-img]](https://travis-ci.org/crstnbr/BinningAnalysis.jl)
 [![appveyor][appveyor-img]](https://ci.appveyor.com/project/crstnbr/binninganalysis-jl/branch/master)
 [![codecov][codecov-img]](http://codecov.io/github/crstnbr/BinningAnalysis.jl?branch=master)
+[![Coverage Status](coveralls-img)](https://coveralls.io/github/crstnbr/BinningAnalysis.jl?branch=master)
 
 [travis-img]: https://img.shields.io/travis/crstnbr/BinningAnalysis.jl/master.svg?label=Linux
 [appveyor-img]: https://img.shields.io/appveyor/ci/crstnbr/binninganalysis-jl/master.svg?label=Windows
 [codecov-img]: https://img.shields.io/codecov/c/github/crstnbr/BinningAnalysis.jl/master.svg?label=codecov
+[coveralls-img]: https://coveralls.io/repos/github/crstnbr/BinningAnalysis.jl/badge.svg?branch=master
 
 This package implements the following statistical tools,
 
