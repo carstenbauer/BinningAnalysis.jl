@@ -18,7 +18,11 @@ This package implements the following statistical tools,
 * Full Binning
 * Jackknife resampling
 
-As per usual, you can install the package with `] add https://github.com/crstnbr/BinningAnalysis.jl`.
+As per usual, you can install the package with
+
+```julia
+] add https://github.com/crstnbr/BinningAnalysis.jl
+```
 
 ---
 
