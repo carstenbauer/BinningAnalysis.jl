@@ -11,8 +11,8 @@
 This package implements the following statistical tools,
 
 * Logarithmic Binning (most performant)
-  * Size complexity: O(log<sub>2</sub>(N))
-  * Time complexity: O(N)
+  * Size complexity: $\mathcal{O}(\log_2(N))$
+  * Time complexity: $\mathcal{O}(N)$
 * Full Binning (slower, more detailed)
 * Jackknife resampling
 
