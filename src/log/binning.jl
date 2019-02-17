@@ -139,33 +139,60 @@ LogBinner(::Type{T} = Float64; kw...) where T = LogBinner(zero(T); kw...)
     LogBinner(zero_element::T[; capacity::Int])
 
 Creates a new `LogBinner` which can take (at least) `capacity` many values of type `T`. The type
-and size is inherited by the given `zero_element`.
+and the size are inherited from the given `zero_element`, which must exclusively contain zeros.
 
 Values can be added using `push!` and `append!`.
+
+---
+
+    LogBinner(timeseries::AbstractVector{T})
+
+Creates a new `LogBinner` and adds all elements from the given timeseries.
 """
-function LogBinner(_zero::T;
+function LogBinner(x::T;
         capacity::Int64 = _nlvls2capacity(32)
-        ) where {T}
+        ) where {T <: Union{Number, AbstractArray}}
 
     # check keyword args
     capacity <= 0 && throw(ArgumentError("`capacity` must be finite and positive."))
 
-    N = _capacity2nlvls(capacity)
+    # got_timeseries = didn't receive a zero && is a vector
+    got_timeseries = count(!iszero, x) > 0 && ndims(T) == 1
 
-    # heuristic to set sum type (#2)
-    D = ndims(_zero)
-    S = if eltype(T)<:Real
-        D > 0 ? Array{Float64, D} : Float64
+    if got_timeseries 
+        # x = time series
+        N = _capacity2nlvls(length(x))
+        S = _sum_type_heuristic(eltype(T), ndims(x[1]))
+        el = zero(x[1])
     else
-        D > 0 ? Array{ComplexF64, D} : ComplexF64
+        # x = zero_element
+        N = _capacity2nlvls(capacity)
+        S = _sum_type_heuristic(T, ndims(x))
+        el = x
     end
 
-    LogBinner{N, S}(
-        tuple([Compressor{S}(copy(_zero), false) for i in 1:N]...),
-        [copy(_zero) for _ in 1:N],
-        [copy(_zero) for _ in 1:N],
+    B = LogBinner{N, S}(
+        tuple([Compressor{S}(copy(el), false) for i in 1:N]...),
+        [copy(el) for _ in 1:N],
+        [copy(el) for _ in 1:N],
         zeros(Int64, N)
     )
+
+    got_timeseries && append!(B, x)
+
+    return B
+end
+
+
+
+function _sum_type_heuristic(::Type{T}, elndims::Integer) where T
+    # heuristic to set sum type (#2)
+    S = if eltype(T)<:Real
+        elndims > 0 ? Array{Float64, elndims} : Float64
+    else
+        elndims > 0 ? Array{ComplexF64, elndims} : ComplexF64
+    end
+    return S
 end
 
 
