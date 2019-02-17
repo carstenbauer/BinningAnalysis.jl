@@ -13,7 +13,7 @@ This package implements the following statistical tools,
 * Logarithmic Binning (most performant)
   * Size complexity: $\mathcal{O}(\log_2(N))$
   * Time complexity: $\mathcal{O}(N)$
-* Full Binning (slower, more detailed)
+* Full Binning
 * Jackknife resampling
 
 As per usual, you can install the package with `] add https://github.com/crstnbr/BinningAnalysis.jl`.
