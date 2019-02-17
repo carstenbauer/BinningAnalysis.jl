@@ -43,6 +43,27 @@
     @test capacity(B) == 16383
     @test_throws ArgumentError LogBinner(capacity=0)
     @test_throws ArgumentError LogBinner(capacity=-1)
+
+
+    # Test error on overflow
+    B = LogBinner(capacity=1)
+    push!(B, 1.0)
+    @test_throws OverflowError push!(B, 2.0)
+
+    B = LogBinner(zeros(2,2), capacity=1)
+    push!(B, rand(2,2))
+    @test_throws OverflowError push!(B, rand(2,2))
+
+    # time series constructor (#26)
+    x = rand(10)
+    B = LogBinner(x)
+    @test length(B) == 10
+    @test mean(B) == mean(x)
+
+    x = [rand(2,3) for _ in 1:5]
+    B = LogBinner(x)
+    @test length(B) == 5
+    @test mean(B) == mean(x)
 end
 
 
@@ -88,6 +109,23 @@ end
     # calculated here, the values are onyl approximately the same. (Float error)
     xs = rand(ComplexF64, 1_000_000)
     BA = LogBinner(ComplexF64)
+
+    # Test small set (off by one errors are large here)
+    for x in xs[1:10]; push!(BA, x) end
+    @test var(BA, 1) ≈ var(xs[1:10])
+    @test varN(BA, 1) ≈ var(xs[1:10])/10
+
+    # Test full set
+    for x in xs[11:end]; push!(BA, x) end
+    @test var(BA, 1) ≈ var(xs)
+    @test varN(BA, 1) ≈ var(xs)/1_000_000
+end
+
+
+
+@testset "Check variance for complex vectors" begin
+    xs = [rand(ComplexF64, 3) for _ in 1:1_000_000]
+    BA = LogBinner(zeros(ComplexF64, 3))
 
     # Test small set (off by one errors are large here)
     for x in xs[1:10]; push!(BA, x) end
