@@ -42,6 +42,9 @@ end
         @test isapprox(sum(stds), 106377.96306621947) # take sum as approx. hash
         @test isapprox(sum(cum_stds), 75541.44622415205)
         @test isapprox(tau(F), 77.86159630295694)
+
+        # beta: convergence
+        @test !BinningAnalysis.isconverged(F)
     end
 
     # Test 0/0 bug in R_value
@@ -55,7 +58,13 @@ end
         @test isapprox(sum(stds), 150441.1581058718) # take sum as approx. hash
         @test isapprox(sum(cum_stds), 106831.73777147368)
         @test isapprox(tau(F), 77.86159630295694)
+
+        # beta: convergence
+        @test !BinningAnalysis.isconverged(F)
     end
+
+    # R -> tau conversion
+    @test BinningAnalysis._tau(2.4) == 0.7
 end
 
 
@@ -77,4 +86,40 @@ end
         @test isapprox(std_error(F), [0.04445492633322362 0.04004496543964919 0.039737207226072296; 0.04099334255252945 0.039004215520294906 0.0409503504806149])
         @test isapprox(tau(F), [0.062160208644724047 -0.005039096051545122 0.037487751473977315; 0.03850424600452085 -0.032173894672710424 0.0320190059417359])
     end
+end
+
+
+
+
+
+@testset "Cosmetics (show, print, etc.)" begin
+    F = FullBinner();
+    # empty binner
+    oldstdout = stdout
+    (read_pipe, write_pipe) = redirect_stdout()
+    println(F) # compact
+    show(write_pipe, MIME"text/plain"(), F) # full
+    redirect_stdout(oldstdout);
+    close(write_pipe);
+
+    # compact
+    @test readline(read_pipe) == "FullBinner{Float64,Array{Float64,1}}()"
+    # full
+    @test readline(read_pipe) == "FullBinner{Float64,Array{Float64,1}}"
+    @test readline(read_pipe) == "| Count: 0"
+    @test length(readlines(read_pipe)) == 0
+    close(read_pipe);
+
+    # filled binner
+    Random.seed!(1234)
+    append!(F, rand(1000))
+    (read_pipe, write_pipe) = redirect_stdout()
+    show(write_pipe, MIME"text/plain"(), F)
+    redirect_stdout(oldstdout);
+    close(write_pipe);
+    @test readline(read_pipe) == "FullBinner{Float64,Array{Float64,1}}"
+    @test readline(read_pipe) == "| Count: 1000"
+    @test readline(read_pipe) == "| Mean: 0.49685"
+    @test length(readlines(read_pipe)) == 0
+    close(read_pipe);
 end

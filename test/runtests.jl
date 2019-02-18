@@ -32,6 +32,10 @@ using Test, Statistics, Random
         @test isapprox(std_error(x), std_error(x; method=:log))
         @test isapprox(std_error(x, method=:log), [0.03856212859659066 0.09765048982846934 0.04879645809318544; 0.11744109653881814 0.05978167652935139 0.1722342286233907])
         @test isapprox(std_error(x, method=:full), [0.03856212859659072 0.09765048982846936 0.048796458093185405; 0.11744109653881814 0.05978167652935137 0.17223422862339066])
+
+        x = ["this", "should", "error"]
+        @test_throws ErrorException std_error(x, method=:jackknife)
+        @test_throws ArgumentError std_error(x, method=:whatever)
     end
 
 

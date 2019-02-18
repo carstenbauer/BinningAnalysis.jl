@@ -174,13 +174,8 @@ Calculates the standard error for each level of the Binning Analysis.
 """
 function all_std_errors(B::LogBinner) end
 
-
-function all_std_errors(B::LogBinner{N, T}) where {N, T <: Number}
-    sqrt.(all_varNs(B))
-end
-function all_std_errors(B::LogBinner{N, T}) where {N, T <: AbstractArray}
-    (x -> sqrt.(x)).all_varNs(B)
-end
+all_std_errors(B::LogBinner{N, T}) where {N, T <: Number} = sqrt.(all_varNs(B))
+all_std_errors(B::LogBinner{N, T}) where {N, T <: AbstractArray} = (x -> sqrt.(x)).(all_varNs(B))
 
 
 """
