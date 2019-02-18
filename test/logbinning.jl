@@ -286,3 +286,39 @@ end
     @test BinningAnalysis._reliable_level(BA) == 2
     @test !isnan(std_error(BA, BinningAnalysis._reliable_level(BA)))
 end
+
+
+
+
+@testset "Cosmetics (show, print, etc.)" begin
+    B = LogBinner();
+    # empty binner
+    oldstdout = stdout
+    (read_pipe, write_pipe) = redirect_stdout()
+    println(B) # compact
+    show(write_pipe, MIME"text/plain"(), B) # full
+    redirect_stdout(oldstdout);
+    close(write_pipe);
+
+    # compact
+    @test readline(read_pipe) == "LogBinner{32,Float64}()"
+    # full
+    @test readline(read_pipe) == "LogBinner{32,Float64}"
+    @test readline(read_pipe) == "| Count: 0"
+    @test length(readlines(read_pipe)) == 0
+    close(read_pipe);
+
+    # filled binner
+    Random.seed!(1234)
+    append!(B, rand(1000))
+    (read_pipe, write_pipe) = redirect_stdout()
+    show(write_pipe, MIME"text/plain"(), B)
+    redirect_stdout(oldstdout);
+    close(write_pipe);
+    @test readline(read_pipe) == "LogBinner{32,Float64}"
+    @test readline(read_pipe) == "| Count: 1000"
+    @test readline(read_pipe) == "| Mean: 0.49685"
+    @test readline(read_pipe) == "| StdError: 0.00733"
+    @test length(readlines(read_pipe)) == 0
+    close(read_pipe);
+end
