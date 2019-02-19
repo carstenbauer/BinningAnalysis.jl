@@ -18,7 +18,7 @@ function std_error(x::AbstractVector{T}; method::Symbol=:log) where T
         return std_error(FullBinner(x))
     elseif method == :jackknife
         T <: Number || error("Jackknife doesn't support non-number type time series.")
-        return jackknife(mean, x)
+        return Jackknife.std_error(identity, x)
     else
         throw(ArgumentError("Keyword `method` must be either `:log`, `:full`, or `:jackknife`. Got `$(method)`."))
     end

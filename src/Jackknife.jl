@@ -1,140 +1,174 @@
 """
-**Jackknife** errors for (non-linear) functions of uncertain data, i.e. g(<a>,<b>,...)
+**Jackknife** errors for (non-linear) functions of uncertain data, i.e.
+`g(<a>, <b>, ...)` where `<a>`, `<b>` are the means of data sets `a` and `b`.
+Use `jackknife_full(g, a, b, ...)` to get the jackknife estimate, bias and
+error or `jackknife(g, a, b, ...)` to get just the estimate and error.
 
-Inspired by https://github.com/ararslan/Jackknife.jl.
+See: [`jackknife_full`](@ref), [`jackknife`](@ref)
 """
 module Jackknife
 
-using EllipsisNotation
+
+
 import Statistics: mean, var
 
 export jackknife_full, jackknife
 
 
 """
-    jackknife_full(g::Function, x::AbstractArray) -> je, jstd
+    jackknife_full(g::Function, a[, b, ...])
 
-Jackknife estimate `je` and standard error `jstd` of `g(<a>,<b>,...)`.
+Returns the jackknife estimate, bias and error for a given function
+`g(<a>, <b>, ...)` acting on the means of the samples `a`, `b`, etc.
 
-Columns of `x` are time series of random variables, i.e. `x[i,1] = a_i` 
-and `x[i,2] = b_i`. For a given matrix input `x` the function `g` 
-must produce a scalar, for example `g(x) = @views mean(x[:,1])^2 - mean(x[:,2].^2)`.
+Example:
+    # Assuming some sample xs is given
+    # variance of sample xs
+    g(x2, x) = x2 - x^2
+    estimate, bias, error = jackknife_full(g, xs.^2, xs)
+
+See also: [`estimate`](@ref), [`bias`](@ref), [`std_error`](@ref)
 """
-function jackknife_full(g::Function, x::AbstractArray{<:Number})
-    gis = leaveoneout(g,x)
-    return estimate(g,x,gis), bias(g,x,gis), std_error(g,x,gis)
+function jackknife_full(g::Function, samples::AbstractVector{<:Number}...)
+    reduced_results = leaveoneout(g, samples...)
+    return estimate(g, samples...; reduced_results = reduced_results),
+           bias(g, samples...; reduced_results = reduced_results),
+           _std_error(reduced_results)
+end
+function jackknife_full(g::Function, samples::AbstractArray{<:Number})
+    jackknife_full(g, [samples[:, i] for i in 1:size(samples, 2)]...)
 end
 
-jackknife_full(g::Function, xs...) = jackknife_full(g, hcat(xs...))
-
-
-
-
 """
-    jackknife(g::Function, x::AbstractArray) -> jstd
+    jackknife(g::Function, a[, b, ...])
 
-Jackknife standard error `jstd` of `g(<a>,<b>,...)`.
+Returns the jackknife estimate and error for a given function `g(<a>, <b>, ...)`
+acting on the means of the samples `a`, `b`, etc.
 
-Columns of `x` are time series of random variables, i.e. `x[i,1] = a_i` 
-and `x[i,2] = b_i`. For a given matrix input `x` the function `g` 
-must produce a scalar, for example `g(x) = @views mean(x[:,1])^2 - mean(x[:,2].^2)`.
+Example:
+    # Assuming some sample xs is given
+    # variance of sample xs
+    g(x2, x) = x2 - x^2
+    error = jackknife(g, xs.^2, xs)
+
+See also: [`estimate`](@ref), [`std_error`](@ref)
 """
-function jackknife(g::Function, x::AbstractArray{<:Number})
-    gis = leaveoneout(g,x)
-    return std_error(g,x,gis)
+function jackknife(g::Function, samples::AbstractVector{<:Number}...)
+    reduced_results = leaveoneout(g, samples...)
+    return estimate(g, samples...; reduced_results = reduced_results),
+           _std_error(reduced_results)
 end
-
-jackknife(g::Function, xs...) = jackknife(g, hcat(xs...))
-
-
-
-
-"""
-    leaveoneout(g::Function, x::AbstractArray)
-
-Estimate `g(<a>,<b>,...)` systematically omitting each time index one 
-at a time. The result is a vector with the resulting jackknife block 
-values `g_i(x_[])`.
-
-Columns of `x` are time series of random variables, i.e. `x[i,1] = a_i` 
-and `x[i,2] = b_i`. For a given matrix input `x` the function `g` 
-must produce a scalar, for example `g(x) = @views mean(x[:,1])^2 - mean(x[:,2].^2)`.
-"""
-function leaveoneout(g::Function, x::AbstractArray{<:Number})
-    size(x,1) > 1 || throw(ArgumentError("The sample must have size > 1"))
-    return @views [g(circshift(x, -i)[2:end,..]) for i in 0:size(x,1)-1]
+function jackknife(g::Function, samples::AbstractArray{<:Number})
+    jackknife(g, [samples[:, i] for i in 1:size(samples, 2)]...)
 end
 
 
-
-
-
 """
-    var(g::Function, x::AbstractArray)
+    leaveoneout(g::Function, samples::AbstractVector{<:Number}...)
 
-Compute the jackknife estimate of the variance of `g(<a>,<b>,...)`, where `g` is given as a
-function that computes a point estimate (scalar) when passed a matrix `x`. Columns of `x` 
-are time series of the random variables.
-
-For more details, see also [`leaveoneout](@ref).
+Generates N sub-samples for each sample in `samples`, where one value is left
+out and applies it mean to the function `g`. The result is used for a
+1-jackknife.
 """
-function var(g::Function, x::AbstractArray{<:Number}, gis::AbstractVector{<:Real})
-    n = size(x,1)
-    return var(gis) * (n - 1)^2 / n # Eq. (3.35) in QMC Methods book
+function leaveoneout(g::Function, samples::AbstractVector{<:Number}...)
+    @assert(
+        length(samples[1]) > 1,
+        "The sample must have multiple values! (length(samples[1]) > 1)"
+    )
+
+    full_sample_sums = map(sum, samples)
+    invN1 = 1 / (length(samples[1]) - 1)
+    red_sample_means = map(samples, full_sample_sums) do sample, full_sample_sum
+        [(full_sample_sum - sample[i]) * invN1 for i in eachindex(sample)]
+    end
+    g.(red_sample_means...)
 end
-var(g::Function, x::AbstractArray{<:Number}) = var(g,x,leaveoneout(g, x))
-var(g::Function, x::AbstractArray{<:Number}, gis::AbstractVector{<:Complex}) = var(g,x,real(gis)) + var(g,x,imag(gis))
-
-
-
-
-
-"""
-    std_error(g::Function, x::AbstractArray)
-
-Compute the jackknife estimate of the one sigma error of `g(<a>,<b>,...)`, where `g` is given as a
-function that computes a point estimate (scalar) when passed a matrix `x`. Columns of `x` 
-are time series of the random variables.
-
-For more details, see also [`leaveoneout](@ref).
-"""
-std_error(g::Function, x::AbstractArray{<:Number}, gis::AbstractVector{<:Real}) = sqrt(var(g,x, gis))
-std_error(g::Function, x::AbstractArray{<:Number}, gis::AbstractVector{<:Complex}) = sqrt(std_error(g,x,real(gis))^2 + std_error(g,x,imag(gis))^2)
-std_error(g::Function, x::AbstractArray{<:Number}) = std_error(g,x,leaveoneout(g,x))
-
-
-
-
-
-"""
-    bias(g::Function, x::AbstractArray)
-
-Compute the jackknife estimate of the bias of `g(<a>,<b>,...)`, which computes a point 
-estimate when passed a matrix `x`. Columns of `x` are time series of the random variables.
-
-For more details, see also [`leaveoneout](@ref).
-"""
-function bias(g::Function, x::AbstractArray{<:Number}, gis::AbstractVector{<:Number}=leaveoneout(g, x))
-    return (size(x,1) - 1) * (mean(gis) - g(x)) # Basically Eq. (3.33)
+function leaveoneout(g::Function, samples::AbstractArray{<:Number})
+    leaveoneout(g, [samples[:, i] for i in 1:size(samples, 2)]...)
 end
 
 
-
-
-
 """
-    estimate(g::Function, x)
+    var(g::Function, a[, b, ...])
 
-Compute the bias-corrected jackknife estimate of `g(<a>,<b>,...)`, which computes a 
-point estimate when passed a matrix `x`. Columns of `x` are time series of the random variables.
-
-For more details, see also [`leaveoneout](@ref).
+Returns the jackknife variance for a given function `g(<a>, <b>, ...)` acting on
+the means of the samples `a`, `b`, etc.
 """
-function estimate(g::Function, x::AbstractArray{<:Number}, gis::AbstractVector{<:Number}=leaveoneout(g, x))
-    n = size(x,1)
-    return n * g(x) - (n - 1) * mean(gis) # Eq. (3.34) in QMC Methods book
+function var(g::Function, samples::AbstractVector{<:Number}...)
+    _var(leaveoneout(g, samples...))
+end
+function var(g::Function, samples::AbstractArray{<:Number})
+    var(g, [samples[:, i] for i in 1:size(samples, 2)]...)
+end
+_var(gis::AbstractVector{<:Complex}) = _var(real(gis)) + _var(imag(gis))
+function _var(reduced_results::AbstractVector{<:Real})
+    # With N values each sample, N subsamples are created and N reduced_results
+    # are calculated.
+    N = length(reduced_results)
+    # Eq. (3.35) in QMC Methods book
+    return var(reduced_results) * (N - 1)^2 / N
 end
 
+
+"""
+    std_error(g::Function, a[, b, ...])
+
+Returns the jackknife error for a given function `g(<a>, <b>, ...)` acting on
+the means of the samples `a`, `b`, etc.
+"""
+function std_error(g::Function, samples::AbstractVector{<:Number}...)
+    _std_error(leaveoneout(g, samples...))
+end
+function std_error(g::Function, samples::AbstractArray{<:Number})
+    std_error(g, [samples[:, i] for i in 1:size(samples, 2)]...)
+end
+function _std_error(gis::AbstractVector{<:Complex})
+    sqrt(_std_error(real(gis))^2 + _std_error(imag(gis))^2)
+end
+_std_error(gis::AbstractVector{<:Real}) = sqrt(_var(gis))
+
+
+"""
+    bias(g::Function, a[, b, ...])
+
+Returns the jackknife bias for a given function `g(<a>, <b>, ...)` acting on
+the means of the samples `a`, `b`, etc.
+"""
+function bias(
+        g::Function,
+        samples::AbstractVector{<:Number}...;
+        reduced_results::AbstractVector{<:Number} = leaveoneout(g, samples...)
+    )
+    # Basically Eq. (3.33)
+    (length(reduced_results) - 1) * (
+        mean(reduced_results) - g(map(mean, samples)...)
+    )
+end
+function bias(g::Function, samples::AbstractArray{<:Number})
+    bias(g, [samples[:, i] for i in 1:size(samples, 2)]...)
+end
+
+
+"""
+    estimate(g::Function, a[, b, ...])
+
+Returns the (bias corrected) jackknife estimate for a given function
+`g(<a>, <b>, ...)` acting on the means of the samples `a`, `b`, etc. If
+`leaveoneout` has already been calculated it can be supplied via the keyword
+argument `reduced_results`.
+"""
+function estimate(
+        g::Function,
+        samples::AbstractVector{<:Number}...;
+        reduced_results::AbstractVector{<:Number} = leaveoneout(g, samples...)
+    )
+    # Eq. (3.34) in QMC Methods book
+    n = length(reduced_results)
+    return n * g(map(mean, samples)...) - (n - 1) * mean(reduced_results)
+end
+function estimate(g::Function, samples::AbstractArray{<:Number})
+    estimate(g, [samples[:, i] for i in 1:size(samples, 2)]...)
+end
 
 
 
