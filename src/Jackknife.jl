@@ -2,7 +2,9 @@
 **Jackknife** errors for (non-linear) functions of uncertain data, i.e.
 `g(<a>, <b>, ...)` where `<a>`, `<b>` are the means of data sets `a` and `b`.
 Use `jackknife_full(g, a, b, ...)` to get the jackknife estimate, bias and
-error or `jackknife(g, a, b, ...)` to get just the error.
+error or `jackknife(g, a, b, ...)` to get just the estimate and error.
+
+See: [`jackknife_full`](@ref), [`jackknife`](@ref)
 """
 module Jackknife
 
@@ -24,6 +26,8 @@ Example:
     # variance of sample xs
     g(x2, x) = x2 - x^2
     estimate, bias, error = jackknife_full(g, xs.^2, xs)
+
+See also: [`estimate`](@ref), [`bias`](@ref), [`std_error`](@ref)
 """
 function jackknife_full(g::Function, samples::AbstractVector{<:Number}...)
     reduced_results = leaveoneout(g, samples...)
@@ -38,18 +42,21 @@ end
 """
     jackknife(g::Function, a[, b, ...])
 
-Returns the jackknife error for a given function `g(<a>, <b>, ...)` acting on
-the means of the samples `a`, `b`, etc.
+Returns the jackknife estimate and error for a given function `g(<a>, <b>, ...)`
+acting on the means of the samples `a`, `b`, etc.
 
 Example:
     # Assuming some sample xs is given
     # variance of sample xs
     g(x2, x) = x2 - x^2
     error = jackknife(g, xs.^2, xs)
+
+See also: [`estimate`](@ref), [`std_error`](@ref)
 """
 function jackknife(g::Function, samples::AbstractVector{<:Number}...)
     reduced_results = leaveoneout(g, samples...)
-    return _std_error(reduced_results)
+    return estimate(g, samples...; reduced_results = reduced_results),
+           _std_error(reduced_results)
 end
 function jackknife(g::Function, samples::AbstractArray{<:Number})
     jackknife(g, [samples[:, i] for i in 1:size(samples, 2)]...)

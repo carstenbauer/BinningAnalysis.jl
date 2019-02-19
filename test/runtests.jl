@@ -60,7 +60,7 @@ using Test, Statistics, Random
         @test jackknife_full(g, hcat(ts, ts2.^2)) == jackknife_full(g, ts, ts2.^2)
 
         # check consistency with Julia's Statistics
-        @test jackknife(identity, ts) ≈ std(ts)/sqrt(length(ts))
+        @test jackknife(identity, ts)[2] ≈ std(ts)/sqrt(length(ts))
 
         # Complex
         ts = Complex{Float64}[0.0259924+0.674798im, 0.329853+0.558688im, 0.821612+0.142805im, 0.0501703+0.801068im, 0.0309707+0.877745im, 0.937856+0.852463im, 0.669084+0.606286im, 0.887004+0.431615im, 0.763452+0.210563im, 0.678384+0.428294im]
@@ -95,6 +95,6 @@ using Test, Statistics, Random
         @test jackknife_full(g, hcat(ts, ts2.^2)) == jackknife_full(g, ts, ts2.^2)
 
         # check consistency with Julia's Statistics
-        @test jackknife(identity, ts) ≈ std(ts)/sqrt(length(ts))
+        @test jackknife(identity, ts)[2] ≈ std(ts)/sqrt(length(ts))
     end
 end
