@@ -77,17 +77,18 @@ x  = mean(B)
 ```julia
 x = rand(100)
 
-Δx = jackknife(mean, x) # jackknife error of <x>
+xmean, Δx = jackknife(identity, x) # jackknife estimates for mean and standard error of <x>
 
-isapprox(jackknife(mean, ts), std(ts)/sqrt(length(ts))) == true
+# in this example
+# isapprox(Δx, std(x)/sqrt(length(x))) == true
 
-Δx_inv = jackknife(x -> mean(1 ./ x), x) # jacknife error of <1/x>
+x_inv_mean, Δx_inv = jackknife(identity, 1 ./ x) # # jackknife estimates for mean and standard error of <1/x>
 
 # Multiple time series
 x = rand(100)
 y = rand(100)
 
-# The input z will be a matrix whose columns correspond to x and y, i.e. z[:,1] == x and z[:,2] == y
-g(z) = @views mean(z[:,1]) * mean(z[:,2]) / mean(z[:,1] .* z[:,2])  # <x><y> / <xy>
-Δg = jackknife(g, x, y)
+# The inputs of the function `g` must be provided as arguments in `jackknife`.
+g(x, y, xy) = x * y / xy  # <x><y> / <xy>
+g_mean, Δg = jackknife(g, x, y, x .* y)
 ```
