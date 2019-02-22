@@ -61,7 +61,6 @@ using Test, Statistics, Random
             (-0.07916794438503649, 0.011738898528964592, 0.14501699232741938),
             atol = 1e-12
         ) |> all
-        @test jackknife_full(g, hcat(ts, ts2.^2)) == jackknife_full(g, ts, ts2.^2)
 
         # check consistency with Julia's Statistics
         @test jackknife(identity, ts)[2] ≈ std(ts)/sqrt(length(ts))
@@ -96,7 +95,6 @@ using Test, Statistics, Random
             ),
             atol = 1e-12
         ) |> all
-        @test jackknife_full(g, hcat(ts, ts2.^2)) == jackknife_full(g, ts, ts2.^2)
 
         # check consistency with Julia's Statistics
         @test jackknife(identity, ts)[2] ≈ std(ts)/sqrt(length(ts))
