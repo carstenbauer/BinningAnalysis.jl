@@ -43,6 +43,12 @@ append!(B, [1,2,3]) # multiple values at once
 x  = mean(B)
 Δx = std_error(B) # standard error of the mean
 tau_x = tau(B) # autocorrelation time
+
+# Alternatively you can provide a time series already in the constructor
+x = rand(100)
+B = LogBinner(x)
+
+Δx = std_error(B)
 ```
 
 <!--
@@ -62,14 +68,21 @@ has_converged(B, 3)
 ### Full Binning
 
 ```julia
-x = rand(1000)
-B = FullBinner(x) # just a thin wrapper <: AbstractVector
+B = FullBinner() # <: AbstractVector (lightweight wrapper)
 
-push!(B, 2.0) # will modify x
+push!(B, 2.0)
 append!(B, [1,2,3])
 
 x  = mean(B)
 Δx = std_error(B) # standard error of the mean
+
+# Alternatively you can provide a time series already in the constructor
+x = rand(100)
+F = FullBinner(x)
+
+push!(F, 2.0) # will modify x as F is just a thin wrapper
+
+Δx = std_error(F)
 ```
 
 ## Resampling methods
