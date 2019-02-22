@@ -28,9 +28,9 @@ As per usual, you can install the package with
 ] add https://github.com/crstnbr/BinningAnalysis.jl
 ```
 
----
+## Binning tools
 
-### Hands on: Logarithmic Binning
+### Logarithmic Binning
 
 ```julia
 B = LogBinner()
@@ -59,7 +59,7 @@ has_converged(B, 3)
 # than a convergence failure.
 !-->
 
-### Hands on: Full Binning
+### Full Binning
 
 ```julia
 x = rand(1000)
@@ -72,7 +72,9 @@ x  = mean(B)
 Δx = std_error(B) # standard error of the mean
 ```
 
-### Hands on: Jackknife
+## Resampling methods
+
+### Jackknife
 
 ```julia
 x = rand(100)
@@ -91,4 +93,15 @@ y = rand(100)
 # The inputs of the function `g` must be provided as arguments in `jackknife`.
 g(x, y, xy) = x * y / xy  # <x><y> / <xy>
 g_mean, Δg = jackknife(g, x, y, x .* y)
+```
+
+
+## Convenience wrapper
+
+If you have a time series and you simply want to calculate the standard error, using any of the aboves methods, there is a convenience wrapper `std_error(x[; method=:log])`. It takes a keyword argument `method` which can be `:log`, `:full`, or `:jackknife`.
+
+```julia
+ts = rand(1000);
+std_error(ts) # default is logarithmic binning
+std_error(ts, method=:full)
 ```
