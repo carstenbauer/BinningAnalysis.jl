@@ -35,9 +35,7 @@ function jackknife_full(g::Function, samples::AbstractVector{<:Number}...)
            bias(g, samples...; reduced_results = reduced_results),
            _std_error(reduced_results)
 end
-function jackknife_full(g::Function, samples::AbstractArray{<:Number})
-    jackknife_full(g, [samples[:, i] for i in 1:size(samples, 2)]...)
-end
+
 
 """
     jackknife(g::Function, a[, b, ...])
@@ -58,9 +56,7 @@ function jackknife(g::Function, samples::AbstractVector{<:Number}...)
     return estimate(g, samples...; reduced_results = reduced_results),
            _std_error(reduced_results)
 end
-function jackknife(g::Function, samples::AbstractArray{<:Number})
-    jackknife(g, [samples[:, i] for i in 1:size(samples, 2)]...)
-end
+
 
 
 """
@@ -83,9 +79,7 @@ function leaveoneout(g::Function, samples::AbstractVector{<:Number}...)
     end
     g.(red_sample_means...)
 end
-function leaveoneout(g::Function, samples::AbstractArray{<:Number})
-    leaveoneout(g, [samples[:, i] for i in 1:size(samples, 2)]...)
-end
+
 
 
 """
@@ -96,9 +90,6 @@ the means of the samples `a`, `b`, etc.
 """
 function var(g::Function, samples::AbstractVector{<:Number}...)
     _var(leaveoneout(g, samples...))
-end
-function var(g::Function, samples::AbstractArray{<:Number})
-    var(g, [samples[:, i] for i in 1:size(samples, 2)]...)
 end
 _var(gis::AbstractVector{<:Complex}) = _var(real(gis)) + _var(imag(gis))
 function _var(reduced_results::AbstractVector{<:Real})
@@ -118,9 +109,6 @@ the means of the samples `a`, `b`, etc.
 """
 function std_error(g::Function, samples::AbstractVector{<:Number}...)
     _std_error(leaveoneout(g, samples...))
-end
-function std_error(g::Function, samples::AbstractArray{<:Number})
-    std_error(g, [samples[:, i] for i in 1:size(samples, 2)]...)
 end
 function _std_error(gis::AbstractVector{<:Complex})
     sqrt(_std_error(real(gis))^2 + _std_error(imag(gis))^2)
@@ -144,9 +132,6 @@ function bias(
         mean(reduced_results) - g(map(mean, samples)...)
     )
 end
-function bias(g::Function, samples::AbstractArray{<:Number})
-    bias(g, [samples[:, i] for i in 1:size(samples, 2)]...)
-end
 
 
 """
@@ -165,9 +150,6 @@ function estimate(
     # Eq. (3.34) in QMC Methods book
     n = length(reduced_results)
     return n * g(map(mean, samples)...) - (n - 1) * mean(reduced_results)
-end
-function estimate(g::Function, samples::AbstractArray{<:Number})
-    estimate(g, [samples[:, i] for i in 1:size(samples, 2)]...)
 end
 
 
