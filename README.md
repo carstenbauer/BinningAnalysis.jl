@@ -118,3 +118,11 @@ ts = rand(1000);
 std_error(ts) # default is logarithmic binning
 std_error(ts, method=:full)
 ```
+
+
+## Supported types
+
+All statistical tools should work with number-like (`<: Number`) and array-like (`<: AbstractArray`) elements. Regarding complex numbers, we follow base Julia and define
+`var(x) = var(real(x)) + var(imag(x))`.
+
+If you observe unexpected behavior please file an issue!
