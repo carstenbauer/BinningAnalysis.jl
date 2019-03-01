@@ -5,7 +5,7 @@ function performance_test(N = 28, start=1)
 
     for i in start:N
         # NOTE using the default size here actually performs better
-        BA = LogBinner(i+1)
+        BA = LogBinner(Float64, capacity = 2^i)
         xs = rand(2^i)
         GC.gc()
 
@@ -30,7 +30,7 @@ begin
     plot(xs, ys, "r+:")
     xlabel("log(Values pushed)")
     ylabel("Average time per push [ns]")
-    ylim(0, 100)
+    ylim(0, 200)
 end
 
 
