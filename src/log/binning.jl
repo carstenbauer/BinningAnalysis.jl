@@ -11,6 +11,7 @@ end
 struct LogBinner{N, T}
     # list of Compressors, one per level
     compressors::NTuple{N, Compressor{T}}
+    overflow::Vector{T}
 
     # sum(x) for all values on a given lvl
     x_sum::Vector{T}
@@ -74,7 +75,7 @@ function Base.empty!(B::LogBinner)
             # numbers
             B.x_sum[i] = z
             B.x2_sum[i] = z
-        else 
+        else
             # arrays
             fill!(B.x_sum[i], z)
             fill!(B.x2_sum[i], z)
@@ -93,6 +94,8 @@ function Base.empty!(B::LogBinner)
         end
         c.switch = false
     end
+
+    empty!(B.overflow)
 
     nothing
 end
@@ -159,7 +162,7 @@ function LogBinner(x::T;
     # got_timeseries = didn't receive a zero && is a vector
     got_timeseries = count(!iszero, x) > 0 && ndims(T) == 1
 
-    if got_timeseries 
+    if got_timeseries
         # x = time series
         N = _capacity2nlvls(length(x))
         S = _sum_type_heuristic(eltype(T), ndims(x[1]))
@@ -173,6 +176,7 @@ function LogBinner(x::T;
 
     B = LogBinner{N, S}(
         tuple([Compressor{S}(copy(el), false) for i in 1:N]...),
+        S[],
         [copy(el) for _ in 1:N],
         [copy(el) for _ in 1:N],
         zeros(Int64, N)
@@ -247,7 +251,7 @@ function _push!(B::LogBinner{N, T}, lvl::Int64, value::S) where {N, T <: Number,
         # Do averaging
         if lvl == N
             # No more propagation possible -> throw error
-            throw(OverflowError("The Binning Analysis has exceeded its maximum capacity."))
+            push!(B.overflow, value)
         else
             # propagate to next lvl
             C.switch = false
@@ -275,7 +279,7 @@ function _push!(
         return nothing
     else
         if lvl == N
-            throw(OverflowError("The Binning Analysis has exceeded its maximum capacity."))
+            push!(B.overflow, value)
         else
             C.switch = false
             _push!(B, lvl+1, 0.5 * (C.value .+ value))

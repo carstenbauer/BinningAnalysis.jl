@@ -47,12 +47,13 @@
 
     # Test error on overflow
     B = LogBinner(capacity=1)
-    push!(B, 1.0)
-    @test_throws OverflowError push!(B, 2.0)
+    push!(B, 1.0); push!(B, 2.0)
+    @test !isempty(B.overflow)
+
 
     B = LogBinner(zeros(2,2), capacity=1)
-    push!(B, rand(2,2))
-    @test_throws OverflowError push!(B, rand(2,2))
+    push!(B, rand(2,2)); push!(B, rand(2,2))
+    @test !isempty(B.overflow)
 
     # time series constructor (#26)
     x = rand(10)
