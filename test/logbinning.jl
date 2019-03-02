@@ -66,6 +66,12 @@
     @test mean(B) == mean(x)
 
     # Test LogBinner(::LogBinner)
+    fake_Binner = LogBinner{1, String}(
+        tuple(BinningAnalysis.Compressor{String}("", false)),
+        String[], [""], [""], [0]
+    )
+    @test_throws ErrorException LogBinner(fake_Binner)
+
     for T in [Float64, ComplexF32]
         xs = rand(T, 1000)
         small_Binner = LogBinner(T, capacity = 200)

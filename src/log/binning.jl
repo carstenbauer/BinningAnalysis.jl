@@ -203,10 +203,12 @@ function LogBinner(
         ))
     end
 
-    _zero = if T <: Number
-        zero(T)
+    if T <: Number
+        _zero = zero(T)
     elseif T <: AbstractArray
-        B.x_sum[1] .- B.x_sum[1]
+        _zero = B.x_sum[1] .- B.x_sum[1]
+    else
+        throw(ErrorException("Failed to generate zero for type $T."))
     end
 
     # Copy everthing up to lvl = N, fill the rest with neutral elements
