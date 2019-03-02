@@ -45,11 +45,10 @@
     @test_throws ArgumentError LogBinner(capacity=-1)
 
 
-    # Test error on overflow
+    # Test overflow
     B = LogBinner(capacity=1)
     push!(B, 1.0); push!(B, 2.0)
     @test !isempty(B.overflow)
-
 
     B = LogBinner(zeros(2,2), capacity=1)
     push!(B, rand(2,2)); push!(B, rand(2,2))
@@ -65,8 +64,40 @@
     B = LogBinner(x)
     @test length(B) == 5
     @test mean(B) == mean(x)
-end
 
+    # Test LogBinner(::LogBinner)
+    for T in [Float64, ComplexF32]
+        xs = rand(T, 1000)
+        small_Binner = LogBinner(T, capacity = 200)
+        large_Binner = LogBinner(T)
+        append!(small_Binner, xs)
+        append!(large_Binner, xs)
+        ext_Binner = LogBinner(small_Binner)
+
+        @test all(ext_Binner.x_sum .== large_Binner.x_sum)
+        @test all(ext_Binner.x2_sum .== large_Binner.x2_sum)
+        @test all(ext_Binner.count .== large_Binner.count)
+        @test all(ext_Binner.overflow .== large_Binner.overflow)
+        @test map(ext_Binner.compressors, large_Binner.compressors) do c1, c2
+            (c1.value == c2.value) && (c1.switch == c2.switch)
+        end |> all
+    end
+
+    xs = [rand(2, 2) for _ in 1:1000]
+    small_Binner = LogBinner(zeros(2, 2), capacity = 200)
+    large_Binner = LogBinner(zeros(2, 2))
+    append!(small_Binner, xs)
+    append!(large_Binner, xs)
+    ext_Binner = LogBinner(small_Binner)
+    
+    @test all(ext_Binner.x_sum .== large_Binner.x_sum)
+    @test all(ext_Binner.x2_sum .== large_Binner.x2_sum)
+    @test all(ext_Binner.count .== large_Binner.count)
+    @test all(ext_Binner.overflow .== large_Binner.overflow)
+    @test map(ext_Binner.compressors, large_Binner.compressors) do c1, c2
+        (c1.value == c2.value) && (c1.switch == c2.switch)
+    end |> all
+end
 
 
 @testset "Checking converging data (Real)" begin

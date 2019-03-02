@@ -189,6 +189,47 @@ function LogBinner(
 end
 
 
+function LogBinner(
+        B::LogBinner{N, T};
+        capacity = _nlvls2capacity(32)
+    ) where {N, T}
+
+    N_lvls = _capacity2nlvls(capacity)
+    if N_lvls <= N
+        throw(OverflowError(
+            "The new LogBinner must have equal or larger capacity when being" *
+            "built from an old LogBinner. (Try capacity ≥ " *
+            "$(_nlvls2capacity(N)+1))"
+        ))
+    end
+
+    _zero = if T <: Number
+        zero(T)
+    elseif T <: AbstractArray
+        B.x_sum[1] .- B.x_sum[1]
+    end
+
+    # Copy everthing up to lvl = N, fill the rest with neutral elements
+    x_sum = [lvl <= N ? copy(B.x_sum[lvl]) : copy(_zero) for lvl in 1:N_lvls]
+    x2_sum = [lvl <= N ? copy(B.x2_sum[lvl]) : copy(_zero) for lvl in 1:N_lvls]
+    count = [lvl <= N ? copy(B.count[lvl]) : 0 for lvl in 1:N_lvls]
+    compressors = map(1:N_lvls) do lvl
+        if lvl <= N
+            deepcopy(B.compressors[lvl])
+        else
+            Compressor{T}(copy(_zero), false)
+        end
+    end
+
+    # Create new LogBinner, insert (N+1)-times binned value from overflow
+    new_Binner = LogBinner{N_lvls, T}(tuple(compressors...), T[], x_sum, x2_sum, count)
+    for value in B.overflow
+        _push!(new_Binner, N+1, value)
+    end
+
+    new_Binner
+end
+
 
 function _sum_type_heuristic(::Type{T}, elndims::Integer) where T
     # heuristic to set sum type (#2)
