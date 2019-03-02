@@ -152,9 +152,10 @@ Values can be added using `push!` and `append!`.
 
 Creates a new `LogBinner` and adds all elements from the given timeseries.
 """
-function LogBinner(x::T;
+function LogBinner(
+        x::T;
         capacity::Int64 = _nlvls2capacity(32)
-        ) where {T <: Union{Number, AbstractArray}}
+    ) where {T <: Union{Number, AbstractArray}}
 
     # check keyword args
     capacity <= 0 && throw(ArgumentError("`capacity` must be finite and positive."))
@@ -249,12 +250,12 @@ function _push!(B::LogBinner{N, T}, lvl::Int64, value::S) where {N, T <: Number,
         return nothing
     else
         # Do averaging
+        C.switch = false
         if lvl == N
             # No more propagation possible -> throw error
-            push!(B.overflow, value)
+            push!(B.overflow, 0.5 * (C.value + value))
         else
             # propagate to next lvl
-            C.switch = false
             _push!(B, lvl+1, 0.5 * (C.value + value))
             return nothing
         end
@@ -278,10 +279,10 @@ function _push!(
         C.switch = true
         return nothing
     else
+        C.switch = false
         if lvl == N
-            push!(B.overflow, value)
+            push!(B.overflow, 0.5 * (C.value .+ value))
         else
-            C.switch = false
             _push!(B, lvl+1, 0.5 * (C.value .+ value))
             return nothing
         end
