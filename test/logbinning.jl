@@ -69,10 +69,11 @@
     for T in [Float64, ComplexF32]
         xs = rand(T, 1000)
         small_Binner = LogBinner(T, capacity = 200)
-        large_Binner = LogBinner(T)
+        large_Binner = LogBinner(T, capacity = 2000)
         append!(small_Binner, xs)
         append!(large_Binner, xs)
-        ext_Binner = LogBinner(small_Binner)
+        @test_throws OverflowError LogBinner(small_Binner, capacity = 100)
+        ext_Binner = LogBinner(small_Binner, capacity = 2000)
 
         @test all(ext_Binner.x_sum .== large_Binner.x_sum)
         @test all(ext_Binner.x2_sum .== large_Binner.x2_sum)
@@ -85,11 +86,12 @@
 
     xs = [rand(2, 2) for _ in 1:1000]
     small_Binner = LogBinner(zeros(2, 2), capacity = 200)
-    large_Binner = LogBinner(zeros(2, 2))
+    large_Binner = LogBinner(zeros(2, 2), capacity = 2000)
     append!(small_Binner, xs)
     append!(large_Binner, xs)
-    ext_Binner = LogBinner(small_Binner)
-    
+    @test_throws OverflowError LogBinner(small_Binner, capacity = 100)
+    ext_Binner = LogBinner(small_Binner, capacity = 2000)
+
     @test all(ext_Binner.x_sum .== large_Binner.x_sum)
     @test all(ext_Binner.x2_sum .== large_Binner.x2_sum)
     @test all(ext_Binner.count .== large_Binner.count)
