@@ -206,7 +206,7 @@ function LogBinner(
     if T <: Number
         _zero = zero(T)
     elseif T <: AbstractArray
-        _zero = fill!(similiar(B.x_sum[1]), eltype(B.x_sum[1]))
+        _zero = fill!(similar(B.x_sum[1]), zero(eltype(B.x_sum[1])))
     else
         throw(ErrorException("Failed to generate zero for type $T."))
     end
