@@ -241,12 +241,12 @@ end
 
 @testset "Sum-type heuristic" begin
     # numbers
-    @test typeof(LogBinner(zero(Int64))) == LogBinner{32,Float64}
-    @test typeof(LogBinner(zero(ComplexF16))) == LogBinner{32,ComplexF64}
+    @test typeof(LogBinner(zero(Int64))) == LogBinner{Float64, 32}
+    @test typeof(LogBinner(zero(ComplexF16))) == LogBinner{ComplexF64, 32}
 
     # arrays
-    @test typeof(LogBinner(zeros(Int64, 2,2))) == LogBinner{32,Matrix{Float64}}
-    @test typeof(LogBinner(zeros(ComplexF16, 2,2))) == LogBinner{32,Matrix{ComplexF64}}
+    @test typeof(LogBinner(zeros(Int64, 2,2))) == LogBinner{Matrix{Float64}, 32}
+    @test typeof(LogBinner(zeros(ComplexF16, 2,2))) == LogBinner{Matrix{ComplexF64}, 32}
 end
 
 
@@ -307,9 +307,9 @@ end
     close(write_pipe);
 
     # compact
-    @test readline(read_pipe) == "LogBinner{32,Float64}()"
+    @test readline(read_pipe) == "LogBinner{Float64,32}()"
     # full
-    @test readline(read_pipe) == "LogBinner{32,Float64}"
+    @test readline(read_pipe) == "LogBinner{Float64,32}"
     @test readline(read_pipe) == "| Count: 0"
     @test length(readlines(read_pipe)) == 0
     close(read_pipe);
@@ -321,7 +321,7 @@ end
     show(write_pipe, MIME"text/plain"(), B)
     redirect_stdout(oldstdout);
     close(write_pipe);
-    @test readline(read_pipe) == "LogBinner{32,Float64}"
+    @test readline(read_pipe) == "LogBinner{Float64,32}"
     @test readline(read_pipe) == "| Count: 1000"
     @test readline(read_pipe) == "| Mean: 0.49685"
     @test readline(read_pipe) == "| StdError: 0.00733"
