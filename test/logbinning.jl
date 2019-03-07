@@ -126,6 +126,9 @@ end
     @test isapprox(all_varNs(BA), zero(all_varNs(BA)), atol=1e-6)
     @test isapprox(all_taus(BA), [0.0, -0.00065328850247931, -0.0018180968845809553, 0.00019817179932868356, 0.0005312186016332987, -0.009476150581268994, -0.008794711536776634, -0.007346737569564443, -0.014542478848703244, -0.030064159934323653, -0.01599670814224563, -0.007961042363178128, -0.03167873601168558, -0.056188229083248886, -0.008218660661725774, 0.05035147373711113, 0.0756019296606737, 0.2387501479629205, 0.289861051172009])
     @test isapprox(all_std_errors(BA), [0.0004083071646092097, 0.0004080403350462593, 0.00040756414657076514, 0.0004083880715587553, 0.0004085240073900606, 0.00040441947616030687, 0.00040470028980091994, 0.0004052963382191276, 0.00040232555162611277, 0.00039584146247874917, 0.00040172249945971054, 0.00040504357104527986, 0.00039516087376314515, 0.0003846815937765092, 0.00040493752222959487, 0.0004283729758565588, 0.00043808977717638777, 0.0004963074437049236, 0.0005131890106236348])
+
+    @test isapprox(tau(BA), -0.008218660661725774)
+    @test isapprox(std_error(BA), 0.00040493752222959487)
 end
 
 
@@ -147,6 +150,9 @@ end
 
     # all_std_errors for <:AbstractArray
     @test all(isapprox.(all_std_errors(BA), Ref(zeros(3)), atol=1e-2))
+
+    @test all(isapprox.(tau(BA), [-0.101203, -0.0831874, -0.0112827], atol=1e-6))
+    @test all(isapprox.(std_error(BA), [0.000364498, 0.00037268, 0.000403603], atol=1e-6))
 end
 
 
@@ -235,12 +241,12 @@ end
 
 @testset "Sum-type heuristic" begin
     # numbers
-    @test typeof(LogBinner(zero(Int64))) == LogBinner{32,Float64}
-    @test typeof(LogBinner(zero(ComplexF16))) == LogBinner{32,ComplexF64}
+    @test typeof(LogBinner(zero(Int64))) == LogBinner{Float64, 32}
+    @test typeof(LogBinner(zero(ComplexF16))) == LogBinner{ComplexF64, 32}
 
     # arrays
-    @test typeof(LogBinner(zeros(Int64, 2,2))) == LogBinner{32,Matrix{Float64}}
-    @test typeof(LogBinner(zeros(ComplexF16, 2,2))) == LogBinner{32,Matrix{ComplexF64}}
+    @test typeof(LogBinner(zeros(Int64, 2,2))) == LogBinner{Matrix{Float64}, 32}
+    @test typeof(LogBinner(zeros(ComplexF16, 2,2))) == LogBinner{Matrix{ComplexF64}, 32}
 end
 
 
@@ -301,9 +307,9 @@ end
     close(write_pipe);
 
     # compact
-    @test readline(read_pipe) == "LogBinner{32,Float64}()"
+    @test readline(read_pipe) == "LogBinner{Float64,32}()"
     # full
-    @test readline(read_pipe) == "LogBinner{32,Float64}"
+    @test readline(read_pipe) == "LogBinner{Float64,32}"
     @test readline(read_pipe) == "| Count: 0"
     @test length(readlines(read_pipe)) == 0
     close(read_pipe);
@@ -315,7 +321,7 @@ end
     show(write_pipe, MIME"text/plain"(), B)
     redirect_stdout(oldstdout);
     close(write_pipe);
-    @test readline(read_pipe) == "LogBinner{32,Float64}"
+    @test readline(read_pipe) == "LogBinner{Float64,32}"
     @test readline(read_pipe) == "| Count: 1000"
     @test readline(read_pipe) == "| Mean: 0.49685"
     @test readline(read_pipe) == "| StdError: 0.00733"

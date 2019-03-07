@@ -8,7 +8,7 @@ mutable struct Compressor{T}
 end
 
 
-struct LogBinner{N, T}
+struct LogBinner{T, N}
     # list of Compressors, one per level
     compressors::NTuple{N, Compressor{T}}
 
@@ -23,21 +23,21 @@ end
 
 
 # Overload some basic Base functions
-Base.eltype(B::LogBinner{N,T}) where {N,T} = T
+Base.eltype(B::LogBinner{T,N}) where {T,N} = T
 Base.length(B::LogBinner) = B.count[1]
-Base.ndims(B::LogBinner{N,T}) where {N,T} = ndims(eltype(B))
+Base.ndims(B::LogBinner{T,N}) where {T,N} = ndims(eltype(B))
 Base.isempty(B::LogBinner) = length(B) == 0
 
 
 
 
 
-function _print_header(io::IO, B::LogBinner{N,T}) where {N, T}
-    print(io, "LogBinner{$(N),$(T)}")
+function _print_header(io::IO, B::LogBinner{T,N}) where {T,N}
+    print(io, "LogBinner{$(T),$(N)}")
     nothing
 end
 
-function _println_body(io::IO, B::LogBinner{N,T}) where {N, T}
+function _println_body(io::IO, B::LogBinner{T,N}) where {T,N}
     n = length(B)
     println(io)
     print(io, "| Count: ", n)
@@ -49,7 +49,7 @@ function _println_body(io::IO, B::LogBinner{N,T}) where {N, T}
 end
 
 # short version (shows up in arrays etc.)
-Base.show(io::IO, B::LogBinner{N,T}) where {N, T} = print(io, "LogBinner{$(N),$(T)}()")
+Base.show(io::IO, B::LogBinner{T,N}) where {T,N} = print(io, "LogBinner{$(T),$(N)}()")
 # verbose version (shows up in the REPL)
 Base.show(io::IO, m::MIME"text/plain", B::LogBinner) = (_print_header(io, B); _println_body(io, B))
 
@@ -107,8 +107,8 @@ _capacity2nlvls(capacity::Int) = ceil(Int, log(2, capacity + 1))
 
 Capacity of the binner, i.e. how many values can be handled before overflowing.
 """
-capacity(B::LogBinner{N, T}) where {N,T} = _nlvls2capacity(N)
-nlevels(B::LogBinner{N, T}) where {N,T} = N
+capacity(B::LogBinner{T,N}) where {T,N} = _nlvls2capacity(N)
+nlevels(B::LogBinner{T,N}) where {T,N} = N
 
 
 
@@ -171,7 +171,7 @@ function LogBinner(x::T;
         el = x
     end
 
-    B = LogBinner{N, S}(
+    B = LogBinner{S, N}(
         tuple([Compressor{S}(copy(el), false) for i in 1:N]...),
         [copy(el) for _ in 1:N],
         [copy(el) for _ in 1:N],
@@ -215,7 +215,7 @@ end
 
 Pushes a new value into the Binning Analysis.
 """
-function Base.push!(B::LogBinner{N, T}, value::S) where {N, T, S}
+function Base.push!(B::LogBinner{T,N}, value::S) where {N, T, S}
     ndims(T) == ndims(S) || throw(DimensionMismatch("Expected $(ndims(T)) dimensions but got $(ndims(S))."))
 
     _push!(B, 1, value)
@@ -227,7 +227,7 @@ _square(x::Complex) = Complex(real(x)^2, imag(x)^2)
 _square(x::AbstractArray) = _square.(x)
 
 # recursion, back-end function
-function _push!(B::LogBinner{N, T}, lvl::Int64, value::S) where {N, T <: Number, S}
+function _push!(B::LogBinner{T,N}, lvl::Int64, value::S) where {N, T <: Number, S}
     C = B.compressors[lvl]
 
     # any value propagating through this function is new to lvl. Therefore we
@@ -259,7 +259,7 @@ function _push!(B::LogBinner{N, T}, lvl::Int64, value::S) where {N, T <: Number,
 end
 
 function _push!(
-        B::LogBinner{N, T},
+        B::LogBinner{T,N},
         lvl::Int64,
         value::S
     ) where {N, T <: AbstractArray, S}
