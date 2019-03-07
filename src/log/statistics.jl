@@ -122,10 +122,15 @@ end
 
 Calculates the autocorrelation time tau.
 """
-function tau(B::LogBinner, lvl::Integer = _reliable_level(B))
+function tau(B::LogBinner{N, T}, lvl::Integer = _reliable_level(B)) where {N , T <: Number}
     var_0 = varN(B, 1)
     var_l = varN(B, lvl)
     0.5 * (var_l / var_0 - 1)
+end
+function tau(B::LogBinner{N, T}, lvl::Integer = _reliable_level(B)) where {N , T <: AbstractArray}
+    var_0 = varN(B, 1)
+    var_l = varN(B, lvl)
+    @. 0.5 * (var_l / var_0 - 1)
 end
 
 
