@@ -203,8 +203,8 @@ end
 Adds an array of values to the binner by `push!`ing each element.
 """
 function Base.append!(B::LogBinner, values::AbstractArray)
-    for value in values
-        push!(B, value)
+    @inbounds for i in eachindex(values)
+        _push!(B, 1, values[i])
     end
     nothing
 end
@@ -222,12 +222,12 @@ function Base.push!(B::LogBinner{T,N}, value::S) where {N, T, S}
 end
 
 
-_square(x) = x^2
-_square(x::Complex) = Complex(real(x)^2, imag(x)^2)
-_square(x::AbstractArray) = _square.(x)
+@inline _square(x) = x^2
+@inline _square(x::Complex) = Complex(real(x)^2, imag(x)^2)
+@inline _square(x::AbstractArray) = _square.(x)
 
 # recursion, back-end function
-function _push!(B::LogBinner{T,N}, lvl::Int64, value::S) where {N, T <: Number, S}
+@inline function _push!(B::LogBinner{T,N}, lvl::Int64, value::S) where {N, T <: Number, S}
     C = B.compressors[lvl]
 
     # any value propagating through this function is new to lvl. Therefore we
