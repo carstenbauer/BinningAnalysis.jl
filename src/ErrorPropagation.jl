@@ -31,42 +31,73 @@ Statistics.std(g::Function, ep::Abstract_Error_Propagator) = sqrt(var_O1(g, ep))
 ################################################################################
 
 
-mutable struct Error_Propagator1 <: Abstract_Error_Propagator
-    x_sum::Float64
-    y_sum::Float64
-
-    xx_sum::Float64
-    yy_sum::Float64
-    xy_sum::Float64
+mutable struct Error_Propagator1{T} <: Abstract_Error_Propagator
+    # ∑x
+    sums1D::Vector{T}
+    #∑xy
+    sums2D::Matrix{T}
 
     N::Int64
 end
 
 # Initialization
-Error_Propagator1() = Error_Propagator1(0., 0., 0., 0., 0., 0)
+function Error_Propagator1(zero::T, N::Integer) where T
+    Error_Propagator1(
+        [copy(zero) for _ in 1:N],
+        [copy(zero) for _ in 1:N, __ in 1:N],
+        0
+    )
+end
 
-function Base.push!(ep::Error_Propagator1, x::Float64, y::Float64)
-    # For means, variance, covariance
-    ep.x_sum += x
-    ep.y_sum += y
+function Base.push!(ep::Error_Propagator1{T}, args::T...) where T
     ep.N += 1
-
-    # Variances
-    ep.xx_sum += x*x
-    ep.yy_sum += y*y
-
-    # Covariance
-    ep.xy_sum += x*y
+    @simd for i in eachindex(ep.sums1D)
+        ep.sums1D[i] += args[i]
+        for j in eachindex(ep.sums1D)
+            ep.sums2D[i, j] += args[i] * args[j]
+        end
+    end
     nothing
 end
 
-# These require a final normalization
-xmean(ep::Error_Propagator1) = ep.x_sum / ep.N
-ymean(ep::Error_Propagator1) = ep.y_sum / ep.N
-xvar(ep::Error_Propagator1) = (ep.xx_sum - ep.x_sum^2 / ep.N) / (ep.N - 1)
-yvar(ep::Error_Propagator1) = (ep.yy_sum - ep.y_sum^2 / ep.N) / (ep.N - 1)
-xycov(ep::Error_Propagator1) = (ep.xy_sum - ep.x_sum * ep.y_sum / ep.N) / (ep.N - 1)
 
+means(ep::Error_Propagator1) = ep.sums1D ./ ep.N
+function covmat(ep::Error_Propagator1)
+    invN = 1.0 / ep.N
+    invN1 = 1.0 / (ep.N-1)
+    [
+        (ep.sums2D[i, j] - ep.sums1D[i] * ep.sums1D[j] * invN) * invN1
+        for i in eachindex(ep.sums1D), j in eachindex(ep.sums1D)
+    ]
+end
+
+function var_O1(g::Function, ep::Error_Propagator1)
+    # NOTE: Not type stable :(
+    # derivatives = ForwardDiff.gradient(v -> g(v...), means(ep))
+    # NOTE: Also not type stable
+    # NOTE: crossing a function barrier doesn"t hel either
+    ms = means(ep)
+    derivatives = [
+        ForwardDiff.derivative(
+            x -> g(ms[1:i-1]..., x, ms[i+1:end]...),
+            ms[i]
+        ) for i in eachindex(ms)
+    ]
+
+
+    result = 0.0
+    invN = 1.0 / ep.N
+    invNN1 = 1.0 / (ep.N * (ep.N-1))
+    for i in eachindex(ep.sums1D)
+        for j in eachindex(ep.sums1D)
+            result += derivatives[i] * derivatives[j] * (
+                ep.sums2D[i, j] - ep.sums1D[i] * ep.sums1D[j] * invN
+            ) * invNN1
+        end
+    end
+
+    result
+end
 
 ################################################################################
 ### Version 2: Using Welford's Algorithm for the variance and covariance
