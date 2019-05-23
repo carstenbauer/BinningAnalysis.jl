@@ -41,6 +41,12 @@ mutable struct Error_Propagator1{T} <: Abstract_Error_Propagator
 end
 
 # Initialization
+"""
+    Error_Propagator1(zero, N_arguments)
+
+Creates a new error propagator accepting `N_arguments` per push! with a given
+zero-element.
+"""
 function Error_Propagator1(zero::T, N::Integer) where T
     Error_Propagator1(
         [copy(zero) for _ in 1:N],
@@ -49,6 +55,12 @@ function Error_Propagator1(zero::T, N::Integer) where T
     )
 end
 
+"""
+    push!(error_propagator, args...)
+
+Adds a set of arguments `args` to the error_propagator, where the number of
+arguments must match `N_arguments` from the initialization.
+"""
 function Base.push!(ep::Error_Propagator1{T}, args::T...) where T
     ep.N += 1
     @simd for i in eachindex(ep.sums1D)
@@ -60,8 +72,19 @@ function Base.push!(ep::Error_Propagator1{T}, args::T...) where T
     nothing
 end
 
+"""
+    means(error_propagator)
 
+Calculates the mean of each argument pushed to the error propagator, i.e.
+`N_arguments` means, and returns them as a vector.
+"""
 means(ep::Error_Propagator1) = ep.sums1D ./ ep.N
+
+"""
+    covmat(error_propagator)
+
+Calculates the covariance matrix of each argument of the error_propagator.
+"""
 function covmat(ep::Error_Propagator1)
     invN = 1.0 / ep.N
     invN1 = 1.0 / (ep.N-1)
@@ -71,6 +94,13 @@ function covmat(ep::Error_Propagator1)
     ]
 end
 
+"""
+    var_O1(f, error_propagator)
+
+Gives a first order estimate of the variance of the function `f` for the sample
+pushed to error_propagator. The mean of `f` can be calculated with
+`f(means(error_propagator)...)`.
+"""
 function var_O1(g::Function, ep::Error_Propagator1)
     # NOTE: Not type stable :(
     # derivatives = ForwardDiff.gradient(v -> g(v...), means(ep))
@@ -168,6 +198,12 @@ struct Error_Propagator3{T, N} <: Abstract_Error_Propagator
 end
 
 # Initialization
+"""
+    Error_Propagator3(zero, N_arguments[, N_levels = 32])
+
+Creates a new, empty Error Propagator. By default, it can handle 2^32-1 ≈ 4e9
+values.
+"""
 function Error_Propagator3(zero::T, N_arguments::Integer, N_levels=32) where T
     Error_Propagator3{T, N_levels}(
         tuple([
@@ -186,6 +222,13 @@ function Error_Propagator3(zero::T, N_arguments::Integer, N_levels=32) where T
     )
 end
 
+"""
+    push!(error_propagator, args...)
+
+Pushes a set of argumentes `args` into a given error propagator. Note that the
+number of arguments must match the initially defined `N_arguments` of the
+error propagator.
+"""
 function Base.push!(ep::Error_Propagator3{T, N}, args::T...) where {T, N}
     _push!(ep, 1, args)
 end
@@ -234,7 +277,21 @@ function _push!(ep::Error_Propagator3{T, N}, lvl::Int64, args) where {T, N}
 end
 
 
+"""
+    means(error_propagator, lvl)
+
+Returns a vector of means for a given level of the error propagator. The order
+of means matches the order of arguments.
+"""
 means(ep::Error_Propagator3, lvl) = ep.sums1D[lvl] ./ ep.count[lvl]
+
+"""
+    covmat(error_propagator, lvl)
+
+Returns the covariance matrix for a given level of the error propgator. The
+diagonal of this matrix contains the variances, given in the same order as
+means.
+"""
 function covmat(ep::Error_Propagator3, lvl)
     invN = 1.0 / ep.count[lvl]
     invN1 = 1.0 / (ep.count[lvl] - 1)
@@ -244,6 +301,13 @@ function covmat(ep::Error_Propagator3, lvl)
     ]
 end
 
+"""
+    var_O1(f, error_propagator, lvl)
+
+Gives a first-order variance estimate of `f(args...)` for a given binning level,
+where `args` have been collected in the error propagator. To get an estimate
+mean value of `f`, `f(means(error_propagator)...)` can be used.
+"""
 function var_O1(g::Function, ep::Error_Propagator3, lvl)
     # NOTE: Not type stable :(
     # derivatives = ForwardDiff.gradient(v -> g(v...), means(ep))
