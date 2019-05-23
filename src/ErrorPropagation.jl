@@ -229,12 +229,28 @@ Pushes a set of argumentes `args` into a given error propagator. Note that the
 number of arguments must match the initially defined `N_arguments` of the
 error propagator.
 """
-function Base.push!(ep::Error_Propagator3{T, N}, args::T...) where {T, N}
-    _push!(ep, 1, args)
+@inline function Base.push!(ep::Error_Propagator3{T, N}, args::T...) where {T, N}
+    # @boundscheck allows you to define a boundscheck that can be omitted with
+    # @inbounds
+    # but that requires an @inline
+    @boundscheck begin
+        (length(args) == length(ep.sums1D[1])) || throw(DimensionMismatch(
+            "Number of arguments $(length(args)) does not match the number " *
+            "of arguments accepted by the error propagator (N_arguments = " *
+            "$(length(ep.sums1D[1])))"
+        ))
+    end
+    @inbounds _push!(ep, 1, args)
 end
 
-function _push!(ep::Error_Propagator3{T, N}, lvl::Int64, args) where {T, N}
-    # TODO Remove "..."?
+@inline function _push!(ep::Error_Propagator3{T, N}, lvl::Int64, args) where {T, N}
+    @boundscheck begin
+        (length(args) == length(ep.sums1D[1])) || throw(DimensionMismatch(
+            "Number of arguments $(length(args)) does not match the number " *
+            "of arguments accepted by the error propagator (N_arguments = " *
+            "$(length(ep.sums1D[1])))"
+        ))
+    end
     C = ep.compressors[lvl]
 
     # any value propagating through this function is new to lvl. Therefore we
@@ -249,7 +265,7 @@ function _push!(ep::Error_Propagator3{T, N}, lvl::Int64, args) where {T, N}
     # do this
     @simd for i in eachindex(ep.sums1D[lvl])
         ep.sums1D[lvl][i] += args[i]
-        @inbounds for j in eachindex(ep.sums1D[lvl])
+        for j in eachindex(ep.sums1D[lvl])
             ep.sums2D[lvl][i, j] += args[i] * args[j]
         end
     end
@@ -267,7 +283,7 @@ function _push!(ep::Error_Propagator3{T, N}, lvl::Int64, args) where {T, N}
         else
             # propagate to next lvl
             C.switch = false
-            _push!(ep, lvl+1, 0.5 * (C.values .+ args))
+            @inbounds _push!(ep, lvl+1, 0.5 * (C.values .+ args))
             return nothing
         end
     end
