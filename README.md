@@ -15,14 +15,16 @@ This package provides tools to estimate [standard errors](https://en.wikipedia.o
 
 **Binning tools:**
 
-* Logarithmic Binning (most performant)
+* Logarithmic Binning
   * Size complexity: `O(log(N))`
   * Time complexity: `O(N)`
-* Full Binning
+* Full Binning (all bin sizes that work out evenly)
 
 **Statistical resampling methods:**
 
 * Jackknife resampling.
+
+<br>
 
 As per usual, you can install the package with
 
@@ -113,7 +115,7 @@ g_mean, Δg = jackknife(g, x, y, x .* y)
 
 ## Convenience wrapper
 
-If you have a time series and you simply want to calculate the standard error, using any of the aboves methods, there is a convenience wrapper `std_error(x[; method=:log])`. It takes a keyword argument `method` which can be `:log`, `:full`, or `:jackknife`.
+If you want to calculate the standard error of an existing time series there you can use the convenience wrapper `std_error(x[; method=:log])`. It takes a keyword argument `method`, which can be `:log`, `:full`, or `:jackknife`.
 
 ```julia
 ts = rand(1000);
