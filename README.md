@@ -11,13 +11,13 @@
 
 ![logo](https://github.com/crstnbr/BinningAnalysis.jl/blob/master/docs/src/assets/logo_with_text.png)
 
-This package provides tools to estimate [standard errors](https://en.wikipedia.org/wiki/Standard_error) and [autocorrelation times](https://en.wikipedia.org/wiki/Autocorrelation) of correlated time series. A typical example for the latter is a [Markov chain](https://en.wikipedia.org/wiki/Markov_chain) obtained in a [Metropolis Monte Carlo simulation](https://en.wikipedia.org/wiki/Metropolis%E2%80%93Hastings_algorithm).
+This package provides tools to estimate [standard errors](https://en.wikipedia.org/wiki/Standard_error) and [autocorrelation times](https://en.wikipedia.org/wiki/Autocorrelation) of correlated time series. A typical example is a [Markov chain](https://en.wikipedia.org/wiki/Markov_chain) obtained in a [Metropolis Monte Carlo simulation](https://en.wikipedia.org/wiki/Metropolis%E2%80%93Hastings_algorithm).
 
 Currently, the following binning tools and statistical resampling methods are provided:
 
 * Logarithmic Binning (most performant)
-  * Size complexity: $\mathcal{O}(\log_2(N))$
-  * Time complexity: $\mathcal{O}(N)$
+  * Size complexity: `O(log(N))`
+  * Time complexity: `O(N)`
 * Full Binning
 
 * Jackknife resampling.
@@ -126,3 +126,9 @@ All statistical tools should work with number-like (`<: Number`) and array-like 
 `var(x) = var(real(x)) + var(imag(x))`.
 
 If you observe unexpected behavior please file an issue!
+
+
+## References
+
+* J. Gubernatis, N. Kawashima, and P. Werner, [Quantum Monte Carlo Methods: Algorithms for Lattice Models](https://www.cambridge.org/core/books/quantum-monte-carlo-methods/AEA92390DA497360EEDA153CF1CEC7AC), Book (2016)
+* V. Ambegaokar, and M. Troyer, [Estimating errors reliably in Monte Carlo simulations of the Ehrenfest model](http://aapt.scitation.org/doi/10.1119/1.3247985), American Journal of Physics 78, 150 (2010)
