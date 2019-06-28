@@ -26,10 +26,10 @@ This package provides tools to estimate [standard errors](https://en.wikipedia.o
 
 <br>
 
-As per usual, you can install the package with
+As per usual, you can install the registered package with
 
 ```julia
-] add https://github.com/crstnbr/BinningAnalysis.jl
+] add BinningAnalysis
 ```
 
 ## Binning tools
