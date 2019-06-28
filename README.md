@@ -11,14 +11,14 @@
 
 ![logo](https://github.com/crstnbr/BinningAnalysis.jl/blob/master/docs/src/assets/logo_with_text.png)
 
-This package implements the following binning tools,
+This package provides tools to estimate [standard errors](https://en.wikipedia.org/wiki/Standard_error) and [autocorrelation times](https://en.wikipedia.org/wiki/Autocorrelation) of correlated time series. A typical example for the latter is a [Markov chain](https://en.wikipedia.org/wiki/Markov_chain) obtained in a [Metropolis Monte Carlo simulation](https://en.wikipedia.org/wiki/Metropolis%E2%80%93Hastings_algorithm).
+
+Currently, the following binning tools and statistical resampling methods are provided:
 
 * Logarithmic Binning (most performant)
   * Size complexity: $\mathcal{O}(\log_2(N))$
   * Time complexity: $\mathcal{O}(N)$
 * Full Binning
-
-and the following statistical resampling methods,
 
 * Jackknife resampling.
 
