@@ -11,16 +11,20 @@
 
 ![logo](https://github.com/crstnbr/BinningAnalysis.jl/blob/master/docs/src/assets/logo_with_text.png)
 
-This package implements the following binning tools,
+This package provides tools to estimate [standard errors](https://en.wikipedia.org/wiki/Standard_error) and [autocorrelation times](https://en.wikipedia.org/wiki/Autocorrelation) of correlated time series. A typical example is a [Markov chain](https://en.wikipedia.org/wiki/Markov_chain) obtained in a [Metropolis Monte Carlo simulation](https://en.wikipedia.org/wiki/Metropolis%E2%80%93Hastings_algorithm).
 
-* Logarithmic Binning (most performant)
-  * Size complexity: $\mathcal{O}(\log_2(N))$
-  * Time complexity: $\mathcal{O}(N)$
-* Full Binning
+**Binning tools:**
 
-and the following statistical resampling methods,
+* Logarithmic Binning
+  * Size complexity: `O(log(N))`
+  * Time complexity: `O(N)`
+* Full Binning (all bin sizes that work out evenly)
+
+**Statistical resampling methods:**
 
 * Jackknife resampling.
+
+<br>
 
 As per usual, you can install the package with
 
@@ -111,7 +115,7 @@ g_mean, Δg = jackknife(g, x, y, x .* y)
 
 ## Convenience wrapper
 
-If you have a time series and you simply want to calculate the standard error, using any of the aboves methods, there is a convenience wrapper `std_error(x[; method=:log])`. It takes a keyword argument `method` which can be `:log`, `:full`, or `:jackknife`.
+If you want to calculate the standard error of an existing time series there you can use the convenience wrapper `std_error(x[; method=:log])`. It takes a keyword argument `method`, which can be `:log`, `:full`, or `:jackknife`.
 
 ```julia
 ts = rand(1000);
@@ -126,3 +130,9 @@ All statistical tools should work with number-like (`<: Number`) and array-like 
 `var(x) = var(real(x)) + var(imag(x))`.
 
 If you observe unexpected behavior please file an issue!
+
+
+## References
+
+* J. Gubernatis, N. Kawashima, and P. Werner, [Quantum Monte Carlo Methods: Algorithms for Lattice Models](https://www.cambridge.org/core/books/quantum-monte-carlo-methods/AEA92390DA497360EEDA153CF1CEC7AC), Book (2016)
+* V. Ambegaokar, and M. Troyer, [Estimating errors reliably in Monte Carlo simulations of the Ehrenfest model](http://aapt.scitation.org/doi/10.1119/1.3247985), American Journal of Physics 78, 150 (2010)
