@@ -248,25 +248,76 @@ end
 
 
 """
-    var(ep::ErrorPropagator, gradient::Vector[, lvl])
+    var(ep::ErrorPropagator, gradient[, lvl])
 
-Gives the first-order variance extimate of a function `f` acting on the
-arguments of the error propagator. For this, the gradient of `f` at the mean
-value of each argument is needed, i.e. `gradient = ∇f(means(ep)...)` should be
-given. To get an estimate mean value of `f`, `f(means(ep)...)` can be used.
+Gives the first-order variance estimate of a function `f` acting on the
+arguments of the error propagator. `gradient` is either the gradient of `f` (a
+function) or a vector `∇f(means(ep))`. To get an  estimate mean value of `f`,
+`f(means(ep)...)` can be used.
 """
-function var(ep::ErrorPropagator, gradient::Vector, lvl = _reliable_level(ep))
+function var(
+        ep::ErrorPropagator{T, N},
+        gradient::Vector,
+        lvl = _reliable_level(ep)
+    ) where {T <: Real, N}
+
     result = 0.0
     invN = 1.0 / ep.count[lvl]
-    invNN1 = 1.0 / (ep.count[lvl] * (ep.count[lvl] - 1))
+    # invNN1 = 1.0 / (ep.count[lvl] * (ep.count[lvl] - 1))
+    invN1 = 1.0 / (ep.count[lvl] - 1)
     for i in eachindex(ep.sums1D[lvl])
         for j in eachindex(ep.sums1D[lvl])
-            result += gradients[i] * gradients[j] * (
+            result += gradient[i] * gradient[j] * (
                 ep.sums2D[lvl][i, j] -
                 ep.sums1D[lvl][i] * ep.sums1D[lvl][j] * invN
-            ) * invNN1
+            ) * invN1
         end
     end
 
     result
+end
+function var(
+        ep::ErrorPropagator{T, N},
+        gradient::Vector,
+        lvl = _reliable_level(ep)
+    ) where {T <: Complex, N}
+
+    result = 0.0 * 0.0im
+    invN = 1.0 / ep.count[lvl]
+    # invNN1 = 1.0 / (ep.count[lvl] * (ep.count[lvl] - 1))
+    invN1 = 1.0 / (ep.count[lvl] - 1)
+    for i in eachindex(ep.sums1D[lvl])
+        for j in eachindex(ep.sums1D[lvl])
+            result += gradient[i] * gradient[j] * (
+                real(ep.sums2D[lvl][i, j]) + imag(ep.sums2D[lvl][i, j]) -
+                real(ep.sums1D[lvl][i]) * real(ep.sums1D[lvl][j]) * invN -
+                imag(ep.sums1D[lvl][i]) * imag(ep.sums1D[lvl][j]) * invN
+            ) * invN1
+        end
+    end
+
+    abs(result)
+end
+
+# Wrappers
+function var(ep::ErrorPropagator, gradient::Function, lvl = _reliable_level(ep))
+    grad = gradient(means(ep))
+    if typeof(grad) <: AbstractArray
+        return var(ep, grad, lvl)
+    else
+        return var(ep, [grad], lvl)
+    end
+end
+
+"""
+    std_error(ep::ErrorPropagator, gradient[, lvl])
+
+
+Gives the first-order standard error estimate of a function `f` acting on the
+arguments of the error propagator. `gradient` is either the gradient of `f` (a
+function) or a vector `∇f(means(ep))`. To get an  estimate mean value of `f`,
+`f(means(ep)...)` can be used.
+"""
+function std_error(ep::ErrorPropagator, gradient, lvl = _reliable_level(ep))
+    sqrt(var(ep, gradient, lvl) / ep.count[lvl])
 end
