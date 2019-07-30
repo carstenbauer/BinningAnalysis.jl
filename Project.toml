@@ -1,8 +1,8 @@
 name = "BinningAnalysis"
 uuid = "b7192094-8e58-5052-a244-180a858778ee"
-version = "0.2.1"
 license = "MIT"
 desc = "Statistical standard error estimation tools for correlated data."
+version = "0.2.1"
 
 [deps]
 Lazy = "50d2b5c4-7a5e-59d5-8109-a42b560f39c0"

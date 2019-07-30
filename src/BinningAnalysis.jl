@@ -6,7 +6,7 @@ using Reexport, Lazy, RecursiveArrayTools
 
 # Generic functions
 include("generic.jl")
-export std_error
+export std_error, tau
 
 
 # Logarithmic binning
