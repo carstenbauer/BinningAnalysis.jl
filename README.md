@@ -32,6 +32,8 @@ As per usual, you can install the registered package with
 ] add BinningAnalysis
 ```
 
+Note that there is [BinningAnalysisPlots.jl](https://github.com/crstnbr/BinningAnalysisPlots.jl) which defines some [Plots.jl](https://github.com/JuliaPlots/Plots.jl) recipes for `LogBinner` and `FullBinner` to facilitate visualizing the error convergence.
+
 ## Binning tools
 
 ### Logarithmic Binning
