@@ -68,6 +68,51 @@ end
 
 
 
+@testset "Check variance for Float64 values" begin
+    # NOTE
+    # Due to the different (mathematically equivalent) versions of the variance
+    # calculated here, the values are onyl approximately the same. (Float error)
+    Random.seed!(1234)
+    xs = rand(Float64, 1_000_000)
+    ys = rand(Float64, 1_000_000)
+    ep = ErrorPropagator(Float64, N_args=2)
+
+    # Test small set (off by one errors are large here)
+    for (x, y) in zip(xs[1:10], ys[1:10]); push!(ep, x, y) end
+    @test var(ep, 1, 1) ≈ var(xs[1:10])
+    @test var(ep, 2, 1) ≈ var(ys[1:10])
+    @test varN(ep, 1, 1) ≈ var(xs[1:10])/10
+    @test varN(ep, 2, 1) ≈ var(ys[1:10])/10
+    @test vars(ep, 1) ≈ [var(xs[1:10]), var(ys[1:10])]
+    @test covmat(ep, 1) ≈ [
+        cov(xs[1:10], xs[1:10]) cov(xs[1:10], ys[1:10]);
+        cov(ys[1:10], xs[1:10]) cov(ys[1:10], ys[1:10])
+    ]
+
+    # Test full set
+    for (x, y) in zip(xs[11:end], ys[11:end]); push!(ep, x, y) end
+    @test var(ep, 1, 1) ≈ var(xs)
+    @test var(ep, 2, 1) ≈ var(ys)
+    @test varN(ep, 1, 1) ≈ var(xs)/1_000_000
+    @test varN(ep, 2, 1) ≈ var(ys)/1_000_000
+    @test vars(ep, 1) ≈ [var(xs), var(ys)]
+    @test covmat(ep, 1) ≈ [
+        cov(xs, xs) cov(xs, ys);
+        cov(ys, xs) cov(ys, ys)
+    ]
+
+    # all_* methods
+    @test isapprox(first.(all_vars(ep)), [0.0833563, 0.0417223, 0.0208426, 0.0104261, 0.00525425, 0.00263066, 0.00129848, 0.000643458, 0.000324319, 0.000152849, 7.28893e-5, 3.70618e-5, 1.6847e-5, 8.35098e-6, 4.03675e-6, 2.06069e-6, 9.23046e-7, 5.40964e-7, 7.6288e-7], atol=1e-6)
+    @test isapprox(first.(all_varNs(ep)), zero(first.(all_varNs(ep))), atol=1e-6)
+    @test isapprox(first.(all_taus(ep)), [0.0, 0.000530439, 8.45695e-5, 0.000316855, 0.00426884, 0.0049475, -0.00152239, -0.00592876, -0.00195134, -0.0305476, -0.0520332, -0.0444472, -0.0858441, -0.0894091, -0.103052, -0.0879748, -0.130883, -0.0364442, 1.02534], atol=1e-6)
+    @test isapprox(first.(all_std_errors(ep)), [0.000288715, 0.000288868, 0.000288739, 0.000288806, 0.000289945, 0.00029014, 0.000288275, 0.000286998, 0.000288151, 0.000279756, 0.000273279, 0.000275584, 0.000262764, 0.000261631, 0.000257247, 0.000262087, 0.000248065, 0.000277994, 0.000504275], atol=1e-6)
+
+    @test isapprox(tau(ep, 1), -0.10305205108202309)
+    @test isapprox(std_error(ep, 1), 0.00025724734978688446)
+end
+
+
+
 @testset "Check variance for complex values" begin
     # NOTE
     # Due to the different (mathematically equivalent) versions of the variance
