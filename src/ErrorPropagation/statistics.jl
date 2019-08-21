@@ -234,13 +234,30 @@ the error propagator. The result is indexed as `all_varNs(ep)[lvl][arg_idx]`.
 
 Returns the covariance matrix for a given level of the error propgator.
 """
-function covmat(ep::ErrorPropagator, lvl = _reliable_level(ep))
+function covmat(
+        ep::ErrorPropagator{T, N}, lvl = _reliable_level(ep)
+    ) where {N , T <: Number}
+
     invN = 1.0 / ep.count[lvl]
     invN1 = 1.0 / (ep.count[lvl] - 1)
     [
         (
             ep.sums2D[lvl][i, j] -
             ep.sums1D[lvl][i] * conj(ep.sums1D[lvl][j]) * invN
+        ) * invN1
+        for i in eachindex(ep.sums1D[lvl]), j in eachindex(ep.sums1D[lvl])
+    ]
+end
+function covmat(
+        ep::ErrorPropagator{T, N}, lvl = _reliable_level(ep)
+    ) where {N , T <: AbstractArray}
+
+    invN = 1.0 / ep.count[lvl]
+    invN1 = 1.0 / (ep.count[lvl] - 1)
+    [
+        (
+            ep.sums2D[lvl][i, j] -
+            ep.sums1D[lvl][i] .* conj(ep.sums1D[lvl][j]) * invN
         ) * invN1
         for i in eachindex(ep.sums1D[lvl]), j in eachindex(ep.sums1D[lvl])
     ]
