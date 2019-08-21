@@ -278,7 +278,7 @@ end
 
     ep = ErrorPropagator(ts, ts2.^2)
     # Jackknife result is           -0.07916794438503649
-    @test isapprox(g(means(ep)...), -0.0674290458560719, atol=1e-12)
+    @test isapprox(mean(ep, g), -0.0674290458560719, atol=1e-12)
     # Jackknife result is                    0.14501699232741938
     @test isapprox(std_error(ep, grad_g, 1), 0.14500583947715115, atol=1e-12)
 
@@ -298,7 +298,7 @@ end
 
     ep = ErrorPropagator(ts, ts2.^2)
     # Jackknife result is           0.02144667272121564 + 0.06979705636190503im
-    @test isapprox(g(means(ep)...), 0.02874707439395066 + 0.059243942813840045im, atol=1e-12)
+    @test isapprox(mean(ep, g), 0.02874707439395066 + 0.059243942813840045im, atol=1e-12)
     # Jackknife result is                    0.2752976586383889
     @test isapprox(std_error(ep, grad_g, 1), 0.2781329035594455, atol=1e-12)
 end

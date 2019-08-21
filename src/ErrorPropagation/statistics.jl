@@ -269,8 +269,8 @@ end
 
 Gives the first-order variance estimate of a function `f` acting on the
 arguments of the error propagator. `gradient` is either the gradient of `f` (a
-function) or a vector `∇f(means(ep))`. To get an  estimate mean value of `f`,
-`f(means(ep)...)` can be used.
+function) or a vector `∇f(means(ep))`. To get an estimate mean value of `f`,
+`mean(ep, f)` can be used.
 """
 function var(
         ep::ErrorPropagator{T, N},
@@ -332,8 +332,20 @@ end
 Gives the first-order standard error estimate of a function `f` acting on the
 arguments of the error propagator. `gradient` is either the gradient of `f` (a
 function) or a vector `∇f(means(ep))`. To get an estimate mean value of `f`,
-`f(means(ep)...)` can be used.
+`mean(ep, f)` can be used.
 """
 function std_error(ep::ErrorPropagator, gradient, lvl = _reliable_level(ep))
     sqrt(var(ep, gradient, lvl) / ep.count[lvl])
+end
+
+"""
+    mean(ep, f[, lvl=1])
+
+Returns an estimate for the mean value of `f`, where `f` is a function acting
+on the sample pushed the error porpagator. `f` must be of the form `f(v)`, where
+`v = [mean_arg1, mean_arg2, ..., mean_argN]` is a vector containing the averages
+of each argument pushed to the error propagator.
+"""
+function mean(ep::ErrorPropagator, f::Function, lvl = 1)
+    f(means(ep, lvl))
 end
