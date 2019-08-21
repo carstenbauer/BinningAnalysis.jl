@@ -55,15 +55,17 @@
     @test_throws OverflowError push!(ep, rand(2,2))
 
     # time series constructor (#26)
-    x = rand(10)
+    x = rand(16)
     ep = ErrorPropagator(x)
-    @test length(ep) == 10
+    @test length(ep) == 16
     @test mean(ep, 1) == mean(x)
+    @test all(m ≈ [mean(x)] for m in all_means(ep))
 
-    x = [rand(2,3) for _ in 1:5]
+    x = [rand(2,3) for _ in 1:8]
     ep = ErrorPropagator(x)
-    @test length(ep) == 5
+    @test length(ep) == 8
     @test mean(ep, 1) == mean(x)
+    @test all(m ≈ [mean(x)] for m in all_means(ep))
 end
 
 
@@ -109,6 +111,49 @@ end
 
     @test isapprox(tau(ep, 1), -0.10305205108202309)
     @test isapprox(std_error(ep, 1), 0.00025724734978688446)
+end
+
+
+
+@testset "Check variance for Float64 vectors" begin
+    Random.seed!(1234)
+    xs = [rand(Float64, 3) for _ in 1:1_000_000]
+    ys = [rand(Float64, 3) for _ in 1:1_000_000]
+    ep = ErrorPropagator(zeros(Float64, 3), zeros(Float64, 3))
+
+    # Test small set (off by one errors are large here)
+    for (x, y) in zip(xs[1:10], ys[1:10]); push!(ep, x, y) end
+    @test var(ep, 1, 1) ≈ var(xs[1:10])
+    @test var(ep, 2, 1) ≈ var(ys[1:10])
+    @test varN(ep, 1, 1) ≈ var(xs[1:10])/10
+    @test varN(ep, 2, 1) ≈ var(ys[1:10])/10
+    @test vars(ep, 1) ≈ [var(xs[1:10]), var(ys[1:10])]
+    @test covmat(ep, 1) ≈ reshape([
+        [cov([xs[i][j] for i in 1:10], [xs[i][j] for i in 1:10]) for j in 1:3],
+        [cov([ys[i][j] for i in 1:10], [xs[i][j] for i in 1:10]) for j in 1:3],
+        [cov([xs[i][j] for i in 1:10], [ys[i][j] for i in 1:10]) for j in 1:3],
+        [cov([ys[i][j] for i in 1:10], [ys[i][j] for i in 1:10]) for j in 1:3]
+    ], (2, 2))
+
+    # Test full set
+    for (x, y) in zip(xs[11:end], ys[11:end]); push!(ep, x, y) end
+    @test var(ep, 1, 1) ≈ var(xs)
+    @test var(ep, 2, 1) ≈ var(ys)
+    @test varN(ep, 1, 1) ≈ var(xs)/1_000_000
+    @test varN(ep, 2, 1) ≈ var(ys)/1_000_000
+    @test vars(ep, 1) ≈ [var(xs), var(ys)]
+    @test covmat(ep, 1) ≈ reshape([
+        [cov([xs[i][j] for i in 1:1_000_000], [xs[i][j] for i in 1:1_000_000]) for j in 1:3],
+        [cov([ys[i][j] for i in 1:1_000_000], [xs[i][j] for i in 1:1_000_000]) for j in 1:3],
+        [cov([xs[i][j] for i in 1:1_000_000], [ys[i][j] for i in 1:1_000_000]) for j in 1:3],
+        [cov([ys[i][j] for i in 1:1_000_000], [ys[i][j] for i in 1:1_000_000]) for j in 1:3]
+    ], (2, 2))
+
+    # all_std_errors for <:AbstractArray
+    @test all(isapprox.(first.(all_std_errors(ep)), Ref(zeros(3)), atol=1e-2))
+
+    @test all(isapprox.(tau(ep, 1), [0.0313041, -0.153329, -0.0566459], atol=1e-6))
+    @test all(isapprox.(std_error(ep, 1), [0.000297531, 0.000240407, 0.000271932], atol=1e-6))
 end
 
 
