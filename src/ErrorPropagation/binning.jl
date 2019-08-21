@@ -227,7 +227,7 @@ end
 
 
 @inline _mult(x, y) = x * y
-@inline _mult(x::Complex, y::Complex) = Complex(real(x) * real(y), imag(x) * imag(y))
+@inline _mult(x::Complex, y::Complex) = x * conj(y)
 @inline _mult(x::AbstractArray, y::AbstractArray) = _mult.(x, y)
 
 # recursion, back-end function

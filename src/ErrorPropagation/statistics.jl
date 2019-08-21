@@ -240,7 +240,7 @@ function covmat(ep::ErrorPropagator, lvl = _reliable_level(ep))
     [
         (
             ep.sums2D[lvl][i, j] -
-            ep.sums1D[lvl][i] * ep.sums1D[lvl][j] * invN
+            ep.sums1D[lvl][i] * conj(ep.sums1D[lvl][j]) * invN
         ) * invN1
         for i in eachindex(ep.sums1D[lvl]), j in eachindex(ep.sums1D[lvl])
     ]
@@ -288,10 +288,9 @@ function var(
     invN1 = 1.0 / (ep.count[lvl] - 1)
     for i in eachindex(ep.sums1D[lvl])
         for j in eachindex(ep.sums1D[lvl])
-            result += gradient[i] * gradient[j] * (
-                real(ep.sums2D[lvl][i, j]) + imag(ep.sums2D[lvl][i, j]) -
-                real(ep.sums1D[lvl][i]) * real(ep.sums1D[lvl][j]) * invN -
-                imag(ep.sums1D[lvl][i]) * imag(ep.sums1D[lvl][j]) * invN
+            result += gradient[i] * conj(gradient[j]) * (
+                ep.sums2D[lvl][i, j] -
+                ep.sums1D[lvl][i] * conj(ep.sums1D[lvl][j]) * invN
             ) * invN1
         end
     end
