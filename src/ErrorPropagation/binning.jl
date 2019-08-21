@@ -32,7 +32,6 @@ function _print_header(io::IO, ep::ErrorPropagator{T,N}) where {T,N}
     nothing
 end
 
-# TODO
 function _println_body(io::IO, ep::ErrorPropagator{T,N}) where {T,N}
     n = length(ep)
     println(io)
@@ -59,7 +58,7 @@ end
 """
     empty!(ep::ErrorPropagator)
 
-Clear the binner, i.e. reset it to its inital state.
+Clear the error propagator, i.e. reset it to its inital state.
 """
 function Base.empty!(ep::ErrorPropagator)
     !isempty(ep) || return
@@ -107,7 +106,7 @@ end
 """
     capacity(ep)
 
-Capacity of the Error Propagator, i.e. how many values can be handled before
+Capacity of the error propagator, i.e. how many values can be handled before
 overflowing.
 """
 capacity(ep::ErrorPropagator{T,N}) where {T,N} = _nlvls2capacity(N)
@@ -116,24 +115,24 @@ nlevels(ep::ErrorPropagator{T,N}) where {T,N} = N
 
 
 """
-    ErrorPropagator([::Type{T}; capacity::Int])
+    ErrorPropagator([::Type{T}; N_args, capacity::Int])
 
-Creates a `ErrorPropagator` which can handle (at least) `capacity` many values
-of type `T`.
+Creates an `ErrorPropagator` which can handle (at least) `capacity` many values
+for each of `N_args` inputs of type `T`.
 
-The default is `T = Float64` and `capacity = 2^32-1 ≈ 4e9`.
+The default is `T = Float64`, `N_args = 2` and `capacity = 2^32-1 ≈ 4e9`.
 """
-function ErrorPropagator(::Type{T} = Float64; kw...) where T
-    ErrorPropagator(zero(T); kw...)
+function ErrorPropagator(::Type{T} = Float64; N_args::Int64 = 2, kw...) where T
+    ErrorPropagator([zero(T) for _ in 1:N_args]...; kw...)
 end
 
 
 """
-    ErrorPropagator(zero_element::T[; capacity::Int])
+    ErrorPropagator(zero_element::T...[; capacity::Int])
 
 Creates a new `ErrorPropagator` which can take (at least) `capacity` many
-values of type `T`. The type and the size are inherited from the given
-`zero_element`, which must exclusively contain zeros.
+values for each input of type `T`. The type and the size are inherited from the
+given `zero_element`s, which must exclusively contain zeros.
 
 Values can be added using `push!` and `append!`.
 

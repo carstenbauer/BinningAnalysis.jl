@@ -1,7 +1,7 @@
 # see log/statistics.jl
-function _reliable_level(B::ErrorPropagator{T,N})::Int64 where {T,N}
-    isempty(B) && (return 1)                # results in NaN in std_error
-    i = findlast(x -> x >= 32, B.count)
+function _reliable_level(ep::ErrorPropagator{T,N})::Int64 where {T,N}
+    isempty(ep) && (return 1)                # results in NaN in std_error
+    i = findlast(x -> x >= 32, ep.count)
     something(i, 1)
 end
 
@@ -94,7 +94,7 @@ end
 """
     tau(ep::ErrorPropagator, i[, lvl])
 
-Calculates the autocorrelation time tau for the i-thargument of the error
+Calculates the autocorrelation time tau for the i-th argument of the error
 propagator at a given binning level.
 """
 function tau(
@@ -331,7 +331,7 @@ end
 
 Gives the first-order standard error estimate of a function `f` acting on the
 arguments of the error propagator. `gradient` is either the gradient of `f` (a
-function) or a vector `∇f(means(ep))`. To get an  estimate mean value of `f`,
+function) or a vector `∇f(means(ep))`. To get an estimate mean value of `f`,
 `f(means(ep)...)` can be used.
 """
 function std_error(ep::ErrorPropagator, gradient, lvl = _reliable_level(ep))
