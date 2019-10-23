@@ -27,8 +27,29 @@ Base.eltype(B::LogBinner{T,N}) where {T,N} = T
 Base.length(B::LogBinner) = B.count[1]
 Base.ndims(B::LogBinner{T,N}) where {T,N} = ndims(eltype(B))
 Base.isempty(B::LogBinner) = length(B) == 0
+Base.:(==)(a::T, b::T) where {T <: Compressor} = (a.value == b.value) && (a.switch == b.switch)
+Base.:(!=)(a::T, b::T) where {T <: Compressor} = !(a == b)
 
+function Base.:(==)(a::LogBinner{T, N}, b::LogBinner{T, M}) where {T, N, M}
+    # Switch order so that we can deal with just N ≤ M here
+    (N > M) && (return b == a)
 
+    # Does every level match?
+    for i in 1:N
+        (a.compressors[i] == b.compressors[i]) || return false
+        (a.x_sum[i] == b.x_sum[i]) || return false
+        (a.x2_sum[i] == b.x2_sum[i]) || return false
+        (a.count[i] == b.count[i]) || return false
+    end
+
+    # Are extra levels empty?
+    for i in N+1:M
+        (b.count[i] == 0) || return false
+    end
+
+    return true
+end
+Base.:(!=)(a::LogBinner{T, N}, b::LogBinner{T, M}) where {T, N, M} = !(a == b)
 
 
 
@@ -74,7 +95,7 @@ function Base.empty!(B::LogBinner)
             # numbers
             B.x_sum[i] = z
             B.x2_sum[i] = z
-        else 
+        else
             # arrays
             fill!(B.x_sum[i], z)
             fill!(B.x2_sum[i], z)
@@ -159,7 +180,7 @@ function LogBinner(x::T;
     # got_timeseries = didn't receive a zero && is a vector
     got_timeseries = count(!iszero, x) > 0 && ndims(T) == 1
 
-    if got_timeseries 
+    if got_timeseries
         # x = time series
         N = _capacity2nlvls(length(x))
         S = _sum_type_heuristic(eltype(T), ndims(x[1]))

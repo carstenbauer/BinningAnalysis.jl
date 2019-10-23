@@ -2,6 +2,7 @@
     # numbers
     for T in (Float64, ComplexF64)
         B = LogBinner(T)
+        B2 = LogBinner(T)
 
         @test length(B) == 0
         @test ndims(B) == 0
@@ -9,10 +10,19 @@
         @test eltype(B) == T
         @test capacity(B) == 2^32 - 1
         @test BinningAnalysis.nlevels(B) == 32
+        @test B == B2
+        @test !(B != B2)
 
-        append!(B, rand(1000))
+        buffer = rand(1000)
+        append!(B, buffer)
         @test length(B) == 1000
         @test !isempty(B)
+        @test !(B == B2)
+        @test B != B2
+
+        append!(B2, buffer)
+        @test B == B2
+        @test !(B != B2)
 
         empty!(B)
         @test length(B) == 0
@@ -22,6 +32,7 @@
     # arrays
     for T in (Float64, ComplexF64)
         B = LogBinner(zeros(T, 2, 3))
+        B2 = LogBinner(zeros(T, 2, 3))
 
         @test length(B) == 0
         @test ndims(B) == 2
@@ -29,10 +40,20 @@
         @test eltype(B) == Array{T, 2}
         @test capacity(B) == 2^32 - 1
         @test BinningAnalysis.nlevels(B) == 32
+        @test B == B2
+        @test !(B != B2)
 
-        append!(B, [rand(T, 2,3) for _ in 1:1000])
+        buffer = [rand(T, 2, 3) for _ in 1:1000]
+        append!(B, buffer)
         @test length(B) == 1000
         @test !isempty(B)
+        @test !(B == B2)
+        @test B != B2
+
+        append!(B2, buffer)
+        @test B == B2
+        @test !(B != B2)
+
         empty!(B)
         @test length(B) == 0
         @test isempty(B)
@@ -60,10 +81,34 @@
     @test length(B) == 10
     @test mean(B) == mean(x)
 
+    # Test equality of different sizes
+    B2 = LogBinner()
+    @test !(B == B2)
+    @test !(B2 == B)
+    @test B != B2
+    @test B2 != B
+    append!(B2, x)
+    @test B == B2
+    @test B2 == B
+    @test !(B != B2)
+    @test !(B2 != B)
+
+    # Again for Array inputs
     x = [rand(2,3) for _ in 1:5]
     B = LogBinner(x)
     @test length(B) == 5
     @test mean(B) == mean(x)
+
+    B2 = LogBinner(zeros(2,3))
+    @test !(B == B2)
+    @test !(B2 == B)
+    @test B != B2
+    @test B2 != B
+    append!(B2, x)
+    @test B == B2
+    @test B2 == B
+    @test !(B != B2)
+    @test !(B2 != B)
 end
 
 
