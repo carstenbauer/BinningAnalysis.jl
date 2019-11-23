@@ -1,5 +1,4 @@
-[![travis][travis-img]](https://travis-ci.org/crstnbr/BinningAnalysis.jl)
-[![appveyor][appveyor-img]](https://ci.appveyor.com/project/crstnbr/binninganalysis-jl/branch/master)
+[![github-ci](https://github.com/crstnbr/BinningAnalysis.jl/workflows/Run%20tests/badge.svg)](https://github.com/crstnbr/BinningAnalysis.jl/actions?query=workflow%3A%22Run+tests%22)
 [![codecov][codecov-img]](http://codecov.io/github/crstnbr/BinningAnalysis.jl?branch=master)
 [![license: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 <!-- [![coveralls][coveralls-img]](https://coveralls.io/github/crstnbr/BinningAnalysis.jl?branch=master) !-->
