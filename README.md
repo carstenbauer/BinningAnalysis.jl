@@ -1,14 +1,22 @@
-[![github-ci](https://github.com/crstnbr/BinningAnalysis.jl/workflows/Run%20tests/badge.svg)](https://github.com/crstnbr/BinningAnalysis.jl/actions?query=workflow%3A%22Run+tests%22)
-[![codecov][codecov-img]](http://codecov.io/github/crstnbr/BinningAnalysis.jl?branch=master)
-[![license: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-<!-- [![coveralls][coveralls-img]](https://coveralls.io/github/crstnbr/BinningAnalysis.jl?branch=master) !-->
-
-[travis-img]: https://img.shields.io/travis/crstnbr/BinningAnalysis.jl/master.svg?label=linux
-[appveyor-img]: https://img.shields.io/appveyor/ci/crstnbr/binninganalysis-jl/master.svg?label=windows
-[codecov-img]: https://img.shields.io/codecov/c/github/crstnbr/BinningAnalysis.jl/master.svg?label=codecov
-[coveralls-img]: https://img.shields.io/coveralls/github/crstnbr/BinningAnalysis.jl/master.svg?label=coverage
-
 ![logo](https://github.com/crstnbr/BinningAnalysis.jl/blob/master/docs/src/assets/logo_with_text.png)
+
+| **Documentation**                                                               | **Build Status**                                                                                |  **Community**                                                                                |
+|:-------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------:|
+| [![][docs-dev-img]][docs-dev-url] | ![][lifecycle-img] [![][github-ci-img]][github-ci-url] [![][codecov-img]][codecov-url] | [![][slack-img]][slack-url] [![][license-img]][license-url] |
+
+[docs-dev-img]: https://img.shields.io/badge/docs-dev-blue.svg
+[docs-dev-url]: https://crstnbr.github.io/BinningAnalysis.jl/dev
+[github-ci-img]: https://github.com/crstnbr/BinningAnalysis.jl/workflows/Run%20tests/badge.svg
+[github-ci-url]: https://github.com/crstnbr/BinningAnalysis.jl/actions?query=workflow%3A%22Run+tests%22
+[codecov-img]: https://img.shields.io/codecov/c/github/crstnbr/BinningAnalysis.jl/master.svg?label=codecov
+[codecov-url]: http://codecov.io/github/crstnbr/BinningAnalysis.jl?branch=master
+
+[slack-url]: https://slackinvite.julialang.org/
+[slack-img]: https://img.shields.io/badge/chat-on%20slack-yellow.svg
+[license-img]: https://img.shields.io/badge/License-MIT-red.svg
+[license-url]: https://opensource.org/licenses/MIT
+
+[lifecycle-img]: https://img.shields.io/badge/lifecycle-stable-blue.svg
 
 This package provides tools to estimate [standard errors](https://en.wikipedia.org/wiki/Standard_error) and [autocorrelation times](https://en.wikipedia.org/wiki/Autocorrelation) of correlated time series. A typical example is a [Markov chain](https://en.wikipedia.org/wiki/Markov_chain) obtained in a [Metropolis Monte Carlo simulation](https://en.wikipedia.org/wiki/Metropolis%E2%80%93Hastings_algorithm).
 
