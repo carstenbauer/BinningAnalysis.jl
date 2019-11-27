@@ -1,3 +1,5 @@
+![logo](https://github.com/crstnbr/BinningAnalysis.jl/blob/master/docs/src/assets/logo_with_text.png)
+
 | **Documentation**                                                               | **Build Status**                                                                                |  **Community**                                                                                |
 |:-------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------:|
 | [![][docs-dev-img]][docs-dev-url] | ![][lifecycle-img] [![][github-ci-img]][github-ci-url] [![][codecov-img]][codecov-url] | [![][slack-img]][slack-url] [![][license-img]][license-url] |
@@ -15,8 +17,6 @@
 [license-url]: https://opensource.org/licenses/MIT
 
 [lifecycle-img]: https://img.shields.io/badge/lifecycle-stable-blue.svg
-
-![logo](https://github.com/crstnbr/BinningAnalysis.jl/blob/master/docs/src/assets/logo_with_text.png)
 
 This package provides tools to estimate [standard errors](https://en.wikipedia.org/wiki/Standard_error) and [autocorrelation times](https://en.wikipedia.org/wiki/Autocorrelation) of correlated time series. A typical example is a [Markov chain](https://en.wikipedia.org/wiki/Markov_chain) obtained in a [Metropolis Monte Carlo simulation](https://en.wikipedia.org/wiki/Metropolis%E2%80%93Hastings_algorithm).
 
