@@ -2,7 +2,7 @@
 
 | **Build Status**                                                                                |  **Community**                                                                                |
 |:-----------------------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------:|
-| ![][lifecycle-img] [![][github-ci-img]][github-ci-url] [![][codecov-img]][codecov-url] | [![][slack-img]][slack-url] [![][license-img]][license-url] [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3603347.svg)](https://doi.org/10.5281/zenodo.3603347) |
+| ![][lifecycle-img] [![][github-ci-img]][github-ci-url] [![][codecov-img]][codecov-url] [![][pkgeval-img]][pkgeval-url] | [![][slack-img]][slack-url] [![][license-img]][license-url] [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3603347.svg)](https://doi.org/10.5281/zenodo.3603347) |
 
 [docs-dev-img]: https://img.shields.io/badge/docs-dev-blue.svg
 [docs-dev-url]: https://crstnbr.github.io/BinningAnalysis.jl/dev
@@ -10,6 +10,9 @@
 [github-ci-url]: https://github.com/crstnbr/BinningAnalysis.jl/actions?query=workflow%3A%22Run+tests%22
 [codecov-img]: https://img.shields.io/codecov/c/github/crstnbr/BinningAnalysis.jl/master.svg?label=codecov
 [codecov-url]: http://codecov.io/github/crstnbr/BinningAnalysis.jl?branch=master
+
+[pkgeval-img]: https://juliaci.github.io/NanosoldierReports/pkgeval_badges/E/Example.svg
+[pkgeval-url]: https://juliaci.github.io/NanosoldierReports/pkgeval_badges/report.html
 
 [slack-url]: https://slackinvite.julialang.org/
 [slack-img]: https://img.shields.io/badge/chat-on%20slack-yellow.svg
