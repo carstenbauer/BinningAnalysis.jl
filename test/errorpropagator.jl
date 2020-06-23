@@ -342,8 +342,8 @@ end
 
 @testset "Error Propagation" begin
     # These tests are taken from Jackknife.jl
-    # The difference between g(means(ep)) and the jackknife mean is likely
-    # related to sample size (i.e. it decreases for longer timeseries)
+    Random.seed!(123)
+
     g(x1, x2) = x1^2 - x2
     g(v) = v[1]^2 - v[2]
     grad_g(x1, x2) = [2x1, -1.0]
@@ -354,41 +354,39 @@ end
 
     # Real
     # comparing to results from mean(ts), std(ts)/sqrt(10) (etc)
-    ts = [0.00124803, 0.643089, 0.183268, 0.799899, 0.0857666, 0.955348, 0.165763, 0.765998, 0.63942, 0.308818]
-    ts2 = [0.606857, 0.0227746, 0.805997, 0.978731, 0.0853112, 0.311463, 0.628918, 0.0190664, 0.515998, 0.0223728]
+    ts = rand(Float64, 1000)
+    ts2 = rand(Float64, 1000)
+
     ep = ErrorPropagator(ts)
-    @test isapprox(mean(ep, 1), 0.454861763, atol=1e-12)
-    @test isapprox(std_error(ep, grad_identity, 1), 0.10834619757501408, atol=1e-12)
+    @test isapprox(mean(ep, 1), 0.5032466005013134, atol=1e-12)
+    @test isapprox(std_error(ep, grad_identity, 1), 0.008897060002353763, atol=1e-12)
     # check consistency with Julia's Statistics
     @test std_error(ep, grad_identity, 1) ≈ std(ts)/sqrt(length(ts))
 
     ep = ErrorPropagator(1 ./ ts)
-    @test isapprox(mean(ep, 1), 83.43709884072862, atol=1e-12)
-    @test isapprox(std_error(ep, grad_identity, 1), 79.76537738034834, atol=1e-12)
+    @test isapprox(mean(ep, 1), 7.977079066071383, atol=1e-12)
+    @test isapprox(std_error(ep, grad_identity, 1), 2.5221274681061696, atol=1e-12)
 
     ep = ErrorPropagator(ts, ts2.^2)
-    # Jackknife result is           -0.07916794438503649
-    @test isapprox(mean(ep, g), -0.0674290458560719, atol=1e-12)
-    # Jackknife result is                    0.14501699232741938
-    @test isapprox(std_error(ep, grad_g, 1), 0.14500583947715115, atol=1e-12)
+    @test isapprox(mean(ep, g), -0.05969375347674344, atol=1e-3)
+    @test isapprox(std_error(ep, grad_g, 1), 0.013117185693279606, atol=1e-4)
 
 
     # Complex
-    ts = Complex{Float64}[0.0259924+0.674798im, 0.329853+0.558688im, 0.821612+0.142805im, 0.0501703+0.801068im, 0.0309707+0.877745im, 0.937856+0.852463im, 0.669084+0.606286im, 0.887004+0.431615im, 0.763452+0.210563im, 0.678384+0.428294im]
-    ts2 = Complex{Float64}[0.138147+0.11007im, 0.484956+0.127761im, 0.986078+0.702827im, 0.45161+0.878256im, 0.768398+0.954537im, 0.228518+0.260732im, 0.256892+0.437918im, 0.647672+0.749172im, 0.0587658+0.408715im, 0.0792651+0.288578im]
+    ts = rand(ComplexF64, 1000)
+    ts2 = rand(ComplexF64, 1000)
+
     ep = ErrorPropagator(ts)
-    @test isapprox(mean(ep, 1), 0.51943784 + 0.5584325im, atol=1e-12)
-    @test isapprox(std_error(ep, grad_identity, 1), 0.14286073531999163, atol=1e-12)
+    @test isapprox(mean(ep, 1), 0.5026931517594448 + 0.49854565281725627im, atol=1e-12)
+    @test isapprox(std_error(ep, grad_identity, 1), 0.012946143510730868, atol=1e-12)
     # check consistency with Julia's Statistics
     @test std_error(ep, grad_identity, 1) ≈ std(ts)/sqrt(length(ts))
 
     ep = ErrorPropagator(1 ./ ts)
-    @test isapprox(mean(ep, 1), 0.6727428408881814 - 0.8112743686359858im, atol=1e-12)
-    @test isapprox(std_error(ep, grad_identity, 1), 0.2047347223258764, atol=1e-12)
+    @test isapprox(mean(ep, 1), 1.1496877962692906 - 1.0838709685240246im, atol=1e-11)
+    @test isapprox(std_error(ep, grad_identity, 1), 0.05676635162628594, atol=1e-12)
 
     ep = ErrorPropagator(ts, ts2.^2)
-    # Jackknife result is           0.02144667272121564 + 0.06979705636190503im
-    @test isapprox(mean(ep, g), 0.02874707439395066 + 0.059243942813840045im, atol=1e-12)
-    # Jackknife result is                    0.2752976586383889
-    @test isapprox(std_error(ep, grad_g, 1), 0.2781329035594455, atol=1e-12)
+    @test isapprox(mean(ep, g), 0.02004836872405491 - 0.01825289014938747im, atol=1e-4)
+    @test isapprox(std_error(ep, grad_g, 1), 0.026446578773003968, atol=1e-5)
 end
