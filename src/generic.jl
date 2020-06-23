@@ -19,8 +19,15 @@ function std_error(x::AbstractVector{T}; method::Symbol=:log) where T
     elseif method == :jackknife
         T <: Number || error("Jackknife doesn't support non-number type time series.")
         return Jackknife.std_error(identity, x)
+    elseif method == :error_propagator
+        B = ErrorPropagator(zero(x[1]), capacity=length(x))
+        append!(B, x)
+        return std_error(B, 1)
     else
-        throw(ArgumentError("Keyword `method` must be either `:log`, `:full`, or `:jackknife`. Got `$(method)`."))
+        throw(ArgumentError(
+            "Keyword `method` must be either `:log`, `:full`, `:jackknife` or " *
+            "`:error_propagator`. Got `$(method)`."
+        ))
     end
 end
 
