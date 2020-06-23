@@ -22,8 +22,6 @@ end
 Calculates the variance for the i-th argument of the error propagator at a given
 binning level.
 """
-function var(ep::ErrorPropagator) end
-
 function var(
         ep::ErrorPropagator{T,N},
         i::Integer,
@@ -125,8 +123,6 @@ end
 Calculates the standard error of the mean for the i-th argument of the error
 propagator at a given binning level.
 """
-function std_error(ep::ErrorPropagator) end
-
 function std_error(
         ep::ErrorPropagator{T,N},
         i::Integer,
