@@ -1,32 +1,48 @@
-[![travis][travis-img]](https://travis-ci.org/crstnbr/BinningAnalysis.jl)
-[![appveyor][appveyor-img]](https://ci.appveyor.com/project/crstnbr/binninganalysis-jl/branch/master)
-[![codecov][codecov-img]](http://codecov.io/github/crstnbr/BinningAnalysis.jl?branch=master)
-[![license: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-<!-- [![coveralls][coveralls-img]](https://coveralls.io/github/crstnbr/BinningAnalysis.jl?branch=master) !-->
-
-[travis-img]: https://img.shields.io/travis/crstnbr/BinningAnalysis.jl/master.svg?label=linux
-[appveyor-img]: https://img.shields.io/appveyor/ci/crstnbr/binninganalysis-jl/master.svg?label=windows
-[codecov-img]: https://img.shields.io/codecov/c/github/crstnbr/BinningAnalysis.jl/master.svg?label=codecov
-[coveralls-img]: https://img.shields.io/coveralls/github/crstnbr/BinningAnalysis.jl/master.svg?label=coverage
-
 ![logo](https://github.com/crstnbr/BinningAnalysis.jl/blob/master/docs/src/assets/logo_with_text.png)
 
-This package implements the following binning tools,
+| **Build Status**                                                                                |  **Community**                                                                                |
+|:-----------------------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------:|
+| ![][lifecycle-img] [![][github-ci-img]][github-ci-url] [![][codecov-img]][codecov-url] [![][pkgeval-img]][pkgeval-url] | [![][slack-img]][slack-url] [![][license-img]][license-url] [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3603347.svg)](https://doi.org/10.5281/zenodo.3603347) |
 
-* Logarithmic Binning (most performant)
-  * Size complexity: $\mathcal{O}(\log_2(N))$
-  * Time complexity: $\mathcal{O}(N)$
-* Full Binning
+[docs-dev-img]: https://img.shields.io/badge/docs-dev-blue.svg
+[docs-dev-url]: https://crstnbr.github.io/BinningAnalysis.jl/dev
+[github-ci-img]: https://github.com/crstnbr/BinningAnalysis.jl/workflows/Run%20tests/badge.svg
+[github-ci-url]: https://github.com/crstnbr/BinningAnalysis.jl/actions?query=workflow%3A%22Run+tests%22
+[codecov-img]: https://img.shields.io/codecov/c/github/crstnbr/BinningAnalysis.jl/master.svg?label=codecov
+[codecov-url]: http://codecov.io/github/crstnbr/BinningAnalysis.jl?branch=master
 
-and the following statistical resampling methods,
+[pkgeval-img]: https://juliaci.github.io/NanosoldierReports/pkgeval_badges/B/BinningAnalysis.svg
+[pkgeval-url]: https://juliaci.github.io/NanosoldierReports/pkgeval_badges/report.html
+
+[slack-url]: https://slackinvite.julialang.org/
+[slack-img]: https://img.shields.io/badge/chat-on%20slack-yellow.svg
+[license-img]: https://img.shields.io/badge/License-MIT-red.svg
+[license-url]: https://opensource.org/licenses/MIT
+
+[lifecycle-img]: https://img.shields.io/badge/lifecycle-stable-blue.svg
+
+This package provides tools to estimate [standard errors](https://en.wikipedia.org/wiki/Standard_error) and [autocorrelation times](https://en.wikipedia.org/wiki/Autocorrelation) of correlated time series. A typical example is a [Markov chain](https://en.wikipedia.org/wiki/Markov_chain) obtained in a [Metropolis Monte Carlo simulation](https://en.wikipedia.org/wiki/Metropolis%E2%80%93Hastings_algorithm).
+
+**Binning tools:**
+
+* Logarithmic Binning
+  * Size complexity: `O(log(N))`
+  * Time complexity: `O(N)`
+* Full Binning (all bin sizes that work out evenly)
+
+**Statistical resampling methods:**
 
 * Jackknife resampling.
 
-As per usual, you can install the package with
+<br>
+
+As per usual, you can install the registered package with
 
 ```julia
-] add https://github.com/crstnbr/BinningAnalysis.jl
+] add BinningAnalysis
 ```
+
+Note that there is [BinningAnalysisPlots.jl](https://github.com/crstnbr/BinningAnalysisPlots.jl) which defines some [Plots.jl](https://github.com/JuliaPlots/Plots.jl) recipes for `LogBinner` and `FullBinner` to facilitate visualizing the error convergence.
 
 ## Binning tools
 
@@ -111,7 +127,7 @@ g_mean, Δg = jackknife(g, x, y, x .* y)
 
 ## Convenience wrapper
 
-If you have a time series and you simply want to calculate the standard error, using any of the aboves methods, there is a convenience wrapper `std_error(x[; method=:log])`. It takes a keyword argument `method` which can be `:log`, `:full`, or `:jackknife`.
+If you want to calculate the standard error of an existing time series there you can use the convenience wrapper `std_error(x[; method=:log])`. It takes a keyword argument `method`, which can be `:log`, `:full`, or `:jackknife`.
 
 ```julia
 ts = rand(1000);
@@ -126,3 +142,9 @@ All statistical tools should work with number-like (`<: Number`) and array-like 
 `var(x) = var(real(x)) + var(imag(x))`.
 
 If you observe unexpected behavior please file an issue!
+
+
+## References
+
+* J. Gubernatis, N. Kawashima, and P. Werner, [Quantum Monte Carlo Methods: Algorithms for Lattice Models](https://www.cambridge.org/core/books/quantum-monte-carlo-methods/AEA92390DA497360EEDA153CF1CEC7AC), Book (2016)
+* V. Ambegaokar, and M. Troyer, [Estimating errors reliably in Monte Carlo simulations of the Ehrenfest model](http://aapt.scitation.org/doi/10.1119/1.3247985), American Journal of Physics 78, 150 (2010)
