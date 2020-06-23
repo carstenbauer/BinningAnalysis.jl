@@ -25,6 +25,7 @@ using Test, Statistics, Random
         @test std_error(x; method=:log) ≈ 0.03384198827323159
         @test std_error(x; method=:full) ≈ 0.030761063167290947
         @test std_error(x; method=:jackknife) ≈ 0.029551526503551463
+        @test std_error(x; method=:error_propagator) ≈ 0.03384198827323159
         @test tau(x) ≈ tau(x; method=:log)
         @test tau(x; method=:log) ≈ 0.15572524869061377
         @test tau(x; method=:full) ≈ 0.04176737474771308
@@ -34,6 +35,7 @@ using Test, Statistics, Random
         @test std_error(x; method=:log) ≈ 0.0338419882732316
         @test std_error(x; method=:full) ≈ 0.03076106316729094
         @test std_error(x; method=:jackknife) ≈ 0.029551526503551445
+        @test std_error(x; method=:error_propagator) ≈ 0.03384198827323173
         @test tau(x) ≈ tau(x; method=:log)
         @test tau(x; method=:log) ≈ 0.15572524869061377
         @test tau(x; method=:full) ≈ 0.04176737474771308
@@ -43,6 +45,7 @@ using Test, Statistics, Random
         @test std_error(x) ≈ std_error(x; method=:log)
         @test std_error(x, method=:log) ≈ [0.03856212859659066 0.09765048982846934 0.04879645809318544; 0.11744109653881814 0.05978167652935139 0.1722342286233907]
         @test std_error(x, method=:full) ≈ [0.03856212859659072 0.09765048982846936 0.048796458093185405; 0.11744109653881814 0.05978167652935137 0.17223422862339066]
+        @test std_error(x, method=:error_propagator) ≈ [0.03856212859659066 0.09765048982846934 0.04879645809318544; 0.11744109653881814 0.05978167652935139 0.1722342286233907]
         @test tau(x) ≈ tau(x; method=:log)
         @test tau(x; method=:log) ≈ [0.0 0.0 0.0; 0.0 0.0 0.0]
         @test isapprox(tau(x; method=:full), [0.0 -5.55112e-17 -5.55112e-17; -1.11022e-16 0.0 0.0], atol=1e-16)
