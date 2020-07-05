@@ -124,6 +124,48 @@ g(x, y, xy) = x * y / xy  # <x><y> / <xy>
 g_mean, Δg = jackknife(g, x, y, x .* y)
 ```
 
+### Error Propagator
+
+```julia
+ep = ErrorPropagator(N_args=1)
+# Essentially a LogBinner that can hold multiple variables. Errors can be derived
+# for functions which depend on these variables. The memory overhead of this
+# type is O(N_args^2 log(N_samples)), making it much cheaper than jackknife for
+# few variables
+
+push!(ep, rand())
+append!(ep, rand(99))
+
+# Mean and error of the (first) input
+xmean = mean(ep, 1)
+Δx = std_error(ep, 1)
+
+# To compute the mean and error of a function we need its gradient
+f(x) = x.^2
+dfdx(x) = 2x
+y = mean(ep, f)[1]
+Δy = std_error(ep, dfdx)[1]
+
+# Error propagator with multiple variables:
+ep = ErrorPropagator(N_args=3)
+
+# Multiple time series
+x = rand(100)
+y = rand(100)
+append!(ep, x, y, x.*y)
+
+# means and standard error of inputs:
+xs = means(ep)
+Δxs = std_errors(ep)
+
+# mean and error of a function dependant on x, y and xy
+# Note that this function takes a vector input
+g(v) = v[1] * v[2] / v[3]  # <x><y> / <xy>
+dgdx(v) = [v[2]/v[3], v[1]/v[3], -v[1]*v[2]/v[3]^2]
+g_mean = mean(ep, g)
+Δg = std_error(ep, dgdx)
+```
+
 
 ## Convenience wrapper
 

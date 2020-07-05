@@ -29,7 +29,12 @@ include("Jackknife.jl")
 @reexport using .Jackknife
 
 
-
-
+include("ErrorPropagation/binning.jl")
+include("ErrorPropagation/statistics.jl")
+export ErrorPropagator
+export mean, var, varN, tau, std_error
+export means, vars, varNs, taus, std_errors
+export all_means, all_vars, all_varNs, all_taus, all_std_errors
+export covmat
 
 end # module
