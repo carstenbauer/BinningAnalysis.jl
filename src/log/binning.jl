@@ -291,7 +291,7 @@ function _push!(
     B.count[lvl] += 1
 
     if !C.switch
-        C.value = value
+        C.value .= value
         C.switch = true
         return nothing
     else
