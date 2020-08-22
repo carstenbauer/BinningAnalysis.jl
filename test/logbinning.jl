@@ -13,12 +13,23 @@
         @test B == B2
         @test !(B != B2)
 
+        B3 = LogBinner(B, capacity=10_000)
+        @test B3 == B
+        @test capacity(B3) == 16383
+
         buffer = rand(1000)
         append!(B, buffer)
         @test length(B) == 1000
         @test !isempty(B)
         @test !(B == B2)
         @test B != B2
+
+        @test B3 != B
+        @test isempty(B3)
+        @test_throws OverflowError LogBinner(B, capacity=10)
+        B3 = LogBinner(B, capacity=10_000)
+        @test B3 == B
+        @test !isempty(B3)
 
         append!(B2, buffer)
         @test B == B2
@@ -43,12 +54,23 @@
         @test B == B2
         @test !(B != B2)
 
+        B3 = LogBinner(B, capacity=10_000)
+        @test B3 == B
+        @test capacity(B3) == 16383
+
         buffer = [rand(T, 2, 3) for _ in 1:1000]
         append!(B, buffer)
         @test length(B) == 1000
         @test !isempty(B)
         @test !(B == B2)
         @test B != B2
+
+        @test B3 != B
+        @test isempty(B3)
+        @test_throws OverflowError LogBinner(B, capacity=10)
+        B3 = LogBinner(B, capacity=10_000)
+        @test B3 == B
+        @test !isempty(B3)
 
         append!(B2, buffer)
         @test B == B2
