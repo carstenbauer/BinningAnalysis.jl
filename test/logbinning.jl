@@ -13,7 +13,7 @@
         @test B == B2
         @test !(B != B2)
 
-        B3 = LogBinner(B, 10_000)
+        B3 = LogBinner(B, capacity=10_000)
         @test B3 == B
         @test capacity(B3) == 16383
 
@@ -26,7 +26,8 @@
 
         @test B3 != B
         @test isempty(B3)
-        B3 = LogBinner(B, 10_000)
+        @test_throws OverflowError LogBinner(B, capacity=10)
+        B3 = LogBinner(B, capacity=10_000)
         @test B3 == B
         @test !isempty(B3)
 
@@ -53,7 +54,7 @@
         @test B == B2
         @test !(B != B2)
 
-        B3 = LogBinner(B, 10_000)
+        B3 = LogBinner(B, capacity=10_000)
         @test B3 == B
         @test capacity(B3) == 16383
 
@@ -66,7 +67,8 @@
 
         @test B3 != B
         @test isempty(B3)
-        B3 = LogBinner(B, 10_000)
+        @test_throws OverflowError LogBinner(B, capacity=10)
+        B3 = LogBinner(B, capacity=10_000)
         @test B3 == B
         @test !isempty(B3)
 
