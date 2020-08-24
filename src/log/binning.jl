@@ -222,9 +222,9 @@ The new LogBinner may be larger or smaller than the given one.
 """
 function LogBinner(B::LogBinner{S, M}; capacity::Int64 = _nlvls2capacity(32)) where {S, M}
     N = _capacity2nlvls(capacity)
-    B.count[min(M, N)] > 0 && throw(OverflowError(
+    B.count[min(M, N)] > 1 && throw(OverflowError(
         "The new LogBinner is too small to reconstruct the given LogBinner. " *
-        "New capacity = $capacity   Old capacity = $(B.count[min(M, N)])"
+        "New capacity = $capacity   Old capacity = $(B.count[1])"
     ))
     el = zero(B.x_sum[1])
     
