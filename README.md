@@ -101,6 +101,24 @@ push!(F, 2.0) # will modify x as F is just a thin wrapper
 Δx = std_error(F)
 ```
 
+### Incremental Binning
+
+```julia
+# Averages pushed values more and more, starting with no averaging
+# Averaging includes 2x more values for every blocksize averages saved
+B = IncrementBinner(0.0, blocksize=50)
+
+for x in rand(10_000)
+    push!(B, x)
+end
+
+# Returns the effective indices for the values saved
+# I.e. [1, 2, ...49, 50, 51.5, 53.5, ..., 146.5, 148.5, 151.5, ...]
+xs = indices(B)
+# Returns the averaged values saved
+ys = values(B)
+```
+
 ## Resampling methods
 
 ### Jackknife
