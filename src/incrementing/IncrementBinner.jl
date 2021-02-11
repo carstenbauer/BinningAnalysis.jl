@@ -58,6 +58,22 @@ function Base.push!(b::IncrementBinner{T}, x::T) where {T}
     if b.count >= b.compression
         push!(b.output, b.sum / b.compression)
         b.count = 0
+        b.sum = x
+    else
+        b.count += 1
+        b.sum += x
+    end
+    if length(b.output) == b.stage * b.keep
+        b.compression *= 2
+        b.stage += 1
+    end
+    nothing
+end
+
+function Base.push!(b::IncrementBinner{T}, x::T) where {T <: AbstractArray}
+    if b.count >= b.compression
+        push!(b.output, b.sum / b.compression)
+        b.count = 0
         b.sum .= x
     else
         b.count += 1
