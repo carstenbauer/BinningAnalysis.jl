@@ -37,4 +37,9 @@ export means, vars, varNs, taus, std_errors
 export all_means, all_vars, all_varNs, all_taus, all_std_errors
 export covmat
 
+
+include("incrementing/IncrementBinner.jl")
+export IncrementBinner
+export indices
+
 end # module
