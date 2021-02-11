@@ -34,9 +34,6 @@ function IncrementBinner(x::T; blocksize = 64) where {T <: Union{Number, Abstrac
     # check keyword args
     blocksize <= 0 && throw(ArgumentError("`blocksize` must be finite and positive."))
 
-    keep = 2^ceil(Int64, log2(blocksize))
-    keep != blocksize && @info "Block size increased to $keep from $blocksize"
-
     # got_timeseries = didn't receive a zero && is a vector
     got_timeseries = count(!iszero, x) > 0 && ndims(T) == 1
 
@@ -50,7 +47,7 @@ function IncrementBinner(x::T; blocksize = 64) where {T <: Union{Number, Abstrac
         el = x
     end
 
-    B = IncrementBinner(keep, 1, 1, el, 0, S[])
+    B = IncrementBinner(blocksize, 1, 1, el, 0, S[])
 
     got_timeseries && append!(B, x)
 

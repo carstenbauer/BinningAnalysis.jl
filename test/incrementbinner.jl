@@ -25,18 +25,18 @@ end
     
     @test B.keep == 4
 
-    for i in 1:4
+    for i in 1:3
         push!(B, 1.0+1.0im)
     end
-    for i in 1:8
+    for i in 1:6
         push!(B, 2.0+2.0im)
     end
 
     xs = indices(B)
     ys = values(B)
 
-    @test xs == Float64[1,2,3,4, 5.5,6.5,7.5,8.5]
-    @test ys == Complex64[1+1im,1+1im,1+1im,1+1im, 2+2im,2+2im,2+2im,2+2im]
+    @test xs == Float64[1,2,3, 4.5,5.5,6.5]
+    @test ys == Complex64[1+1im,1+1im,1+1im, 2+2im,2+2im,2+2im]
 end
 
 @testset "Vector" begin
