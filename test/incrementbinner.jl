@@ -6,11 +6,15 @@
     for i in 1:4
         push!(B, 1.0)
     end
-    for i in 1:8
-        push!(B, 2.0)
+    for i in 1:4
+        push!(B, 1.0)
+        push!(B, 3.0)
     end
-    for i in 1:16
+    for i in 1:4
+        push!(B, 3.0)
         push!(B, 4.0)
+        push!(B, 4.0)
+        push!(B, 5.0)
     end
 
     xs = indices(B)
@@ -28,8 +32,9 @@ end
     for i in 1:3
         push!(B, 1.0+1.0im)
     end
-    for i in 1:6
-        push!(B, 2.0+2.0im)
+    for i in 1:3
+        push!(B, 1.0+3.0im)
+        push!(B, 3.0+1.0im)
     end
 
     xs = indices(B)
@@ -47,8 +52,9 @@ end
     for i in 1:2
         push!(B, [1.0, 1.0])
     end
-    for i in 1:4
-        push!(B, [2.0, 2.0])
+    for i in 1:2
+        push!(B, [1.0, 3.0])
+        push!(B, [3.0, 1.0])
     end
 
     xs = indices(B)
