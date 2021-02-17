@@ -55,13 +55,15 @@ function IncrementBinner(x::T; blocksize = 64) where {T <: Union{Number, Abstrac
 end
 
 function Base.push!(b::IncrementBinner{T}, x::T) where {T}
-    if b.count >= b.compression
-        push!(b.output, b.sum / b.compression)
+    if b.count >= b.compression - 1
+        push!(b.output, (b.sum + x) / b.compression)
         b.count = 0
+    elseif b.count == 0
         b.sum = x
+        b.count = 1
     else
-        b.count += 1
         b.sum += x
+        b.count += 1
     end
     if length(b.output) == b.stage * b.keep
         b.compression *= 2
@@ -71,13 +73,15 @@ function Base.push!(b::IncrementBinner{T}, x::T) where {T}
 end
 
 function Base.push!(b::IncrementBinner{T}, x::T) where {T <: AbstractArray}
-    if b.count >= b.compression
-        push!(b.output, b.sum / b.compression)
+    if b.count >= b.compression - 1
+        push!(b.output, (b.sum .+ x) / b.compression)
         b.count = 0
+    elseif b.count == 0
         b.sum .= x
+        b.count = 1
     else
-        b.count += 1
         b.sum .+= x
+        b.count += 1
     end
     if length(b.output) == b.stage * b.keep
         b.compression *= 2
@@ -100,7 +104,7 @@ function indices(B::IncrementBinner)
     step = 1
     out[1] = 1
     for i in 2:length(B.output)
-        if i % B.keep == 0
+        if i % B.keep == 1
             out[i] = out[i-1] + 1.5step 
             step *= 2
         else
