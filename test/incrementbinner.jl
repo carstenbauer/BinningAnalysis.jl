@@ -20,14 +20,14 @@
     xs = indices(B)
     ys = values(B)
 
-    @test xs == Float64[1,2,3,4, 5.5,6.5,7.5,8.5, 11.5,15.5,19.5,23.5]
+    @test xs == Float64[1,2,3,4, 5.5,7.5,9.5,11.5, 14.5,18.5,22.5,26.5]
     @test ys == Float64[1,1,1,1, 2,2,2,2, 4,4,4,4]
 end
 
 @testset "ComplexF64" begin
     B = IncrementBinner(ComplexF64, blocksize=3)
     
-    @test B.keep == 4
+    @test B.keep == 3
 
     for i in 1:3
         push!(B, 1.0+1.0im)
@@ -40,8 +40,8 @@ end
     xs = indices(B)
     ys = values(B)
 
-    @test xs == Float64[1,2,3, 4.5,5.5,6.5]
-    @test ys == Complex64[1+1im,1+1im,1+1im, 2+2im,2+2im,2+2im]
+    @test xs == Float64[1,2,3, 4.5,6.5,8.5]
+    @test ys == ComplexF64[1+1im,1+1im,1+1im, 2+2im,2+2im,2+2im]
 end
 
 @testset "Vector" begin
