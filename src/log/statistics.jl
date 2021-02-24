@@ -22,13 +22,10 @@ function var(
     ) where {N, T <: Real}
 
     n = B.count[lvl]
-    X = B.x_sum[lvl]
-    X2 = B.x2_sum[lvl]
+    M2 = B.x2_sum[lvl]
 
     # lvl = 1 <=> original values
-    # correct variance:
-    # (∑ xᵢ^2) / (N-1) - (∑ xᵢ)(∑ xᵢ) / (N(N-1))
-    X2 / (n - 1) - X^2 / (n*(n - 1))
+    M2 / (n - 1)
 end
 
 function var(
@@ -37,11 +34,10 @@ function var(
     ) where {N, T <: Complex}
 
     n = B.count[lvl]
-    X = B.x_sum[lvl]
-    X2 = B.x2_sum[lvl]
+    M2 = B.x2_sum[lvl]
 
     # lvl = 1 <=> original values
-    (real(X2) + imag(X2)) / (n - 1) - (real(X)^2 + imag(X)^2) / (n*(n - 1))
+    (real(M2) + imag(M2)) / (n - 1)
 end
 
 function var(
@@ -50,10 +46,9 @@ function var(
     ) where {N, D, T <: Real}
 
     n = B.count[lvl]
-    X = B.x_sum[lvl]
-    X2 = B.x2_sum[lvl]
+    M2 = B.x2_sum[lvl]
 
-    @. X2 / (n - 1) - X^2 / (n*(n - 1))
+    @. M2 / (n - 1)
 end
 
 function var(
@@ -62,10 +57,9 @@ function var(
     ) where {N, D, T <: Complex}
 
     n = B.count[lvl]
-    X = B.x_sum[lvl]
-    X2 = B.x2_sum[lvl]
+    M2 = B.x2_sum[lvl]
 
-    @. (real(X2) + imag(X2)) / (n - 1) - (real(X)^2 + imag(X)^2) / (n*(n - 1))
+    @. (real(M2) + imag(M2)) / (n - 1)
 end
 
 

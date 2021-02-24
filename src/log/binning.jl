@@ -14,7 +14,7 @@ struct LogBinner{T, N}
 
     # sum(x) for all values on a given lvl
     x_sum::Vector{T}
-    # sum(x.^2) for all values on a given lvl
+    # sum((x .- μ) .^2) for all values on a given lvl
     x2_sum::Vector{T}
     # number of values that are summed on a given lvl
     count::Vector{Int64}
@@ -227,7 +227,7 @@ function LogBinner(B::LogBinner{S, M}; capacity::Int64 = _nlvls2capacity(32)) wh
         "New capacity = $capacity   Old capacity = $(B.count[1])"
     ))
     el = zero(B.x_sum[1])
-    
+
     LogBinner{S, N}(
         tuple([i > M ? Compressor{S}(copy(el), false) : deepcopy(B.compressors[i]) for i in 1:N]...),
         [i > M ? copy(el) : copy(B.x_sum[i]) for i in 1:N],
@@ -264,9 +264,9 @@ function Base.push!(B::LogBinner{T,N}, value::S) where {N, T, S}
 end
 
 
-@inline _square(x) = x^2
-@inline _square(x::Complex) = Complex(real(x)^2, imag(x)^2)
-@inline _square(x::AbstractArray) = _square.(x)
+@inline _prod(x, y) = x * y
+@inline _prod(x::Complex, y::Complex) = Complex(real(x) * real(y), imag(x) * imag(y))
+@inline _prod(x::AbstractArray, y::AbstractArray) = _prod.(x, y)
 
 # recursion, back-end function
 @inline function _push!(B::LogBinner{T,N}, lvl::Int64, value::S) where {N, T <: Number, S}
@@ -276,9 +276,19 @@ end
     # add it to the sums. Note that values pushed to the output arrays are not
     # added here until the array drops to the next level. (New compressors are
     # added)
-    B.x_sum[lvl] += value
-    B.x2_sum[lvl] += _square(value)
-    B.count[lvl] += 1
+    if B.count[lvl] == 0
+        B.x_sum[lvl] = value
+        B.count[lvl] = 1
+    else
+        mean = B.x_sum[lvl] / B.count[lvl]
+        delta = value - mean
+
+        B.count[lvl] += 1
+        B.x_sum[lvl] += value
+
+        mean = B.x_sum[lvl] / B.count[lvl]
+        B.x2_sum[lvl] += _prod(delta, value - mean)
+    end
 
     if !C.switch
         # Compressor has space -> save value
@@ -307,9 +317,17 @@ function _push!(
     ) where {N, T <: AbstractArray, S}
 
     C = B.compressors[lvl]
-    B.x_sum[lvl] .+= value
-    B.x2_sum[lvl] .+= _square(value)
-    B.count[lvl] += 1
+    if B.count[lvl] == 0
+        B.x_sum[lvl] .= value
+        B.count[lvl] = 1
+    else
+        delta = @. value - (B.x_sum[lvl] / B.count[lvl])
+
+        B.count[lvl] += 1
+        B.x_sum[lvl] .+= value
+
+        B.x2_sum[lvl] .+= _prod(delta, @. value - (B.x_sum[lvl] / B.count[lvl]))
+    end
 
     if !C.switch
         C.value .= value
@@ -320,7 +338,7 @@ function _push!(
             throw(OverflowError("The Binning Analysis has exceeded its maximum capacity."))
         else
             C.switch = false
-            _push!(B, lvl+1, 0.5 * (C.value .+ value))
+            _push!(B, lvl+1, @. 0.5 * (C.value + value))
             return nothing
         end
     end
