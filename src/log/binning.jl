@@ -8,23 +8,26 @@ mutable struct Compressor{T}
 end
 
 
-struct LogBinner{T, N}
+struct LogBinner{T, N, V <: AbstractVarianceAccumulator{T}}
     # list of Compressors, one per level
     compressors::NTuple{N, Compressor{T}}
 
-    # sum(x) for all values on a given lvl
-    x_sum::Vector{T}
-    # sum((x .- μ) .^2) for all values on a given lvl
-    x2_sum::Vector{T}
-    # number of values that are summed on a given lvl
-    count::Vector{Int64}
+    accumulators::Vector{V}
+
+    function LogBinner{T, N}(
+            compressors::NTuple{N, Compressor{T}},
+            accumulators::Vector{V}
+        ) where {T, N, V <: AbstractVarianceAccumulator{T}}
+        new{T, N, V}(compressors, accumulators)
+    end
 end
+
 
 
 
 # Overload some basic Base functions
 Base.eltype(B::LogBinner{T,N}) where {T,N} = T
-Base.length(B::LogBinner) = B.count[1]
+Base.length(B::LogBinner) = B.accumulators[1].count
 Base.ndims(B::LogBinner{T,N}) where {T,N} = ndims(eltype(B))
 Base.isempty(B::LogBinner) = length(B) == 0
 Base.:(==)(a::T, b::T) where {T <: Compressor} = (a.value == b.value) && (a.switch == b.switch)
@@ -37,14 +40,12 @@ function Base.:(==)(a::LogBinner{T, N}, b::LogBinner{T, M}) where {T, N, M}
     # Does every level match?
     for i in 1:N
         (a.compressors[i] == b.compressors[i]) || return false
-        (a.x_sum[i] == b.x_sum[i]) || return false
-        (a.x2_sum[i] == b.x2_sum[i]) || return false
-        (a.count[i] == b.count[i]) || return false
+        (a.accumulators[i] == b.accumulators[i]) || return false
     end
 
     # Are extra levels empty?
     for i in N+1:M
-        (b.count[i] == 0) || return false
+        isempty(b.accumulators[i]) || return false
     end
 
     return true
@@ -89,21 +90,10 @@ function Base.empty!(B::LogBinner)
     # get zero
     z = zero(eltype(eltype(B)))
 
-    # reset x_sum and x2_sum to all zeros
-    @inbounds for i in eachindex(B.x_sum)
-        if ndims(B) == 0 # compile time
-            # numbers
-            B.x_sum[i] = z
-            B.x2_sum[i] = z
-        else
-            # arrays
-            fill!(B.x_sum[i], z)
-            fill!(B.x2_sum[i], z)
-        end
+    # reset accumulators
+    for acc in B.accumulators
+        empty!(acc)
     end
-
-    # reset counts
-    fill!(B.count, 0)
 
     # reset compressors
     for c in B.compressors
@@ -171,8 +161,9 @@ Values can be added using `push!` and `append!`.
 Creates a new `LogBinner` and adds all elements from the given timeseries.
 """
 function LogBinner(x::T;
-        capacity::Int64 = _nlvls2capacity(32)
-        ) where {T <: Union{Number, AbstractArray}}
+        capacity::Int64 = _nlvls2capacity(32),
+        accumulator::Type{<:AbstractVarianceAccumulator} = Variance
+    ) where {T <: Union{Number, AbstractArray}}
 
     # check keyword args
     capacity <= 0 && throw(ArgumentError("`capacity` must be finite and positive."))
@@ -194,9 +185,7 @@ function LogBinner(x::T;
 
     B = LogBinner{S, N}(
         tuple([Compressor{S}(copy(el), false) for i in 1:N]...),
-        [copy(el) for _ in 1:N],
-        [copy(el) for _ in 1:N],
-        zeros(Int64, N)
+        [accumulator{S}(zero(el), zero(el), zero(Int64)) for _ in 1:N]
     )
 
     got_timeseries && append!(B, x)
@@ -222,17 +211,16 @@ The new LogBinner may be larger or smaller than the given one.
 """
 function LogBinner(B::LogBinner{S, M}; capacity::Int64 = _nlvls2capacity(32)) where {S, M}
     N = _capacity2nlvls(capacity)
-    B.count[min(M, N)] > 1 && throw(OverflowError(
+    B.accumulators[min(M, N)].count > 1 && throw(OverflowError(
         "The new LogBinner is too small to reconstruct the given LogBinner. " *
-        "New capacity = $capacity   Old capacity = $(B.count[1])"
+        "New capacity = $capacity   Old capacity = $(B.accumulators[1].count)"
     ))
-    el = zero(B.x_sum[1])
+    el = zero(mean(B.accumulators[1]))
+    V = empty!(copy(B.accumulators[1]))
 
     LogBinner{S, N}(
         tuple([i > M ? Compressor{S}(copy(el), false) : deepcopy(B.compressors[i]) for i in 1:N]...),
-        [i > M ? copy(el) : copy(B.x_sum[i]) for i in 1:N],
-        [i > M ? copy(el) : copy(B.x2_sum[i]) for i in 1:N],
-        [i > M ? 0 : copy(B.count[i]) for i in 1:N]
+        [i > M ? copy(V) : copy(B.accumulators[i]) for i in 1:N]
     )
 end
 
@@ -263,11 +251,6 @@ function Base.push!(B::LogBinner{T,N}, value::S) where {N, T, S}
     _push!(B, 1, value)
 end
 
-
-@inline _prod(x, y) = x * y
-@inline _prod(x::Complex, y::Complex) = Complex(real(x) * real(y), imag(x) * imag(y))
-@inline _prod(x::AbstractArray, y::AbstractArray) = _prod.(x, y)
-
 # recursion, back-end function
 @inline function _push!(B::LogBinner{T,N}, lvl::Int64, value::S) where {N, T <: Number, S}
     C = B.compressors[lvl]
@@ -276,19 +259,7 @@ end
     # add it to the sums. Note that values pushed to the output arrays are not
     # added here until the array drops to the next level. (New compressors are
     # added)
-    if B.count[lvl] == 0
-        B.x_sum[lvl] = value
-        B.count[lvl] = 1
-    else
-        mean = B.x_sum[lvl] / B.count[lvl]
-        delta = value - mean
-
-        B.count[lvl] += 1
-        B.x_sum[lvl] += value
-
-        mean = B.x_sum[lvl] / B.count[lvl]
-        B.x2_sum[lvl] += _prod(delta, value - mean)
-    end
+    Base.push!(B.accumulators[lvl], value)
 
     if !C.switch
         # Compressor has space -> save value
@@ -317,17 +288,7 @@ function _push!(
     ) where {N, T <: AbstractArray, S}
 
     C = B.compressors[lvl]
-    if B.count[lvl] == 0
-        B.x_sum[lvl] .= value
-        B.count[lvl] = 1
-    else
-        delta = @. value - (B.x_sum[lvl] / B.count[lvl])
-
-        B.count[lvl] += 1
-        B.x_sum[lvl] .+= value
-
-        B.x2_sum[lvl] .+= _prod(delta, @. value - (B.x_sum[lvl] / B.count[lvl]))
-    end
+    Base.push!(B.accumulators[lvl], value)
 
     if !C.switch
         C.value .= value

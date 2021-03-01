@@ -3,10 +3,8 @@
 
 Calculates the variance/N of a given level in the Binning Analysis.
 """
-function varN(B::LogBinner, lvl::Integer = _reliable_level(B))
-    n = B.count[lvl]
-    var(B, lvl) / n
-end
+varN(B::LogBinner, lvl::Integer = _reliable_level(B)) =
+    varN(B.accumulators[lvl])
 
 
 """
@@ -14,53 +12,8 @@ end
 
 Calculates the variance of a given level in the Binning Analysis.
 """
-function var(B::LogBinner) end
-
-function var(
-        B::LogBinner{T,N},
-        lvl::Integer = _reliable_level(B)
-    ) where {N, T <: Real}
-
-    n = B.count[lvl]
-    M2 = B.x2_sum[lvl]
-
-    # lvl = 1 <=> original values
-    M2 / (n - 1)
-end
-
-function var(
-        B::LogBinner{T,N},
-        lvl::Integer = _reliable_level(B)
-    ) where {N, T <: Complex}
-
-    n = B.count[lvl]
-    M2 = B.x2_sum[lvl]
-
-    # lvl = 1 <=> original values
-    (real(M2) + imag(M2)) / (n - 1)
-end
-
-function var(
-        B::LogBinner{<: AbstractArray{T, D}, N},
-        lvl::Integer = _reliable_level(B)
-    ) where {N, D, T <: Real}
-
-    n = B.count[lvl]
-    M2 = B.x2_sum[lvl]
-
-    @. M2 / (n - 1)
-end
-
-function var(
-        B::LogBinner{<: AbstractArray{T, D}, N},
-        lvl::Integer = _reliable_level(B)
-    ) where {N, D, T <: Complex}
-
-    n = B.count[lvl]
-    M2 = B.x2_sum[lvl]
-
-    @. (real(M2) + imag(M2)) / (n - 1)
-end
+var(B::LogBinner{T,N}, lvl::Integer = _reliable_level(B)) where {N, T} =
+    var(B.accumulators[lvl])
 
 
 """
@@ -69,7 +22,7 @@ end
 Calculates the variance for each level of the Binning Analysis.
 """
 function all_vars(B::LogBinner{T,N}) where {T,N}
-    [var(B, lvl) for lvl in 1:N if B.count[lvl] > 1]
+    [var(B, lvl) for lvl in 1:N if B.accumulators[lvl].count > 1]
 end
 
 
@@ -79,7 +32,7 @@ end
 Calculates the variance/N for each level of the Binning Analysis.
 """
 function all_varNs(B::LogBinner{T,N}) where {T,N}
-    [varN(B, lvl) for lvl in 1:N if B.count[lvl] > 1]
+    [varN(B, lvl) for lvl in 1:N if B.accumulators[lvl].count > 1]
 end
 
 
@@ -92,9 +45,7 @@ end
 
 Calculates the mean for a given level in the Binning Analysis.
 """
-function mean(B::LogBinner, lvl::Integer = 1)
-    B.x_sum[lvl] / B.count[lvl]
-end
+mean(B::LogBinner, lvl::Integer = 1) = mean(B.accumulators[lvl])
 
 
 # NOTE works for all
@@ -104,7 +55,7 @@ end
 Calculates the mean for each level of the `LogBinner`.
 """
 function all_means(B::LogBinner{T,N}) where {T,N}
-    [mean(B, lvl) for lvl in 1:N if B.count[lvl] > 1]
+    [mean(B, lvl) for lvl in 1:N if B.accumulators[lvl].count > 1]
 end
 
 
@@ -134,7 +85,7 @@ end
 Calculates the autocorrelation time tau for each level of the `LogBinner`.
 """
 function all_taus(B::LogBinner{T,N}) where {T,N}
-    [tau(B, lvl) for lvl in 1:N if B.count[lvl] > 1]
+    [tau(B, lvl) for lvl in 1:N if B.accumulators[lvl].count > 1]
 end
 
 
@@ -147,7 +98,7 @@ end
 # (Chose 32 based on https://doi.org/10.1119/1.3247985)
 function _reliable_level(B::LogBinner{T,N})::Int64 where {T,N}
     isempty(B) && (return 1)                # results in NaN in std_error
-    i = findlast(x -> x >= 32, B.count)
+    i = findlast(x -> x.count >= 32, B.accumulators)
     something(i, 1)
 end
 
@@ -156,14 +107,8 @@ end
 
 Calculates the standard error of the mean.
 """
-function std_error(B::LogBinner) end
-
-function std_error(B::LogBinner{T,N}, lvl::Integer=_reliable_level(B)) where {N, T <: Number}
-    sqrt(varN(B, lvl))
-end
-function std_error(B::LogBinner{T,N}, lvl::Integer=_reliable_level(B)) where {N, T <: AbstractArray}
-    sqrt.(varN(B, lvl))
-end
+std_error(B::LogBinner{T,N}, lvl::Integer=_reliable_level(B)) where {N, T} =
+    std_error(B.accumulators[lvl])
 
 
 """
@@ -171,10 +116,9 @@ end
 
 Calculates the standard error for each level of the Binning Analysis.
 """
-function all_std_errors(B::LogBinner) end
-
-all_std_errors(B::LogBinner{T,N}) where {N, T <: Number} = sqrt.(all_varNs(B))
-all_std_errors(B::LogBinner{T,N}) where {N, T <: AbstractArray} = (x -> sqrt.(x)).(all_varNs(B))
+function all_std_errors(B::LogBinner{T,N}) where {N, T}
+    [std_error(B, lvl) for lvl in 1:N if B.accumulators[lvl].count > 1]
+end
 
 
 """

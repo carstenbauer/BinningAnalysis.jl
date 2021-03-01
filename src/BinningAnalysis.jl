@@ -10,6 +10,7 @@ export std_error, tau
 
 
 # Logarithmic binning
+include("log/accumulators.jl")
 include("log/binning.jl")
 include("log/statistics.jl")
 export LogBinner, capacity
