@@ -185,7 +185,7 @@ function LogBinner(x::T;
 
     B = LogBinner{S, N}(
         tuple([Compressor{S}(copy(el), false) for i in 1:N]...),
-        tuple([accumulator{S}(zero(el), zero(el), zero(Int64)) for _ in 1:N]...)
+        tuple([accumulator{S}(zero(el)) for _ in 1:N]...)
     )
 
     got_timeseries && append!(B, x)

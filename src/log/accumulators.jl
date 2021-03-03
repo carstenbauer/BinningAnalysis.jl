@@ -84,6 +84,9 @@ mutable struct FastVariance{T} <: AbstractVarianceAccumulator{T}
     x2_sum::T
     count::Int
 end
+function FastVariance{T}(T0) where T 
+    FastVariance{T}(deepcopy(T0), deepcopy(T0), zero(Int))
+end
 FastVariance{T}() where T = FastVariance(zero(T), zero(T), zero(Int))
 FastVariance() = FastVariance{Float64}()
 
@@ -98,7 +101,9 @@ Base.:(==)(a::FastVariance{T}, b::FastVariance{T}) where T = (
     && (a.x2_sum == b.x2_sum)
     && (a.count == b.count)
 )
-Base.copy(V::FastVariance{T}) where T = FastVariance{T}(copy(V.x_sum), copy(V.x2_sum), copy(V.count))
+function Base.copy(V::FastVariance{T}) where T
+    FastVariance{T}(copy(V.x_sum), copy(V.x2_sum), copy(V.count))
+end
 
 mean(V::FastVariance) = isempty(V) ? zero(V.x_sum) : V.x_sum / V.count
 
@@ -149,11 +154,15 @@ values and to compute variances and errors. It is less error prone than
 See also: [`AbstractVarianceAccumulator`](@ref), [`FastVariance`](@ref)
 """
 mutable struct Variance{T} <: AbstractVarianceAccumulator{T}
+    δ::T
     m1::T
     m2::T
     count::Int
 end
-Variance{T}() where T = Variance{T}(zero(T), zero(T), zero(Int))
+function Variance{T}(T0) where {T}
+    Variance{T}(deepcopy(T0), deepcopy(T0), deepcopy(T0), zero(Int))
+end
+Variance{T}() where T = Variance{T}(zero(T), zero(T), zero(T), zero(Int))
 Variance() = Variance{Float64}()
 
 @inline Base.isempty(V::Variance) = iszero(V.count)
@@ -168,7 +177,9 @@ Base.:(==)(a::Variance{T}, b::Variance{T}) where T = (
     && (a.m2 == b.m2)
     && (a.count == b.count)
 )
-Base.copy(V::Variance{T}) where T = Variance{T}(copy(V.m1), copy(V.m2), copy(V.count))
+function Base.copy(V::Variance{T}) where T
+    Variance{T}(copy(V.δ), copy(V.m1), copy(V.m2), copy(V.count))
+end
 
 mean(V::Variance) = V.m1
 
@@ -189,9 +200,9 @@ end
 
 
 function Base.push!(V::Variance{T}, value::S) where {S, T <: AbstractArray}
-    δ = value .- mean(V)
+    @. V.δ = value - V.m1
     V.count += 1
-    V.m1 .+= δ / V.count
-    @. V.m2 += _prod(δ, value - V.m1)
+    @. V.m1 += V.δ / V.count
+    @. V.m2 += _prod(V.δ, value - V.m1)
     return V
 end
