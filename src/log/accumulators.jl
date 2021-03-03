@@ -171,6 +171,6 @@ function Base.push!(V::Variance{T}, value::S) where {S, T <: AbstractArray}
     δ = value .- mean(V)
     V.count += 1
     V.m1 .+= δ / V.count
-    V.m2 .+= _prod(δ, value .- mean(V))
+    @. V.m2 += _prod(δ, value - V.m1)
     return V
 end
