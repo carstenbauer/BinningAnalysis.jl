@@ -225,6 +225,21 @@ function LogBinner(B::LogBinner{S, M}; capacity::Int64 = _nlvls2capacity(32)) wh
 end
 
 
+"""
+    LogBinner(compressors, x_sum, x2_sum, count)
+
+Creates a new (equivalent) `LogBinner` from the fields of < v0.5 LogBinner.
+"""
+function LogBinner(
+        compressors::NTuple{N, Compressor{T}},
+        x_sum::Vector{T}, x2_sum::Vector{T}, count::Vector{Int}
+    ) where {N, T}
+    accumulators = map(x_sum, x2_sum, count) do x, x2, c
+        FastVariance{T}(x, x2, c)
+    end
+    LogBinner{T, N}(compressors, accumulators)
+end
+
 
 # TODO typing?
 """
