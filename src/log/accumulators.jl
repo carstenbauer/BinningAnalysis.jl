@@ -68,6 +68,17 @@ function Base.push!(::AbstractVarianceAccumulator{T}, value::T) where T end
 @inline _prod(x::AbstractArray, y::AbstractArray) = _prod.(x, y)
 
 
+
+"""
+    FastVariance <: AbstractVarianceAccumulator
+
+The `FastVariance` accumulator keeps track of `∑x` and `∑x²` where `x` refers to
+the pushed values. It is significantly faster than the `Variance` accumulator,
+but can become unstable for some inputs. (For example when the mean is much 
+large than the variance of the pushed values.)
+
+See also: [`AbstractVarianceAccumulator`](@ref), [`Variance`](@ref)
+"""
 mutable struct FastVariance{T} <: AbstractVarianceAccumulator{T}
     x_sum::T
     x2_sum::T
@@ -127,6 +138,16 @@ function Base.push!(V::FastVariance{T}, value::T) where T <: AbstractArray
 end
 
 
+
+"""
+    Variance <: AbstractVarianceAccumulator
+
+The `Variance` accumulator uses Welfords algorithm to keep track of pushed 
+values and to compute variances and errors. It is less error prone than 
+`FastVariance` but also slower.
+
+See also: [`AbstractVarianceAccumulator`](@ref), [`FastVariance`](@ref)
+"""
 mutable struct Variance{T} <: AbstractVarianceAccumulator{T}
     m1::T
     m2::T
