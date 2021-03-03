@@ -121,7 +121,7 @@ end
 
 function Base.push!(V::FastVariance{T}, value::T) where T <: AbstractArray
     V.x_sum .+= value
-    V.x2_sum .+= _prod(value, value)
+    @. V.x2_sum += _prod(value, value)
     V.count += 1
     return V
 end

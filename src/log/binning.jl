@@ -299,7 +299,8 @@ function _push!(
             throw(OverflowError("The Binning Analysis has exceeded its maximum capacity."))
         else
             C.switch = false
-            _push!(B, lvl+1, @. 0.5 * (C.value + value))
+            @. C.value = 0.5 * (C.value + value)
+            _push!(B, lvl+1, C.value)
             return nothing
         end
     end
