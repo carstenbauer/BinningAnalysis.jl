@@ -12,11 +12,11 @@ struct LogBinner{T, N, V <: AbstractVarianceAccumulator{T}}
     # list of Compressors, one per level
     compressors::NTuple{N, Compressor{T}}
 
-    accumulators::Vector{V}
+    accumulators::NTuple{N, V}
 
     function LogBinner{T, N}(
             compressors::NTuple{N, Compressor{T}},
-            accumulators::Vector{V}
+            accumulators::NTuple{N, V}
         ) where {T, N, V <: AbstractVarianceAccumulator{T}}
         new{T, N, V}(compressors, accumulators)
     end
@@ -185,7 +185,7 @@ function LogBinner(x::T;
 
     B = LogBinner{S, N}(
         tuple([Compressor{S}(copy(el), false) for i in 1:N]...),
-        [accumulator{S}(zero(el), zero(el), zero(Int64)) for _ in 1:N]
+        tuple([accumulator{S}(zero(el), zero(el), zero(Int64)) for _ in 1:N]...)
     )
 
     got_timeseries && append!(B, x)
@@ -220,7 +220,7 @@ function LogBinner(B::LogBinner{S, M}; capacity::Int64 = _nlvls2capacity(32)) wh
 
     LogBinner{S, N}(
         tuple([i > M ? Compressor{S}(copy(el), false) : deepcopy(B.compressors[i]) for i in 1:N]...),
-        [i > M ? copy(V) : copy(B.accumulators[i]) for i in 1:N]
+        tuple([i > M ? copy(V) : copy(B.accumulators[i]) for i in 1:N]...)
     )
 end
 
