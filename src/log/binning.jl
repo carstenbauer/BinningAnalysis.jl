@@ -24,10 +24,10 @@ end
 
 
 
-
 # Overload some basic Base functions
 Base.eltype(B::LogBinner{T,N}) where {T,N} = T
-Base.length(B::LogBinner) = B.accumulators[1].count
+Base.count(B::LogBinner, lvl::Int=1) = B.accumulators[lvl].count
+Base.length(B::LogBinner) = count(B, 1)
 Base.ndims(B::LogBinner{T,N}) where {T,N} = ndims(eltype(B))
 Base.isempty(B::LogBinner) = length(B) == 0
 Base.:(==)(a::T, b::T) where {T <: Compressor} = (a.value == b.value) && (a.switch == b.switch)

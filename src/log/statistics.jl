@@ -22,7 +22,7 @@ var(B::LogBinner{T,N}, lvl::Integer = _reliable_level(B)) where {N, T} =
 Calculates the variance for each level of the Binning Analysis.
 """
 function all_vars(B::LogBinner{T,N}) where {T,N}
-    [var(B, lvl) for lvl in 1:N if B.accumulators[lvl].count > 1]
+    [var(B, lvl) for lvl in 1:N if count(B, lvl) > 1]
 end
 
 
@@ -32,7 +32,7 @@ end
 Calculates the variance/N for each level of the Binning Analysis.
 """
 function all_varNs(B::LogBinner{T,N}) where {T,N}
-    [varN(B, lvl) for lvl in 1:N if B.accumulators[lvl].count > 1]
+    [varN(B, lvl) for lvl in 1:N if count(B, lvl) > 1]
 end
 
 
@@ -55,7 +55,7 @@ mean(B::LogBinner, lvl::Integer = 1) = mean(B.accumulators[lvl])
 Calculates the mean for each level of the `LogBinner`.
 """
 function all_means(B::LogBinner{T,N}) where {T,N}
-    [mean(B, lvl) for lvl in 1:N if B.accumulators[lvl].count > 1]
+    [mean(B, lvl) for lvl in 1:N if count(B, lvl) > 1]
 end
 
 
@@ -85,7 +85,7 @@ end
 Calculates the autocorrelation time tau for each level of the `LogBinner`.
 """
 function all_taus(B::LogBinner{T,N}) where {T,N}
-    [tau(B, lvl) for lvl in 1:N if B.accumulators[lvl].count > 1]
+    [tau(B, lvl) for lvl in 1:N if count(B, lvl) > 1]
 end
 
 
@@ -117,7 +117,7 @@ std_error(B::LogBinner{T,N}, lvl::Integer=_reliable_level(B)) where {N, T} =
 Calculates the standard error for each level of the Binning Analysis.
 """
 function all_std_errors(B::LogBinner{T,N}) where {N, T}
-    [std_error(B, lvl) for lvl in 1:N if B.accumulators[lvl].count > 1]
+    [std_error(B, lvl) for lvl in 1:N if count(B, lvl) > 1]
 end
 
 
