@@ -1,8 +1,8 @@
 @testset "Constructors and basic properties" begin
     # numbers
-    for T in (Float64, ComplexF64)
-        B = LogBinner(T)
-        B2 = LogBinner(T)
+    for T in (Float64, ComplexF64), V in (BinningAnalysis.Variance, BinningAnalysis.FastVariance)
+        B = LogBinner(T; accumulator=V)
+        B2 = LogBinner(T; accumulator=V)
 
         @test length(B) == 0
         @test ndims(B) == 0
@@ -29,7 +29,7 @@
         B3 = LogBinner(B, capacity=1000)
         @test B3 == B
         @test !isempty(B3)
-        
+
         append!(B2, buffer)
         @test B == B2
         @test !(B != B2)
@@ -43,9 +43,9 @@
     end
 
     # arrays
-    for T in (Float64, ComplexF64)
-        B = LogBinner(zeros(T, 2, 3))
-        B2 = LogBinner(zeros(T, 2, 3))
+    for T in (Float64, ComplexF64), V in (BinningAnalysis.Variance, BinningAnalysis.FastVariance)
+        B = LogBinner(zeros(T, 2, 3), accumulator=V)
+        B2 = LogBinner(zeros(T, 2, 3), accumulator=V)
 
         @test length(B) == 0
         @test ndims(B) == 2
@@ -72,11 +72,11 @@
         B3 = LogBinner(B, capacity=1000)
         @test B3 == B
         @test !isempty(B3)
-        
+
         append!(B2, buffer)
         @test B == B2
         @test !(B != B2)
-        
+
         append!(B, [rand(T, 2, 3) for _ in 1:24])
         @test_throws OverflowError LogBinner(B, capacity=1000)
 
@@ -105,7 +105,7 @@
     x = rand(10)
     B = LogBinner(x)
     @test length(B) == 10
-    @test mean(B) == mean(x)
+    @test mean(B) ≈ mean(x)
 
     # Test equality of different sizes
     B2 = LogBinner()
@@ -123,7 +123,7 @@
     x = [rand(2,3) for _ in 1:5]
     B = LogBinner(x)
     @test length(B) == 5
-    @test mean(B) == mean(x)
+    @test mean(B) ≈ mean(x)
 
     B2 = LogBinner(zeros(2,3))
     @test !(B == B2)
@@ -312,12 +312,12 @@ end
 
 @testset "Sum-type heuristic" begin
     # numbers
-    @test typeof(LogBinner(zero(Int64))) == LogBinner{Float64, 32}
-    @test typeof(LogBinner(zero(ComplexF16))) == LogBinner{ComplexF64, 32}
+    @test typeof(LogBinner(zero(Int64))) == LogBinner{Float64, 32, BinningAnalysis.Variance{Float64}}
+    @test typeof(LogBinner(zero(ComplexF16))) == LogBinner{ComplexF64, 32, BinningAnalysis.Variance{ComplexF64}}
 
     # arrays
-    @test typeof(LogBinner(zeros(Int64, 2,2))) == LogBinner{Matrix{Float64}, 32}
-    @test typeof(LogBinner(zeros(ComplexF16, 2,2))) == LogBinner{Matrix{ComplexF64}, 32}
+    @test typeof(LogBinner(zeros(Int64, 2,2))) == LogBinner{Matrix{Float64}, 32, BinningAnalysis.Variance{Matrix{Float64}}}
+    @test typeof(LogBinner(zeros(ComplexF16, 2,2))) == LogBinner{Matrix{ComplexF64}, 32, BinningAnalysis.Variance{Matrix{ComplexF64}}}
 end
 
 

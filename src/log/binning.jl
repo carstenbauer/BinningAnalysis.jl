@@ -8,23 +8,26 @@ mutable struct Compressor{T}
 end
 
 
-struct LogBinner{T, N}
+struct LogBinner{T, N, V <: AbstractVarianceAccumulator{T}}
     # list of Compressors, one per level
     compressors::NTuple{N, Compressor{T}}
 
-    # sum(x) for all values on a given lvl
-    x_sum::Vector{T}
-    # sum(x.^2) for all values on a given lvl
-    x2_sum::Vector{T}
-    # number of values that are summed on a given lvl
-    count::Vector{Int64}
+    accumulators::NTuple{N, V}
+
+    function LogBinner{T, N}(
+            compressors::NTuple{N, Compressor{T}},
+            accumulators::NTuple{N, V}
+        ) where {T, N, V <: AbstractVarianceAccumulator{T}}
+        new{T, N, V}(compressors, accumulators)
+    end
 end
 
 
 
 # Overload some basic Base functions
 Base.eltype(B::LogBinner{T,N}) where {T,N} = T
-Base.length(B::LogBinner) = B.count[1]
+Base.count(B::LogBinner, lvl::Int=1) = B.accumulators[lvl].count
+Base.length(B::LogBinner) = count(B, 1)
 Base.ndims(B::LogBinner{T,N}) where {T,N} = ndims(eltype(B))
 Base.isempty(B::LogBinner) = length(B) == 0
 Base.:(==)(a::T, b::T) where {T <: Compressor} = (a.value == b.value) && (a.switch == b.switch)
@@ -37,14 +40,12 @@ function Base.:(==)(a::LogBinner{T, N}, b::LogBinner{T, M}) where {T, N, M}
     # Does every level match?
     for i in 1:N
         (a.compressors[i] == b.compressors[i]) || return false
-        (a.x_sum[i] == b.x_sum[i]) || return false
-        (a.x2_sum[i] == b.x2_sum[i]) || return false
-        (a.count[i] == b.count[i]) || return false
+        (a.accumulators[i] == b.accumulators[i]) || return false
     end
 
     # Are extra levels empty?
     for i in N+1:M
-        (b.count[i] == 0) || return false
+        isempty(b.accumulators[i]) || return false
     end
 
     return true
@@ -89,21 +90,10 @@ function Base.empty!(B::LogBinner)
     # get zero
     z = zero(eltype(eltype(B)))
 
-    # reset x_sum and x2_sum to all zeros
-    @inbounds for i in eachindex(B.x_sum)
-        if ndims(B) == 0 # compile time
-            # numbers
-            B.x_sum[i] = z
-            B.x2_sum[i] = z
-        else
-            # arrays
-            fill!(B.x_sum[i], z)
-            fill!(B.x2_sum[i], z)
-        end
+    # reset accumulators
+    for acc in B.accumulators
+        empty!(acc)
     end
-
-    # reset counts
-    fill!(B.count, 0)
 
     # reset compressors
     for c in B.compressors
@@ -171,8 +161,9 @@ Values can be added using `push!` and `append!`.
 Creates a new `LogBinner` and adds all elements from the given timeseries.
 """
 function LogBinner(x::T;
-        capacity::Int64 = _nlvls2capacity(32)
-        ) where {T <: Union{Number, AbstractArray}}
+        capacity::Int64 = _nlvls2capacity(32),
+        accumulator::Type{<:AbstractVarianceAccumulator} = Variance
+    ) where {T <: Union{Number, AbstractArray}}
 
     # check keyword args
     capacity <= 0 && throw(ArgumentError("`capacity` must be finite and positive."))
@@ -194,9 +185,7 @@ function LogBinner(x::T;
 
     B = LogBinner{S, N}(
         tuple([Compressor{S}(copy(el), false) for i in 1:N]...),
-        [copy(el) for _ in 1:N],
-        [copy(el) for _ in 1:N],
-        zeros(Int64, N)
+        tuple([accumulator{S}(zero(el)) for _ in 1:N]...)
     )
 
     got_timeseries && append!(B, x)
@@ -222,20 +211,34 @@ The new LogBinner may be larger or smaller than the given one.
 """
 function LogBinner(B::LogBinner{S, M}; capacity::Int64 = _nlvls2capacity(32)) where {S, M}
     N = _capacity2nlvls(capacity)
-    B.count[min(M, N)] > 1 && throw(OverflowError(
+    B.accumulators[min(M, N)].count > 1 && throw(OverflowError(
         "The new LogBinner is too small to reconstruct the given LogBinner. " *
-        "New capacity = $capacity   Old capacity = $(B.count[1])"
+        "New capacity = $capacity   Old capacity = $(B.accumulators[1].count)"
     ))
-    el = zero(B.x_sum[1])
-    
+    el = zero(mean(B.accumulators[1]))
+    V = empty!(copy(B.accumulators[1]))
+
     LogBinner{S, N}(
         tuple([i > M ? Compressor{S}(copy(el), false) : deepcopy(B.compressors[i]) for i in 1:N]...),
-        [i > M ? copy(el) : copy(B.x_sum[i]) for i in 1:N],
-        [i > M ? copy(el) : copy(B.x2_sum[i]) for i in 1:N],
-        [i > M ? 0 : copy(B.count[i]) for i in 1:N]
+        tuple([i > M ? copy(V) : copy(B.accumulators[i]) for i in 1:N]...)
     )
 end
 
+
+"""
+    LogBinner(compressors, x_sum, x2_sum, count)
+
+Creates a new (equivalent) `LogBinner` from the fields of < v0.5 LogBinner.
+"""
+function LogBinner(
+        compressors::NTuple{N, Compressor{T}},
+        x_sum::Vector{T}, x2_sum::Vector{T}, count::Vector{Int}
+    ) where {N, T}
+    accumulators = map(x_sum, x2_sum, count) do x, x2, c
+        FastVariance{T}(x, x2, c)
+    end
+    LogBinner{T, N}(compressors, accumulators)
+end
 
 
 # TODO typing?
@@ -263,11 +266,6 @@ function Base.push!(B::LogBinner{T,N}, value::S) where {N, T, S}
     _push!(B, 1, value)
 end
 
-
-@inline _square(x) = x^2
-@inline _square(x::Complex) = Complex(real(x)^2, imag(x)^2)
-@inline _square(x::AbstractArray) = _square.(x)
-
 # recursion, back-end function
 @inline function _push!(B::LogBinner{T,N}, lvl::Int64, value::S) where {N, T <: Number, S}
     C = B.compressors[lvl]
@@ -276,9 +274,7 @@ end
     # add it to the sums. Note that values pushed to the output arrays are not
     # added here until the array drops to the next level. (New compressors are
     # added)
-    B.x_sum[lvl] += value
-    B.x2_sum[lvl] += _square(value)
-    B.count[lvl] += 1
+    Base.push!(B.accumulators[lvl], value)
 
     if !C.switch
         # Compressor has space -> save value
@@ -307,9 +303,7 @@ function _push!(
     ) where {N, T <: AbstractArray, S}
 
     C = B.compressors[lvl]
-    B.x_sum[lvl] .+= value
-    B.x2_sum[lvl] .+= _square(value)
-    B.count[lvl] += 1
+    Base.push!(B.accumulators[lvl], value)
 
     if !C.switch
         C.value .= value
@@ -320,7 +314,8 @@ function _push!(
             throw(OverflowError("The Binning Analysis has exceeded its maximum capacity."))
         else
             C.switch = false
-            _push!(B, lvl+1, 0.5 * (C.value .+ value))
+            @. C.value = 0.5 * (C.value + value)
+            _push!(B, lvl+1, C.value)
             return nothing
         end
     end
