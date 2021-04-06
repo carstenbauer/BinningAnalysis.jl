@@ -359,16 +359,20 @@ end
 
     ep = ErrorPropagator(ts)
     @test isapprox(mean(ep, 1), 0.5032466005013134, atol=1e-12)
+    @test isapprox(varN(ep, grad_identity, 1), 7.915767668548315e-5, atol=1e-12)
     @test isapprox(std_error(ep, grad_identity, 1), 0.008897060002353763, atol=1e-12)
     # check consistency with Julia's Statistics
+    @test varN(ep, grad_identity, 1) ≈ std(ts)^2.0/length(ts)
     @test std_error(ep, grad_identity, 1) ≈ std(ts)/sqrt(length(ts))
 
     ep = ErrorPropagator(1 ./ ts)
     @test isapprox(mean(ep, 1), 7.977079066071383, atol=1e-12)
+    @test isapprox(varN(ep, grad_identity, 1), 6.361126965375638, atol=1e-12)
     @test isapprox(std_error(ep, grad_identity, 1), 2.5221274681061696, atol=1e-12)
 
     ep = ErrorPropagator(ts, ts2.^2)
     @test isapprox(mean(ep, g), -0.05969375347674344, atol=1e-3)
+    @test isapprox(varN(ep, grad_g, 1), 0.00017206056051197917, atol=1e-4)
     @test isapprox(std_error(ep, grad_g, 1), 0.013117185693279606, atol=1e-4)
 
 
@@ -378,15 +382,19 @@ end
 
     ep = ErrorPropagator(ts)
     @test isapprox(mean(ep, 1), 0.5026931517594448 + 0.49854565281725627im, atol=1e-12)
+    @test isapprox(varN(ep, grad_identity, 1), 0.00016760263180043896, atol=1e-12)
     @test isapprox(std_error(ep, grad_identity, 1), 0.012946143510730868, atol=1e-12)
     # check consistency with Julia's Statistics
+    @test varN(ep, grad_identity, 1) ≈ std(ts)^2.0/length(ts)
     @test std_error(ep, grad_identity, 1) ≈ std(ts)/sqrt(length(ts))
 
     ep = ErrorPropagator(1 ./ ts)
     @test isapprox(mean(ep, 1), 1.1496877962692906 - 1.0838709685240246im, atol=1e-11)
+    @test isapprox(varN(ep, grad_identity, 1), 0.003222418676959136, atol=1e-12)
     @test isapprox(std_error(ep, grad_identity, 1), 0.05676635162628594, atol=1e-12)
 
     ep = ErrorPropagator(ts, ts2.^2)
     @test isapprox(mean(ep, g), 0.02004836872405491 - 0.01825289014938747im, atol=1e-4)
+    @test isapprox(varN(ep, grad_g, 1), 0.0006994215287967041, atol=1e-5)
     @test isapprox(std_error(ep, grad_g, 1), 0.026446578773003968, atol=1e-5)
 end

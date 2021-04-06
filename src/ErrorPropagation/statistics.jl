@@ -322,6 +322,18 @@ function var(ep::ErrorPropagator, gradient::Function, lvl = _reliable_level(ep))
 end
 
 """
+    varN(ep::ErrorPropagator, gradient[, lvl])
+
+    Gives the first-order variance/N estimate of a function `f` acting on the
+    arguments of the error propagator. `gradient` is either the gradient of `f` (a
+    function) or a vector `∇f(means(ep))`. To get an estimate mean value of `f`,
+    `mean(ep, f)` can be used.
+"""
+function varN(ep::ErrorPropagator, gradient::Function, lvl = _reliable_level(ep))
+    var(ep, gradient, lvl) / ep.count[lvl]
+end
+
+"""
     std_error(ep::ErrorPropagator, gradient[, lvl])
 
 
