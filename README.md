@@ -1,15 +1,15 @@
-![logo](https://github.com/crstnbr/BinningAnalysis.jl/blob/master/docs/src/assets/logo_with_text.png)
+![logo](https://github.com/carstenbauer/BinningAnalysis.jl/blob/master/docs/src/assets/logo_with_text.png)
 
 | **Build Status**                                                                                |  **Community**                                                                                |
 |:-----------------------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------:|
 | ![][lifecycle-img] [![][github-ci-img]][github-ci-url] [![][codecov-img]][codecov-url] [![][pkgeval-img]][pkgeval-url] | [![][slack-img]][slack-url] [![][license-img]][license-url] [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3603347.svg)](https://doi.org/10.5281/zenodo.3603347) |
 
 [docs-dev-img]: https://img.shields.io/badge/docs-dev-blue.svg
-[docs-dev-url]: https://crstnbr.github.io/BinningAnalysis.jl/dev
-[github-ci-img]: https://github.com/crstnbr/BinningAnalysis.jl/workflows/Run%20tests/badge.svg
-[github-ci-url]: https://github.com/crstnbr/BinningAnalysis.jl/actions?query=workflow%3A%22Run+tests%22
-[codecov-img]: https://img.shields.io/codecov/c/github/crstnbr/BinningAnalysis.jl/master.svg?label=codecov
-[codecov-url]: http://codecov.io/github/crstnbr/BinningAnalysis.jl?branch=master
+[docs-dev-url]: https://carstenbauer.github.io/BinningAnalysis.jl/dev
+[github-ci-img]: https://github.com/carstenbauer/BinningAnalysis.jl/workflows/Run%20tests/badge.svg
+[github-ci-url]: https://github.com/carstenbauer/BinningAnalysis.jl/actions?query=workflow%3A%22Run+tests%22
+[codecov-img]: https://img.shields.io/codecov/c/github/carstenbauer/BinningAnalysis.jl/master.svg?label=codecov
+[codecov-url]: http://codecov.io/github/carstenbauer/BinningAnalysis.jl?branch=master
 
 [pkgeval-img]: https://juliaci.github.io/NanosoldierReports/pkgeval_badges/B/BinningAnalysis.svg
 [pkgeval-url]: https://juliaci.github.io/NanosoldierReports/pkgeval_badges/report.html
@@ -42,7 +42,7 @@ As per usual, you can install the registered package with
 ] add BinningAnalysis
 ```
 
-Note that there is [BinningAnalysisPlots.jl](https://github.com/crstnbr/BinningAnalysisPlots.jl) which defines some [Plots.jl](https://github.com/JuliaPlots/Plots.jl) recipes for `LogBinner` and `FullBinner` to facilitate visualizing the error convergence.
+Note that there is [BinningAnalysisPlots.jl](https://github.com/carstenbauer/BinningAnalysisPlots.jl) which defines some [Plots.jl](https://github.com/JuliaPlots/Plots.jl) recipes for `LogBinner` and `FullBinner` to facilitate visualizing the error convergence.
 
 ## Binning tools
 
