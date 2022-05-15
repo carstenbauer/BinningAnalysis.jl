@@ -10,7 +10,7 @@
         @test capacity(ep) == 2^32 - 1
         @test BinningAnalysis.nlevels(ep) == 32
 
-        append!(ep, rand(1000))
+        append!(ep, rand(rng, 1000))
         @test length(ep) == 1000
         @test !isempty(ep)
 
@@ -30,7 +30,7 @@
         @test capacity(ep) == 2^32 - 1
         @test BinningAnalysis.nlevels(ep) == 32
 
-        append!(ep, [rand(T, 2,3) for _ in 1:1000])
+        append!(ep, [rand(rng, T, 2,3) for _ in 1:1000])
         @test length(ep) == 1000
         @test !isempty(ep)
         empty!(ep)
@@ -51,17 +51,17 @@
     @test_throws OverflowError push!(ep, 2.0)
 
     ep = ErrorPropagator(zeros(2,2), capacity=1)
-    push!(ep, rand(2,2))
-    @test_throws OverflowError push!(ep, rand(2,2))
+    push!(ep, rand(rng, 2,2))
+    @test_throws OverflowError push!(ep, rand(rng, 2,2))
 
     # time series constructor (#26)
-    x = rand(16)
+    x = rand(rng, 16)
     ep = ErrorPropagator(x)
     @test length(ep) == 16
     @test mean(ep, 1) == mean(x)
     @test all(m ≈ [mean(x)] for m in all_means(ep))
 
-    x = [rand(2,3) for _ in 1:8]
+    x = [rand(rng, 2,3) for _ in 1:8]
     ep = ErrorPropagator(x)
     @test length(ep) == 8
     @test mean(ep, 1) == mean(x)
@@ -73,10 +73,10 @@ end
 @testset "Check variance for Float64 values" begin
     # NOTE
     # Due to the different (mathematically equivalent) versions of the variance
-    # calculated here, the values are onyl approximately the same. (Float error)
-    Random.seed!(1234)
-    xs = rand(Float64, 1_000_000)
-    ys = rand(Float64, 1_000_000)
+    # calculated here, the values are only approximately the same. (Float error)
+    StableRNGs.seed!(rng, 123)
+    xs = rand(rng, Float64, 1_000_000)
+    ys = rand(rng, Float64, 1_000_000)
     ep = ErrorPropagator(Float64, N_args=2)
 
     # Test small set (off by one errors are large here)
@@ -104,21 +104,21 @@ end
     ]
 
     # all_* methods
-    @test isapprox(first.(all_vars(ep)), [0.0833563, 0.0417223, 0.0208426, 0.0104261, 0.00525425, 0.00263066, 0.00129848, 0.000643458, 0.000324319, 0.000152849, 7.28893e-5, 3.70618e-5, 1.6847e-5, 8.35098e-6, 4.03675e-6, 2.06069e-6, 9.23046e-7, 5.40964e-7, 7.6288e-7], atol=1e-6)
+    @test isapprox(first.(all_vars(ep)), [0.08325406274030639, 0.041664887985400856, 0.02086378726697563, 0.010404153111327696, 0.005186509467804135, 0.002587078870339432, 0.001287770691588086, 0.0006406912824759581, 0.00031618954047712977, 0.00015796947195956257, 7.688354009283138e-5, 3.805137200274533e-5, 1.7766726465417992e-5, 8.513139774846135e-6, 3.718644130956683e-6, 2.0176056744203308e-6, 1.198040510186349e-6, 4.1842538345271407e-7, 4.374011807750655e-7], atol=1e-6)
     @test isapprox(first.(all_varNs(ep)), zero(first.(all_varNs(ep))), atol=1e-6)
-    @test isapprox(first.(all_taus(ep)), [0.0, 0.000530439, 8.45695e-5, 0.000316855, 0.00426884, 0.0049475, -0.00152239, -0.00592876, -0.00195134, -0.0305476, -0.0520332, -0.0444472, -0.0858441, -0.0894091, -0.103052, -0.0879748, -0.130883, -0.0364442, 1.02534], atol=1e-6)
-    @test isapprox(first.(all_std_errors(ep)), [0.000288715, 0.000288868, 0.000288739, 0.000288806, 0.000289945, 0.00029014, 0.000288275, 0.000286998, 0.000288151, 0.000279756, 0.000273279, 0.000275584, 0.000262764, 0.000261631, 0.000257247, 0.000262087, 0.000248065, 0.000277994, 0.000504275], atol=1e-6)
+    @test isapprox(first.(all_taus(ep)), [0.0, 0.0004547119263806909, 0.0012076667550950937, -0.00012514614301650795, -0.0016210095132663804, -0.0028079043475808807, -0.005025211089571158, -0.007449064127587446, -0.01383932219829298, -0.014224629670230415, -0.02690525630387247, -0.03170980256141187, -0.06269730070559826, -0.08092234827197647, -0.1338834575186591, -0.0960946513177322, -0.020327508851475773, -0.1410081813940125, 0.37563530711097126], atol=1e-6)
+    @test isapprox(first.(all_std_errors(ep)), [0.00028853780123288246, 0.00028866897299640936, 0.0002888860485864669, 0.00028850168958018525, 0.0002880696990050605, 0.0002877264740180539, 0.00028708417626479785, 0.0002863803991823409, 0.0002845166131232874, 0.000284403843712177, 0.00028066727445067965, 0.0002792384696929228, 0.00026984153262076416, 0.0002641587292141796, 0.0002469035827929826, 0.00025933284111480696, 0.00028261169003733125, 0.00024448937559525804, 0.00038183817723178037], atol=1e-6)
 
-    @test isapprox(tau(ep, 1), -0.10305205108202309)
-    @test isapprox(std_error(ep, 1), 0.00025724734978688446)
+    @test isapprox(tau(ep, 1), -0.1338834575186591)
+    @test isapprox(std_error(ep, 1), 0.0002469035827929826)
 end
 
 
 
 @testset "Check variance for Float64 vectors" begin
-    Random.seed!(1234)
-    xs = [rand(Float64, 3) for _ in 1:1_000_000]
-    ys = [rand(Float64, 3) for _ in 1:1_000_000]
+    StableRNGs.seed!(rng, 123)
+    xs = [rand(rng, Float64, 3) for _ in 1:1_000_000]
+    ys = [rand(rng, Float64, 3) for _ in 1:1_000_000]
     ep = ErrorPropagator(zeros(Float64, 3), zeros(Float64, 3))
 
     # Test small set (off by one errors are large here)
@@ -152,8 +152,8 @@ end
     # all_std_errors for <:AbstractArray
     @test all(isapprox.(first.(all_std_errors(ep)), Ref(zeros(3)), atol=1e-2))
 
-    @test all(isapprox.(tau(ep, 1), [0.0313041, -0.153329, -0.0566459], atol=1e-6))
-    @test all(isapprox.(std_error(ep, 1), [0.000297531, 0.000240407, 0.000271932], atol=1e-6))
+    @test all(isapprox.(tau(ep, 1), [-0.06939313732460628, -0.05220987781564013, 0.13728303267264075], atol=1e-6))
+    @test all(isapprox.(std_error(ep, 1), [0.0002677468110272373, 0.00027324026280709543, 0.00032601860649145024], atol=1e-6))
 end
 
 
@@ -162,9 +162,9 @@ end
     # NOTE
     # Due to the different (mathematically equivalent) versions of the variance
     # calculated here, the values are onyl approximately the same. (Float error)
-    Random.seed!(1234)
-    xs = rand(ComplexF64, 1_000_000)
-    ys = rand(ComplexF64, 1_000_000)
+    StableRNGs.seed!(rng, 123)
+    xs = rand(rng, ComplexF64, 1_000_000)
+    ys = rand(rng, ComplexF64, 1_000_000)
     ep = ErrorPropagator(ComplexF64, N_args=2)
 
     # Test small set (off by one errors are large here)
@@ -192,21 +192,21 @@ end
     ]
 
     # all_* methods
-    @test isapprox(first.(all_vars(ep)), [0.16671474067121222, 0.08324845751233179, 0.041527133392489035, 0.020847602123934883, 0.010430741538377142, 0.005111097271805531, 0.0025590988213273214, 0.001283239131297187, 0.0006322480081128456, 0.0003060164750540162, 0.00015750782337442537, 8.006142368921498e-5, 3.810111634139357e-5, 1.80535512880331e-5, 1.0002438211476061e-5, 5.505102193326117e-6, 2.8788397929968568e-6, 1.7242475507384114e-6, 7.900888818745955e-7])
+    @test isapprox(first.(all_vars(ep)), [0.16658475406392415, 0.08321852969182086, 0.04163861706031047, 0.020801210327666575, 0.010404232627790222, 0.005208087488829505, 0.002589371281786268, 0.0012979310682935674, 0.0006498645790018465, 0.00033049882070657066, 0.00016135937775918485, 8.244734583795488e-5, 4.190438084472614e-5, 2.1161425558080538e-5, 1.0185807653328993e-5, 5.794287254556885e-6, 2.412065927770435e-6, 2.1323503403003485e-6, 2.657209370315883e-7])
     @test isapprox(first.(all_varNs(ep)), zero(first.(all_varNs(ep))), atol=1e-6)
-    @test isapprox(first.(all_taus(ep)), [0.0, -0.00065328850247931, -0.0018180968845809553, 0.00019817179932868356, 0.0005312186016332987, -0.009476150581268994, -0.008794711536776634, -0.007346737569564443, -0.014542478848703244, -0.030064159934323653, -0.01599670814224563, -0.007961042363178128, -0.03167873601168558, -0.056188229083248886, -0.008218660661725774, 0.05035147373711113, 0.0756019296606737, 0.2387501479629205, 0.289861051172009])
-    @test isapprox(first.(all_std_errors(ep)), [0.0004083071646092097, 0.0004080403350462593, 0.00040756414657076514, 0.0004083880715587553, 0.0004085240073900606, 0.00040441947616030687, 0.00040470028980091994, 0.0004052963382191276, 0.00040232555162611277, 0.00039584146247874917, 0.00040172249945971054, 0.00040504357104527986, 0.00039516087376314515, 0.0003846815937765092, 0.00040493752222959487, 0.0004283729758565588, 0.00043808977717638777, 0.0004963074437049236, 0.0005131890106236348])
+    @test isapprox(first.(all_taus(ep)), [0.0, -0.00044330191292812904, -9.090214423418397e-5, -0.0005254725847371189, -0.0003512686978415225, 0.0002222459643324015, -0.002596252083402084, -0.0013174794805482781, -0.0006266293031622627, 0.00792831442226083, -0.0037744232968683344, 0.007097663665263987, 0.015471138766913417, 0.02061879500256958, 0.0011876815245235317, 0.07971364057455732, -0.017349603544782877, 0.41431379449307415, -0.23414840339108273])
+    @test isapprox(first.(all_std_errors(ep)), [0.0004081479560942626, 0.00040796698320285887, 0.0004081108528834315, 0.00040793342915398906, 0.0004080045613037231, 0.00040823865525271385, 0.0004070869219642424, 0.0004076098748477781, 0.00040789211844213303, 0.0004113711544095814, 0.0004066045146215672, 0.0004110346447395122, 0.0004144143648054135, 0.00041647846025109046, 0.0004086324183581892, 0.00043948027087143456, 0.0004010042333750302, 0.0005519252460123237, 0.00029761324849071505])
 
-    @test isapprox(tau(ep, 1), -0.008218660661725774)
-    @test isapprox(std_error(ep, 1), 0.00040493752222959487)
+    @test isapprox(tau(ep, 1), 0.0011876815245235317)
+    @test isapprox(std_error(ep, 1), 0.0004086324183581892)
 end
 
 
 
 @testset "Check variance for complex vectors" begin
-    Random.seed!(1234)
-    xs = [rand(ComplexF64, 3) for _ in 1:1_000_000]
-    ys = [rand(ComplexF64, 3) for _ in 1:1_000_000]
+    StableRNGs.seed!(rng, 123)
+    xs = [rand(rng, ComplexF64, 3) for _ in 1:1_000_000]
+    ys = [rand(rng, ComplexF64, 3) for _ in 1:1_000_000]
     ep = ErrorPropagator(zeros(ComplexF64, 3), zeros(ComplexF64, 3))
 
     # Test small set (off by one errors are large here)
@@ -240,8 +240,8 @@ end
     # all_std_errors for <:AbstractArray
     @test all(isapprox.(first.(all_std_errors(ep)), Ref(zeros(3)), atol=1e-2))
 
-    @test all(isapprox.(tau(ep, 1), [-0.101203, -0.0831874, -0.0112827], atol=1e-6))
-    @test all(isapprox.(std_error(ep, 1), [0.000364498, 0.00037268, 0.000403603], atol=1e-6))
+    @test all(isapprox.(tau(ep, 1), [0.02509990727281808, 0.0756740457843339, 0.021586917851548426], atol=1e-6))
+    @test all(isapprox.(std_error(ep, 1), [0.00041845464561767837, 0.0004382193124492061, 0.00041696433722574546], atol=1e-6))
 end
 
 
@@ -251,8 +251,8 @@ end
     epc = ErrorPropagator(zero(im)) # Float64 ErrorPropagator
 
     # Check that this doesn't throw (TODO: is there a better way?)
-    @test (append!(epf, rand(1:10, 10000)); true)
-    @test (append!(epc, rand(10000)); true)
+    @test (append!(epf, rand(rng, 1:10, 10000)); true)
+    @test (append!(epc, rand(rng, 10000)); true)
 end
 
 
@@ -291,22 +291,22 @@ end
     @test isnan(std_error(ep, 1, BinningAnalysis._reliable_level(ep)))
 
     # One Element should still return NaN (due to 1/(n-1))
-    push!(ep, rand())
+    push!(ep, rand(rng, ))
     @test BinningAnalysis._reliable_level(ep) == 1
     @test isnan(std_error(ep, 1, BinningAnalysis._reliable_level(ep)))
 
     # Two elements should return some value
-    push!(ep, rand())
+    push!(ep, rand(rng, ))
     @test BinningAnalysis._reliable_level(ep) == 1
     @test !isnan(std_error(ep, 1, BinningAnalysis._reliable_level(ep)))
 
     # same behavior up to (including) 63 values (31 binned in first binned lvl)
-    append!(ep, rand(61))
+    append!(ep, rand(rng, 61))
     @test BinningAnalysis._reliable_level(ep) == 1
     @test !isnan(std_error(ep, 1, BinningAnalysis._reliable_level(ep)))
 
     # at 64 or more values, the lvl should be increasing
-    push!(ep, rand())
+    push!(ep, rand(rng, ))
     @test BinningAnalysis._reliable_level(ep) == 2
     @test !isnan(std_error(ep, 1, BinningAnalysis._reliable_level(ep)))
 end
@@ -328,12 +328,12 @@ end
 
 
     # filled binner
-    Random.seed!(1234)
-    append!(ep, rand(1000))
+    StableRNGs.seed!(rng, 123)
+    append!(ep, rand(rng, 1000))
     show(io, MIME"text/plain"(), ep)
 
     l = String(take!(io))
-    @test l == "ErrorPropagator{Float64,32}\n| Count: 1000\n| Means: [0.49685]\n| StdErrors: [0.00733]"
+    @test l == "ErrorPropagator{Float64,32}\n| Count: 1000\n| Means: [0.49387]\n| StdErrors: [0.00952]"
     @test length(readlines(io)) == 0
     close(io);
 end
@@ -342,7 +342,7 @@ end
 
 @testset "Error Propagation" begin
     # These tests are taken from Jackknife.jl
-    Random.seed!(123)
+    StableRNGs.seed!(rng, 123)
 
     g(x1, x2) = x1^2 - x2
     g(v) = v[1]^2 - v[2]
@@ -354,47 +354,47 @@ end
 
     # Real
     # comparing to results from mean(ts), std(ts)/sqrt(10) (etc)
-    ts = rand(Float64, 1000)
-    ts2 = rand(Float64, 1000)
+    ts = rand(rng, Float64, 1000)
+    ts2 = rand(rng, Float64, 1000)
 
     ep = ErrorPropagator(ts)
-    @test isapprox(mean(ep, 1), 0.5032466005013134, atol=1e-12)
-    @test isapprox(varN(ep, grad_identity, 1), 7.915767668548315e-5, atol=1e-12)
-    @test isapprox(std_error(ep, grad_identity, 1), 0.008897060002353763, atol=1e-12)
+    @test isapprox(mean(ep, 1), 0.4938701707368938, atol=1e-12)
+    @test isapprox(varN(ep, grad_identity, 1), 8.54933681103257e-5, atol=1e-12)
+    @test isapprox(std_error(ep, grad_identity, 1), 0.009246262385976601, atol=1e-12)
     # check consistency with Julia's Statistics
     @test varN(ep, grad_identity, 1) ≈ std(ts)^2.0/length(ts)
     @test std_error(ep, grad_identity, 1) ≈ std(ts)/sqrt(length(ts))
 
     ep = ErrorPropagator(1 ./ ts)
-    @test isapprox(mean(ep, 1), 7.977079066071383, atol=1e-12)
-    @test isapprox(varN(ep, grad_identity, 1), 6.361126965375638, atol=1e-12)
-    @test isapprox(std_error(ep, grad_identity, 1), 2.5221274681061696, atol=1e-12)
+    @test isapprox(mean(ep, 1), 8.100918442539456, atol=1e-12)
+    @test isapprox(varN(ep, grad_identity, 1), 1.2769418115479338, atol=1e-12)
+    @test isapprox(std_error(ep, grad_identity, 1), 1.1300185005334797, atol=1e-12)
 
     ep = ErrorPropagator(ts, ts2.^2)
-    @test isapprox(mean(ep, g), -0.05969375347674344, atol=1e-3)
+    @test isapprox(mean(ep, g), -0.0932215528431069, atol=1e-3)
     @test isapprox(varN(ep, grad_g, 1), 0.00017206056051197917, atol=1e-4)
     @test isapprox(std_error(ep, grad_g, 1), 0.013117185693279606, atol=1e-4)
 
 
     # Complex
-    ts = rand(ComplexF64, 1000)
-    ts2 = rand(ComplexF64, 1000)
+    ts = rand(rng, ComplexF64, 1000)
+    ts2 = rand(rng, ComplexF64, 1000)
 
     ep = ErrorPropagator(ts)
-    @test isapprox(mean(ep, 1), 0.5026931517594448 + 0.49854565281725627im, atol=1e-12)
-    @test isapprox(varN(ep, grad_identity, 1), 0.00016760263180043896, atol=1e-12)
-    @test isapprox(std_error(ep, grad_identity, 1), 0.012946143510730868, atol=1e-12)
+    @test isapprox(mean(ep, 1), 0.5179888756352957 + 0.4818028227938359im, atol=1e-12)
+    @test isapprox(varN(ep, grad_identity, 1), 0.00016572004644474712, atol=1e-12)
+    @test isapprox(std_error(ep, grad_identity, 1), 0.012873229837330922, atol=1e-12)
     # check consistency with Julia's Statistics
     @test varN(ep, grad_identity, 1) ≈ std(ts)^2.0/length(ts)
     @test std_error(ep, grad_identity, 1) ≈ std(ts)/sqrt(length(ts))
 
     ep = ErrorPropagator(1 ./ ts)
-    @test isapprox(mean(ep, 1), 1.1496877962692906 - 1.0838709685240246im, atol=1e-11)
-    @test isapprox(varN(ep, grad_identity, 1), 0.003222418676959136, atol=1e-12)
-    @test isapprox(std_error(ep, grad_identity, 1), 0.05676635162628594, atol=1e-12)
+    @test isapprox(mean(ep, 1), 1.1073219254991422 - 1.0192129144004423im, atol=1e-11)
+    @test isapprox(varN(ep, grad_identity, 1), 0.0020457719406840333, atol=1e-12)
+    @test isapprox(std_error(ep, grad_identity, 1), 0.04523021048684201, atol=1e-12)
 
     ep = ErrorPropagator(ts, ts2.^2)
-    @test isapprox(mean(ep, g), 0.02004836872405491 - 0.01825289014938747im, atol=1e-4)
-    @test isapprox(varN(ep, grad_g, 1), 0.0006994215287967041, atol=1e-5)
-    @test isapprox(std_error(ep, grad_g, 1), 0.026446578773003968, atol=1e-5)
+    @test isapprox(mean(ep, g), 0.01459184115054761 + 0.015352631230090064im, atol=1e-4)
+    @test isapprox(varN(ep, grad_g, 1), 0.0007026624982701395, atol=1e-5)
+    @test isapprox(std_error(ep, grad_g, 1), 0.026507781843642435, atol=1e-5)
 end
