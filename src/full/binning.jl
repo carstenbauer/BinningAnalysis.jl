@@ -8,6 +8,12 @@ end
                         Base.push!, Base.append!, Base.resize!, Base.sizehint!, Base.empty!,
                         Base.isempty)
 
+Base.:(!=)(a::FullBinner, b::FullBinner) = a.x != b.x
+Base.:(==)(a::FullBinner, b::FullBinner) = a.x == b.x
+function Base.isapprox(a::FullBinner, b::FullBinner; kwargs...)
+    (length(a) == length(b)) && (isempty(a) || isapprox(a.x, b.x; kwargs...))
+end
+
 
 FullBinner(::Type{T} = Float64) where T = FullBinner(Vector{T}(undef, 0))
 
