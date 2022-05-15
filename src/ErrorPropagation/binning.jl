@@ -5,6 +5,13 @@ mutable struct EPCompressor{T}
     switch::Bool
 end
 
+function Base.:(==)(a::EPCompressor, b::EPCompressor; kwargs...)
+    # overwrite mode or same value
+    (a.switch == b.switch) && ((a.switch == false) || (a.values == b.values))
+end
+function Base.isapprox(a::EPCompressor, b::EPCompressor; kwargs...)
+    (a.switch == b.switch) && (a.switch || isapprox(a.values, b.values; kwargs...))
+end
 
 struct ErrorPropagator{T, N}
     compressors::NTuple{N, EPCompressor{T}}
@@ -23,6 +30,32 @@ Base.length(ep::ErrorPropagator) = ep.count[1]
 Base.ndims(ep::ErrorPropagator{T,N}) where {T,N} = ndims(eltype(ep))
 Base.isempty(ep::ErrorPropagator) = length(ep) == 0
 
+Base.:(!=)(a::ErrorPropagator, b::ErrorPropagator) = !(a == b)
+function Base.:(==)(a::ErrorPropagator, b::ErrorPropagator)
+    length(a.count) > length(b.count) && return b == a
+    
+    for i in eachindex(a.count)
+        a.compressors[i] == b.compressors[i] || return false
+        a.sums1D[i] == b.sums1D[i] || return false
+        a.sums2D[i] == b.sums2D[i] || return false
+        a.count[i] == b.count[i] || return false
+    end
+
+    return true
+end
+
+function Base.isapprox(a::ErrorPropagator, b::ErrorPropagator; kwargs...)
+    length(a.count) > length(b.count) && return b == a
+    
+    for i in eachindex(a.count)
+        isapprox(a.compressors[i], b.compressors[i]; kwargs...) || return false
+        isapprox(a.sums1D[i], b.sums1D[i]; kwargs...) || return false
+        isapprox(a.sums2D[i], b.sums2D[i]; kwargs...) || return false
+        isapprox(a.count[i], b.count[i]; kwargs...) || return false
+    end
+
+    return true
+end
 
 
 

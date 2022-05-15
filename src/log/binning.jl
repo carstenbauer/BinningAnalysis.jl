@@ -30,9 +30,15 @@ Base.count(B::LogBinner, lvl::Int=1) = B.accumulators[lvl].count
 Base.length(B::LogBinner) = count(B, 1)
 Base.ndims(B::LogBinner{T,N}) where {T,N} = ndims(eltype(B))
 Base.isempty(B::LogBinner) = length(B) == 0
-Base.:(==)(a::T, b::T) where {T <: Compressor} = (a.value == b.value) && (a.switch == b.switch)
 Base.:(!=)(a::T, b::T) where {T <: Compressor} = !(a == b)
-Base.isapprox(a::T, b::T; kwargs...) where {T <: Compressor} = isapprox(a.value, b.value; kwargs...) && (a.switch == b.switch)
+
+function Base.:(==)(a::T, b::T) where {T <: Compressor}
+    # overwrite mode or same value
+    (a.switch == b.switch) && ((a.switch == false) || (a.value == b.value))
+end
+function Base.isapprox(a::T, b::T; kwargs...) where {T <: Compressor}
+    (a.switch == b.switch) && (a.switch || isapprox(a.value, b.value; kwargs...))
+end
 
 function Base.isapprox(a::LogBinner{T, N}, b::LogBinner{T, M}; kwargs...) where {T, N, M}
     # Switch order so that we can deal with just N ≤ M here
