@@ -2,6 +2,7 @@
     # numbers
     for T in (Float64, ComplexF64)
         ep = ErrorPropagator(T, N_args=1)
+        ep2 = ErrorPropagator(T, N_args=1)
 
         @test length(ep) == 0
         @test ndims(ep) == 0
@@ -9,10 +10,18 @@
         @test eltype(ep) == T
         @test capacity(ep) == 2^32 - 1
         @test BinningAnalysis.nlevels(ep) == 32
+        @test ep == ep2
+        @test ep ≈ ep2
 
-        append!(ep, rand(rng, 1000))
+        data = rand(rng, 1000)
+        append!(ep, data)
         @test length(ep) == 1000
         @test !isempty(ep)
+        @test ep != ep2
+        @test !(ep ≈ ep2)
+        append!(ep2, data)
+        @test ep == ep2
+        @test ep ≈ ep2
 
         empty!(ep)
         @test length(ep) == 0
@@ -22,6 +31,7 @@
     # arrays
     for T in (Float64, ComplexF64)
         ep = ErrorPropagator(zeros(T, 2, 3))
+        ep2 = ErrorPropagator(zeros(T, 2, 3))
 
         @test length(ep) == 0
         @test ndims(ep) == 2
@@ -29,10 +39,19 @@
         @test eltype(ep) == Array{T, 2}
         @test capacity(ep) == 2^32 - 1
         @test BinningAnalysis.nlevels(ep) == 32
+        @test ep == ep2
+        @test ep ≈ ep2
 
-        append!(ep, [rand(rng, T, 2,3) for _ in 1:1000])
+        data = [rand(rng, T, 2,3) for _ in 1:1000]
+        append!(ep, data)
         @test length(ep) == 1000
         @test !isempty(ep)
+        @test ep != ep2
+        @test !(ep ≈ ep2)
+        append!(ep2, data)
+        @test ep == ep2
+        @test ep ≈ ep2
+
         empty!(ep)
         @test length(ep) == 0
         @test isempty(ep)

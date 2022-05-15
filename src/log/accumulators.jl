@@ -17,6 +17,7 @@ Clear the given variance accumulator.
 function Base.empty!(::AbstractVarianceAccumulator) end
 
 Base.:(==)(a::AbstractVarianceAccumulator, b::AbstractVarianceAccumulator) = false
+Base.isapprox(a::AbstractVarianceAccumulator, b::AbstractVarianceAccumulator; kwargs...) = false
 
 
 """
@@ -42,8 +43,8 @@ Calculates the standard error of the mean for a given variance accumulator.
 """
 function std_error(::AbstractVarianceAccumulator) end
 
-std_error(V::AbstractVarianceAccumulator{T}) where {T <: Number} = sqrt(varN(V))
-std_error(V::AbstractVarianceAccumulator{T}) where {T <: AbstractArray} = sqrt.(varN(V))
+std_error(V::AbstractVarianceAccumulator{T}) where {T <: Number} = sqrt(max(0, varN(V)))
+std_error(V::AbstractVarianceAccumulator{T}) where {T <: AbstractArray} = sqrt.(max.(0, varN(V)))
 
 
 """
@@ -96,11 +97,14 @@ function Base.empty!(V::FastVariance)
     V.count = zero(Int)
     V
 end
-Base.:(==)(a::FastVariance{T}, b::FastVariance{T}) where T = (
-    (a.x_sum == b.x_sum)
-    && (a.x2_sum == b.x2_sum)
-    && (a.count == b.count)
-)
+function Base.isapprox(a::FastVariance{T}, b::FastVariance{T}; kwargs...) where T
+    isapprox(a.x_sum, b.x_sum; kwargs...) && 
+    isapprox(a.x2_sum, b.x2_sum; kwargs...) && 
+    isapprox(a.count, b.count; kwargs...)
+end
+function Base.:(==)(a::FastVariance{T}, b::FastVariance{T}) where T
+    (a.x_sum == b.x_sum) && (a.x2_sum == b.x2_sum) && (a.count == b.count)
+end
 function Base.copy(V::FastVariance{T}) where T
     FastVariance{T}(copy(V.x_sum), copy(V.x2_sum), copy(V.count))
 end
@@ -172,11 +176,14 @@ function Base.empty!(V::Variance)
     V
 end
 
-Base.:(==)(a::Variance{T}, b::Variance{T}) where T = (
-    (a.m1 == b.m1)
-    && (a.m2 == b.m2)
-    && (a.count == b.count)
-)
+function Base.isapprox(a::Variance{T}, b::Variance{T}; kwargs...) where T
+    isapprox(a.m1, b.m1; kwargs...) && 
+    isapprox(a.m2, b.m2; kwargs...) && 
+    isapprox(a.count, b.count; kwargs...)
+end
+function Base.:(==)(a::Variance{T}, b::Variance{T}) where T
+    (a.m1 == b.m1) && (a.m2 == b.m2) && (a.count == b.count)
+end
 function Base.copy(V::Variance{T}) where T
     Variance{T}(copy(V.δ), copy(V.m1), copy(V.m2), copy(V.count))
 end

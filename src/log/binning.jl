@@ -30,8 +30,33 @@ Base.count(B::LogBinner, lvl::Int=1) = B.accumulators[lvl].count
 Base.length(B::LogBinner) = count(B, 1)
 Base.ndims(B::LogBinner{T,N}) where {T,N} = ndims(eltype(B))
 Base.isempty(B::LogBinner) = length(B) == 0
-Base.:(==)(a::T, b::T) where {T <: Compressor} = (a.value == b.value) && (a.switch == b.switch)
 Base.:(!=)(a::T, b::T) where {T <: Compressor} = !(a == b)
+
+function Base.:(==)(a::T, b::T) where {T <: Compressor}
+    # overwrite mode or same value
+    (a.switch == b.switch) && ((a.switch == false) || (a.value == b.value))
+end
+function Base.isapprox(a::T, b::T; kwargs...) where {T <: Compressor}
+    (a.switch == b.switch) && (a.switch || isapprox(a.value, b.value; kwargs...))
+end
+
+function Base.isapprox(a::LogBinner{T, N}, b::LogBinner{T, M}; kwargs...) where {T, N, M}
+    # Switch order so that we can deal with just N ≤ M here
+    (N > M) && (return isapprox(b, a; kwargs...))
+
+    # Does every level match?
+    for i in 1:N
+        isapprox(a.compressors[i], b.compressors[i]; kwargs...) || return false
+        isapprox(a.accumulators[i], b.accumulators[i]; kwargs...) || return false
+    end
+
+    # Are extra levels empty?
+    for i in N+1:M
+        isempty(b.accumulators[i]) || return false
+    end
+
+    return true
+end
 
 function Base.:(==)(a::LogBinner{T, N}, b::LogBinner{T, M}) where {T, N, M}
     # Switch order so that we can deal with just N ≤ M here

@@ -1,5 +1,7 @@
 @testset "Constructors and basic properties" begin
-    let F = FullBinner()
+    let 
+        F = FullBinner()
+        F2 = FullBinner()
         @test typeof(F) <: AbstractVector{Float64}
         @test eltype(F) == Float64
         @test ndims(F) == 1
@@ -8,6 +10,8 @@
         @test lastindex(F) == 0
         @test axes(F) == (Base.OneTo(0),)
         @test isempty(F)
+        @test F == F2
+        @test F ≈ F2
     end
 
     let F = FullBinner(ComplexF64)
@@ -17,10 +21,16 @@
 
     let x = [0.84, 0.381169, 0.34174, 0.888868, 0.0973183, 0.722725, 0.0957878, 0.432443, 0.755033, 0.864252]
         F = FullBinner(x)
+        F2 = FullBinner(Float64)
         @test length(F) == 10
         @test lastindex(F) == 10
         @test axes(F) == (Base.OneTo(10),)
         @test !isempty(F)
+        @test F != F2
+        @test !(F ≈ F2)
+        append!(F2, x)
+        @test F == F2
+        @test F ≈ F2
     end
 
 
