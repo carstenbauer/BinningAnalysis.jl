@@ -11,10 +11,12 @@
         @test capacity(B) == 2^32 - 1
         @test BinningAnalysis.nlevels(B) == 32
         @test B == B2
+        @test B ≈ B2
         @test !(B != B2)
 
         B3 = LogBinner(B, capacity=10_000)
         @test B3 == B
+        @test B3 ≈ B
         @test capacity(B3) == 16383
 
         buffer = rand(rng, T, 1000)
@@ -22,16 +24,19 @@
         @test length(B) == 1000
         @test !isempty(B)
         @test !(B == B2)
+        @test !(B ≈ B2)
         @test B != B2
 
         @test B3 != B
         @test isempty(B3)
         B3 = LogBinner(B, capacity=1000)
         @test B3 == B
+        @test B3 ≈ B
         @test !isempty(B3)
 
         append!(B2, buffer)
         @test B == B2
+        @test B ≈ B2
         @test !(B != B2)
 
         append!(B, rand(rng, T, 24))
@@ -54,10 +59,12 @@
         @test capacity(B) == 2^32 - 1
         @test BinningAnalysis.nlevels(B) == 32
         @test B == B2
+        @test B ≈ B2
         @test !(B != B2)
 
         B3 = LogBinner(B, capacity=10_000)
         @test B3 == B
+        @test B3 ≈ B
         @test capacity(B3) == 16383
 
         buffer = [rand(rng, T, 2, 3) for _ in 1:1000]
@@ -65,16 +72,19 @@
         @test length(B) == 1000
         @test !isempty(B)
         @test !(B == B2)
+        @test !(B ≈ B2)
         @test B != B2
 
         @test B3 != B
         @test isempty(B3)
         B3 = LogBinner(B, capacity=1000)
         @test B3 == B
+        @test B3 ≈ B
         @test !isempty(B3)
 
         append!(B2, buffer)
         @test B == B2
+        @test B ≈ B2
         @test !(B != B2)
 
         append!(B, [rand(rng, T, 2, 3) for _ in 1:24])
@@ -110,12 +120,16 @@
     # Test equality of different sizes
     B2 = LogBinner()
     @test !(B == B2)
+    @test !(B ≈ B2)
     @test !(B2 == B)
+    @test !(B2 ≈ B)
     @test B != B2
     @test B2 != B
     append!(B2, x)
     @test B == B2
+    @test B ≈ B2
     @test B2 == B
+    @test B2 ≈ B
     @test !(B != B2)
     @test !(B2 != B)
 
@@ -127,12 +141,16 @@
 
     B2 = LogBinner(zeros(2,3))
     @test !(B == B2)
+    @test !(B ≈ B2)
     @test !(B2 == B)
+    @test !(B2 ≈ B)
     @test B != B2
     @test B2 != B
     append!(B2, x)
     @test B == B2
+    @test B ≈ B2
     @test B2 == B
+    @test B2 ≈ B
     @test !(B != B2)
     @test !(B2 != B)
 end

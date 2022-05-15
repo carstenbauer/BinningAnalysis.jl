@@ -32,6 +32,25 @@ Base.ndims(B::LogBinner{T,N}) where {T,N} = ndims(eltype(B))
 Base.isempty(B::LogBinner) = length(B) == 0
 Base.:(==)(a::T, b::T) where {T <: Compressor} = (a.value == b.value) && (a.switch == b.switch)
 Base.:(!=)(a::T, b::T) where {T <: Compressor} = !(a == b)
+Base.isapprox(a::T, b::T; kwargs...) where {T <: Compressor} = isapprox(a.value, b.value; kwargs...) && (a.switch == b.switch)
+
+function Base.isapprox(a::LogBinner{T, N}, b::LogBinner{T, M}; kwargs...) where {T, N, M}
+    # Switch order so that we can deal with just N ≤ M here
+    (N > M) && (return isapprox(b, a; kwargs...))
+
+    # Does every level match?
+    for i in 1:N
+        isapprox(a.compressors[i], b.compressors[i]; kwargs...) || return false
+        isapprox(a.accumulators[i], b.accumulators[i]; kwargs...) || return false
+    end
+
+    # Are extra levels empty?
+    for i in N+1:M
+        isempty(b.accumulators[i]) || return false
+    end
+
+    return true
+end
 
 function Base.:(==)(a::LogBinner{T, N}, b::LogBinner{T, M}) where {T, N, M}
     # Switch order so that we can deal with just N ≤ M here
