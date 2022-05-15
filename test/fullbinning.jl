@@ -105,9 +105,14 @@ end
     close(write_pipe);
 
     # compact
-    @test readline(read_pipe) == "FullBinner{Float64,Vector{Float64}}()"
+    if VERSION < v"1.7.0"
+        @test readline(read_pipe) == "FullBinner{Float64,Array{Float64,1}}()"
+        @test readline(read_pipe) == "FullBinner{Float64,Array{Float64,1}}"
+    else
+        @test readline(read_pipe) == "FullBinner{Float64,Vector{Float64}}()"
+        @test readline(read_pipe) == "FullBinner{Float64,Vector{Float64}}"
+    end
     # full
-    @test readline(read_pipe) == "FullBinner{Float64,Vector{Float64}}"
     @test readline(read_pipe) == "| Count: 0"
     @test length(readlines(read_pipe)) == 0
     close(read_pipe);
@@ -119,7 +124,11 @@ end
     show(write_pipe, MIME"text/plain"(), F)
     redirect_stdout(oldstdout);
     close(write_pipe);
-    @test readline(read_pipe) == "FullBinner{Float64,Vector{Float64}}"
+    @test if VERSION < v"1.7.0"
+        readline(read_pipe) == "FullBinner{Float64,Array{Float64,1}}"
+    else
+        readline(read_pipe) == "FullBinner{Float64,Vector{Float64}}"
+    end
     @test readline(read_pipe) == "| Count: 1000"
     @test readline(read_pipe) == "| Mean: 0.49387"
     @test length(readlines(read_pipe)) == 0
