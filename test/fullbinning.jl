@@ -24,7 +24,7 @@
     end
 
 
-    let x = [rand(2,3) for _ in 1:100]
+    let x = [rand(rng, 2,3) for _ in 1:100]
         F = FullBinner(x)
         @test length(F) == 100
         @test eltype(F) == Array{Float64,2}
@@ -35,6 +35,7 @@ end
 
 @testset "Scalars statistics" begin
     # Real
+    StableRNGs.seed!(rng, 123)
     let F = FullBinner(1:10_000)
         @test isapprox(std_error(F), 361.4079699881821)
         bs, stds, cum_stds = all_binning_errors(F)
@@ -51,6 +52,7 @@ end
     @test std_error(FullBinner(fill(1.0, 100))) == 0.0
 
     # Complex
+    StableRNGs.seed!(rng, 123)
     let F = FullBinner((1:10_000) .+ ((10_000:-1:1) .* im))
         @test isapprox(std_error(F), 511.10805270701564)
         bs, stds, cum_stds = all_binning_errors(F)
@@ -72,19 +74,19 @@ end
 
 @testset "Arrays statistics" begin
     # Real
-    Random.seed!(123)
-    let F = FullBinner([rand(2,3) for _ in 1:100])
+    StableRNGs.seed!(rng, 123)
+    let F = FullBinner([rand(rng, 2,3) for _ in 1:100])
         @test length(F) == 100
-        @test isapprox(std_error(F), [0.029184472105069394 0.029581605926346424 0.027793717502753976; 0.029105387394205307 0.02741415651581391 0.029933054433434834])
-        @test isapprox(tau(F), [0.030183772076860294 0.027610002544459222 -0.047279410457739646; -0.003567404598109447 0.03282685243862249 0.06928989962602228])
+        @test isapprox(std_error(F), [0.03143740602417682 0.027704526977409927 0.030854857036671797; 0.030644671905884845 0.027310786213237917 0.027354755729282157])
+        @test isapprox(tau(F), [0.10870021011145892 0.0061711648482875026 0.11027212856462598; 0.01378233853009625 -0.042306404021438704 -0.007019406166005104])
     end
 
     # Complex
-    Random.seed!(123)
-    let F = FullBinner([rand(ComplexF64, 2,3) for _ in 1:100])
+    StableRNGs.seed!(rng, 123)
+    let F = FullBinner([rand(rng, ComplexF64, 2,3) for _ in 1:100])
         @test length(F) == 100
-        @test isapprox(std_error(F), [0.04445492633322362 0.04004496543964919 0.039737207226072296; 0.04099334255252945 0.039004215520294906 0.0409503504806149])
-        @test isapprox(tau(F), [0.062160208644724047 -0.005039096051545122 0.037487751473977315; 0.03850424600452085 -0.032173894672710424 0.0320190059417359])
+        @test isapprox(std_error(F), [0.04307722433951857 0.038921014462829306 0.04216835617026453; 0.04084767913236551 0.04298458677617402 0.03860867715515041])
+        @test isapprox(tau(F), [0.043561275772290076 -0.024223023364989493 -0.019126929690185812; 0.006471156025580127 0.05209550936082041 -0.06035050880950349])
     end
 end
 
@@ -103,23 +105,32 @@ end
     close(write_pipe);
 
     # compact
-    @test readline(read_pipe) == "FullBinner{Float64,Array{Float64,1}}()"
+    if VERSION < v"1.7.0"
+        @test readline(read_pipe) == "FullBinner{Float64,Array{Float64,1}}()"
+        @test readline(read_pipe) == "FullBinner{Float64,Array{Float64,1}}"
+    else
+        @test readline(read_pipe) == "FullBinner{Float64,Vector{Float64}}()"
+        @test readline(read_pipe) == "FullBinner{Float64,Vector{Float64}}"
+    end
     # full
-    @test readline(read_pipe) == "FullBinner{Float64,Array{Float64,1}}"
     @test readline(read_pipe) == "| Count: 0"
     @test length(readlines(read_pipe)) == 0
     close(read_pipe);
 
     # filled binner
-    Random.seed!(1234)
-    append!(F, rand(1000))
+    StableRNGs.seed!(rng, 123)
+    append!(F, rand(rng, 1000))
     (read_pipe, write_pipe) = redirect_stdout()
     show(write_pipe, MIME"text/plain"(), F)
     redirect_stdout(oldstdout);
     close(write_pipe);
-    @test readline(read_pipe) == "FullBinner{Float64,Array{Float64,1}}"
+    @test if VERSION < v"1.7.0"
+        readline(read_pipe) == "FullBinner{Float64,Array{Float64,1}}"
+    else
+        readline(read_pipe) == "FullBinner{Float64,Vector{Float64}}"
+    end
     @test readline(read_pipe) == "| Count: 1000"
-    @test readline(read_pipe) == "| Mean: 0.49685"
+    @test readline(read_pipe) == "| Mean: 0.49387"
     @test length(readlines(read_pipe)) == 0
     close(read_pipe);
 end

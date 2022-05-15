@@ -17,7 +17,7 @@
         @test B3 == B
         @test capacity(B3) == 16383
 
-        buffer = rand(T, 1000)
+        buffer = rand(rng, T, 1000)
         append!(B, buffer)
         @test length(B) == 1000
         @test !isempty(B)
@@ -34,7 +34,7 @@
         @test B == B2
         @test !(B != B2)
 
-        append!(B, rand(T, 24))
+        append!(B, rand(rng, T, 24))
         @test_throws OverflowError LogBinner(B, capacity=1000)
 
         empty!(B)
@@ -60,7 +60,7 @@
         @test B3 == B
         @test capacity(B3) == 16383
 
-        buffer = [rand(T, 2, 3) for _ in 1:1000]
+        buffer = [rand(rng, T, 2, 3) for _ in 1:1000]
         append!(B, buffer)
         @test length(B) == 1000
         @test !isempty(B)
@@ -77,7 +77,7 @@
         @test B == B2
         @test !(B != B2)
 
-        append!(B, [rand(T, 2, 3) for _ in 1:24])
+        append!(B, [rand(rng, T, 2, 3) for _ in 1:24])
         @test_throws OverflowError LogBinner(B, capacity=1000)
 
         empty!(B)
@@ -98,11 +98,11 @@
     @test_throws OverflowError push!(B, 2.0)
 
     B = LogBinner(zeros(2,2), capacity=1)
-    push!(B, rand(2,2))
-    @test_throws OverflowError push!(B, rand(2,2))
+    push!(B, rand(rng, 2,2))
+    @test_throws OverflowError push!(B, rand(rng, 2,2))
 
     # time series constructor (#26)
-    x = rand(10)
+    x = rand(rng, 10)
     B = LogBinner(x)
     @test length(B) == 10
     @test mean(B) ≈ mean(x)
@@ -120,7 +120,7 @@
     @test !(B2 != B)
 
     # Again for Array inputs
-    x = [rand(2,3) for _ in 1:5]
+    x = [rand(rng, 2,3) for _ in 1:5]
     B = LogBinner(x)
     @test length(B) == 5
     @test mean(B) ≈ mean(x)
@@ -149,7 +149,7 @@ end
     N_blocks = 131_072 # 2^17
 
     for _ in 1:N_blocks
-        x = rand()
+        x = rand(rng, )
         for __ in 1:N_corr
             push!(BA, x)
         end
@@ -178,8 +178,8 @@ end
     # NOTE
     # Due to the different (mathematically equivalent) versions of the variance
     # calculated here, the values are onyl approximately the same. (Float error)
-    Random.seed!(1234)
-    xs = rand(ComplexF64, 1_000_000)
+    StableRNGs.seed!(rng, 123)
+    xs = rand(rng, ComplexF64, 1_000_000)
     BA = LogBinner(ComplexF64)
 
     # Test small set (off by one errors are large here)
@@ -193,20 +193,20 @@ end
     @test varN(BA, 1) ≈ var(xs)/1_000_000
 
     # all_* methods
-    @test isapprox(all_vars(BA), [0.16671474067121222, 0.08324845751233179, 0.041527133392489035, 0.020847602123934883, 0.010430741538377142, 0.005111097271805531, 0.0025590988213273214, 0.001283239131297187, 0.0006322480081128456, 0.0003060164750540162, 0.00015750782337442537, 8.006142368921498e-5, 3.810111634139357e-5, 1.80535512880331e-5, 1.0002438211476061e-5, 5.505102193326117e-6, 2.8788397929968568e-6, 1.7242475507384114e-6, 7.900888818745955e-7])
+    @test isapprox(all_vars(BA), [0.1665847540639013, 0.08321852969184897, 0.0416386170603128, 0.02080121032765401, 0.010404232627786522, 0.005208087488833146, 0.0025893712817839105, 0.0012979310682925164, 0.0006498645790020864, 0.0003304988207069092, 0.00016135937775941, 8.244734583734034e-5, 4.1904380844737295e-5, 2.1161425558227823e-5, 1.0185807653474429e-5, 5.794287254586299e-6, 2.4120659277772666e-6, 2.132350340200331e-6, 2.6572093711370505e-7])
     @test isapprox(all_varNs(BA), zero(all_varNs(BA)), atol=1e-6)
-    @test isapprox(all_taus(BA), [0.0, -0.00065328850247931, -0.0018180968845809553, 0.00019817179932868356, 0.0005312186016332987, -0.009476150581268994, -0.008794711536776634, -0.007346737569564443, -0.014542478848703244, -0.030064159934323653, -0.01599670814224563, -0.007961042363178128, -0.03167873601168558, -0.056188229083248886, -0.008218660661725774, 0.05035147373711113, 0.0756019296606737, 0.2387501479629205, 0.289861051172009])
-    @test isapprox(all_std_errors(BA), [0.0004083071646092097, 0.0004080403350462593, 0.00040756414657076514, 0.0004083880715587553, 0.0004085240073900606, 0.00040441947616030687, 0.00040470028980091994, 0.0004052963382191276, 0.00040232555162611277, 0.00039584146247874917, 0.00040172249945971054, 0.00040504357104527986, 0.00039516087376314515, 0.0003846815937765092, 0.00040493752222959487, 0.0004283729758565588, 0.00043808977717638777, 0.0004963074437049236, 0.0005131890106236348])
+    @test isapprox(all_taus(BA), [0.0, -0.0004433019126909299, -9.090214413765008e-5, -0.0005254725849703767, -0.0003512686979507129, 0.00022224596475073355, -0.0025962520837867764, -0.001317479480883732, -0.0006266293029093539, 0.007928314422850802, -0.0037744232961079427, 0.0070976636615537325, 0.01547113876712125, 0.020618795006264512, 0.001187681531748308, 0.07971364057757968, -0.01734960354334969, 0.4143137944503138, -0.23414840330888914])
+    @test isapprox(all_std_errors(BA), [0.00040814795609423463, 0.00040796698320292777, 0.0004081108528834429, 0.00040793342915386584, 0.00040800456130365054, 0.0004082386552528566, 0.00040708692196405705, 0.00040760987484761305, 0.00040789211844220833, 0.00041137115440979214, 0.0004066045146218508, 0.00041103464473798035, 0.00041441436480546865, 0.0004164784602525399, 0.0004086324183611065, 0.00043948027087255004, 0.00040100423337559803, 0.0005519252459993797, 0.0002976132485367013])
 
-    @test isapprox(tau(BA), -0.008218660661725774)
-    @test isapprox(std_error(BA), 0.00040493752222959487)
+    @test isapprox(tau(BA), 0.001187681531748308)
+    @test isapprox(std_error(BA), 0.0004086324183611065)
 end
 
 
 
 @testset "Check variance for complex vectors" begin
-    Random.seed!(1234)
-    xs = [rand(ComplexF64, 3) for _ in 1:1_000_000]
+    StableRNGs.seed!(rng, 123)
+    xs = [rand(rng, ComplexF64, 3) for _ in 1:1_000_000]
     BA = LogBinner(zeros(ComplexF64, 3))
 
     # Test small set (off by one errors are large here)
@@ -222,8 +222,8 @@ end
     # all_std_errors for <:AbstractArray
     @test all(isapprox.(all_std_errors(BA), Ref(zeros(3)), atol=1e-2))
 
-    @test all(isapprox.(tau(BA), [-0.101203, -0.0831874, -0.0112827], atol=1e-6))
-    @test all(isapprox.(std_error(BA), [0.000364498, 0.00037268, 0.000403603], atol=1e-6))
+    @test all(isapprox.(tau(BA), [0.025099907279786615, 0.07567404578645565, 0.021586917849341525], atol=1e-6))
+    @test all(isapprox.(std_error(BA), [0.000418454645620472, 0.0004382193124499972, 0.00041696433722483093], atol=1e-6))
 end
 
 
@@ -238,7 +238,7 @@ end
     N_blocks = 131_072 # 2^17
 
     for _ in 1:N_blocks
-        x = rand(ComplexF64)
+        x = rand(rng, ComplexF64)
         for __ in 1:N_corr
             push!(BA, x)
         end
@@ -274,7 +274,7 @@ end
     N_blocks = 131_072 # 2^17
 
     for _ in 1:N_blocks
-        x = rand(Float64, 3)
+        x = rand(rng, Float64, 3)
         for __ in 1:N_corr
             push!(BA, x)
         end
@@ -305,8 +305,8 @@ end
     Bc = LogBinner(zero(im)) # Float64 LogBinner
 
     # Check that this doesn't throw (TODO: is there a better way?)
-    @test (append!(Bf, rand(1:10, 10000)); true)
-    @test (append!(Bc, rand(10000)); true)
+    @test (append!(Bf, rand(rng, 1:10, 10000)); true)
+    @test (append!(Bc, rand(rng, 10000)); true)
 end
 
 
@@ -344,22 +344,22 @@ end
     @test isnan(std_error(BA, BinningAnalysis._reliable_level(BA)))
 
     # One Element should still return NaN (due to 1/(n-1))
-    push!(BA, rand())
+    push!(BA, rand(rng, ))
     @test BinningAnalysis._reliable_level(BA) == 1
     @test isnan(std_error(BA, BinningAnalysis._reliable_level(BA)))
 
     # Two elements should return some value
-    push!(BA, rand())
+    push!(BA, rand(rng, ))
     @test BinningAnalysis._reliable_level(BA) == 1
     @test !isnan(std_error(BA, BinningAnalysis._reliable_level(BA)))
 
     # same behavior up to (including) 63 values (31 binned in first binned lvl)
-    append!(BA, rand(61))
+    append!(BA, rand(rng, 61))
     @test BinningAnalysis._reliable_level(BA) == 1
     @test !isnan(std_error(BA, BinningAnalysis._reliable_level(BA)))
 
     # at 64 or more values, the lvl should be increasing
-    push!(BA, rand())
+    push!(BA, rand(rng, ))
     @test BinningAnalysis._reliable_level(BA) == 2
     @test !isnan(std_error(BA, BinningAnalysis._reliable_level(BA)))
 end
@@ -386,16 +386,16 @@ end
     close(read_pipe);
 
     # filled binner
-    Random.seed!(1234)
-    append!(B, rand(1000))
+    StableRNGs.seed!(rng, 123)
+    append!(B, rand(rng, 1000))
     (read_pipe, write_pipe) = redirect_stdout()
     show(write_pipe, MIME"text/plain"(), B)
     redirect_stdout(oldstdout);
     close(write_pipe);
     @test readline(read_pipe) == "LogBinner{Float64,32}"
     @test readline(read_pipe) == "| Count: 1000"
-    @test readline(read_pipe) == "| Mean: 0.49685"
-    @test readline(read_pipe) == "| StdError: 0.00733"
+    @test readline(read_pipe) == "| Mean: 0.49387"
+    @test readline(read_pipe) == "| StdError: 0.00952"
     @test length(readlines(read_pipe)) == 0
     close(read_pipe);
 end
