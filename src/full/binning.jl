@@ -5,8 +5,7 @@ end
 
 @forward FullBinner.x (Base.length, Base.size, Base.lastindex, Base.ndims, Base.iterate,
                         Base.getindex, Base.setindex!, Base.view, Base.axes,
-                        Base.push!, Base.append!, Base.resize!, Base.sizehint!, Base.empty!,
-                        Base.isempty)
+                        Base.resize!, Base.sizehint!, Base.empty!, Base.isempty)
 
 Base.:(!=)(a::FullBinner, b::FullBinner) = a.x != b.x
 Base.:(==)(a::FullBinner, b::FullBinner) = a.x == b.x
@@ -42,8 +41,13 @@ Base.show(io::IO, B::FullBinner{T,A}) where {T, A} = print(io, "FullBinner{$(T),
 # verbose version (shows up in the REPL)
 Base.show(io::IO, m::MIME"text/plain", B::FullBinner) = (_print_header(io, B); _println_body(io, B))
 
-
-
+# We explicitly copy here to avoid falsifying data when a pushed array is 
+# overwritten. (For example one might have a temporary array which accumulates
+# data before pushing it to a FullBinner. If this array is reused for something
+# else and we do not copy here, the pushed element of the FullBinner changes.
+# This is not desirable.)
+Base.push!(B::FullBinner, x) = push!(B.x, deepcopy(x))
+Base.append!(B::FullBinner, x) = append!(B.x, deepcopy(x))
 
 
 
