@@ -14,28 +14,13 @@ function _reliable_level(B::LogBinner{T,N})::Int64 where {T,N}
 end
 
 
-_eachlevel(B::LogBinner) = (i for i in 1:findlast(acc -> acc.count > 1, B.accumulators))
+_eachlevel(B::LogBinner) = 1:findlast(acc -> acc.count > 1, B.accumulators)
 
 
 ################################################################################
 ### Statistics
 ################################################################################
 
-
-"""
-    varN(B::LogBinner[, lvl])
-
-Calculates the variance/N of a given level in the Binning Analysis.
-"""
-varN(B::LogBinner, lvl = _reliable_level(B)) = varN(B.accumulators[lvl])
-
-
-"""
-    var(B::LogBinner[, lvl])
-
-Calculates the variance of a given level in the Binning Analysis.
-"""
-var(B::LogBinner, lvl = _reliable_level(B)) = var(B.accumulators[lvl])
 
 
 """
@@ -47,11 +32,19 @@ mean(B::LogBinner, lvl = 1) = mean(B.accumulators[lvl])
 
 
 """
-    std_error(B::LogBinner[, lvl])
+    var(B::LogBinner[, lvl])
 
-Calculates the standard error of the mean.
+Calculates the variance of a given level in the Binning Analysis.
 """
-std_error(B::LogBinner, lvl = _reliable_level(B)) = std_error(B.accumulators[lvl])
+var(B::LogBinner, lvl = _reliable_level(B)) = var(B.accumulators[lvl])
+
+
+"""
+    varN(B::LogBinner[, lvl])
+
+Calculates the variance/N of a given level in the Binning Analysis.
+"""
+varN(B::LogBinner, lvl = _reliable_level(B)) = varN(B.accumulators[lvl])
 
 
 

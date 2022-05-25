@@ -37,22 +37,6 @@ varN(V::AbstractVarianceAccumulator{T}) where T = var(V) / V.count
 
 
 """
-    std_error(V::AbstractVarianceAccumulator)
-
-Calculates the standard error of the mean for a given variance accumulator.
-"""
-function std_error(::AbstractVarianceAccumulator) end
-
-function std_error(V::AbstractVarianceAccumulator{T}) where {T <: Number}
-    return sqrt(max(0, varN(V)))
-end
-
-function std_error(V::AbstractVarianceAccumulator{T}) where {T <: AbstractArray}
-    return sqrt.(max.(0, varN(V)))
-end
-
-
-"""
     var(V::AbstractVarianceAccumulator)
 
 Calculates the variance of a given variance accumulator.

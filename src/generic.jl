@@ -78,6 +78,27 @@ all_std_errors(B::AbstractBinner) = [std_error(B, lvl) for lvl in _eachlevel(B)]
 
 
 ################################################################################
+### Generic Statistics code
+################################################################################
+
+
+
+"""
+    std_error(B::AbstractBinner[, lvl])
+
+Calculates the standard error of the mean.
+"""
+function std_error(B::AbstractBinner{<: Number}, lvl = _reliable_level(B))
+    return sqrt(max(0, varN(B, lvl)))
+end
+
+function std_error(B::AbstractBinner{<: AbstractArray}, lvl = _reliable_level(B))
+    return @. sqrt(max(0, varN(B, lvl)))
+end
+
+
+
+################################################################################
 ### Autocorrelation time
 ################################################################################
 
@@ -112,10 +133,10 @@ Calculates the autocorrelation time tau for a given binner relative to an
 optional binning level. The default binning level is picked such that at least 
 32 bins exist.
 """
-function tau(B::AbstractBinner{T}, lvl = _reliable_level(B)) where {T <: Number}
+function tau(B::AbstractBinner{<: Number}, lvl = _reliable_level(B))
     return 0.5 * (varN(B, lvl) / varN(B, 1) - 1)
 end
-function tau(B::AbstractBinner{T}, lvl = _reliable_level(B)) where {T <: AbstractArray}
+function tau(B::AbstractBinner{<: AbstractArray}, lvl = _reliable_level(B))
     return @. 0.5 * (varN(B, lvl) / varN(B, 1) - 1)
 end
 
