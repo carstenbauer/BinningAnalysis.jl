@@ -2,7 +2,7 @@
     let 
         F = FullBinner()
         F2 = FullBinner()
-        @test typeof(F) <: AbstractVector{Float64}
+        @test typeof(F) <: BinningAnalysis.AbstractBinner{Float64}
         @test eltype(F) == Float64
         @test ndims(F) == 1
         @test length(F) == 0
@@ -15,7 +15,7 @@
     end
 
     let F = FullBinner(ComplexF64)
-        @test typeof(F) <: AbstractVector{ComplexF64}
+        @test typeof(F) <: BinningAnalysis.AbstractBinner{ComplexF64}
         @test eltype(F) == ComplexF64
     end
 
@@ -46,12 +46,12 @@ end
 @testset "Scalars statistics" begin
     # Real
     StableRNGs.seed!(rng, 123)
-    let F = FullBinner(1:10_000)
+    let F = FullBinner(collect(1:10_000))
         @test isapprox(std_error(F), 361.4079699881821)
-        bs, stds, cum_stds = all_binning_errors(F)
+        bs = BinningAnalysis._eachlevel(F)
+        stds = all_std_errors(F)
         @test bs == 1:312
         @test isapprox(sum(stds), 106377.96306621947) # take sum as approx. hash
-        @test isapprox(sum(cum_stds), 75541.44622415205)
         @test isapprox(tau(F), 77.86159630295694)
 
         # beta: convergence
@@ -63,12 +63,12 @@ end
 
     # Complex
     StableRNGs.seed!(rng, 123)
-    let F = FullBinner((1:10_000) .+ ((10_000:-1:1) .* im))
+    let F = FullBinner(collect((1:10_000) .+ ((10_000:-1:1) .* im)))
         @test isapprox(std_error(F), 511.10805270701564)
-        bs, stds, cum_stds = all_binning_errors(F)
+        bs = BinningAnalysis._eachlevel(F)
+        stds = all_std_errors(F)
         @test bs == 1:312
         @test isapprox(sum(stds), 150441.1581058718) # take sum as approx. hash
-        @test isapprox(sum(cum_stds), 106831.73777147368)
         @test isapprox(tau(F), 77.86159630295694)
 
         # beta: convergence

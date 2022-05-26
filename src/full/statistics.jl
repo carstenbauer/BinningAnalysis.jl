@@ -1,126 +1,135 @@
-# Based on https://www.amazon.com/Quantum-Monte-Carlo-Methods-Algorithms/dp/1107006422
+# Based on Quantum Monte Carlo Methods
+# https://www.amazon.com/Quantum-Monte-Carlo-Methods-Algorithms/dp/1107006422
+# Chapter 3.4
+
+
+################################################################################
+### For generic methods
+################################################################################
+
+
+_reliable_level(B::FullBinner) = max(1, fld(length(B), 32))
+
+_eachlevel(B::FullBinner) = 1:_reliable_level(B)
+
+
+################################################################################
+### Statistics
+################################################################################
+
 
 
 """
-    std_error(F::FullBinner)
+    mean(B::LogBinner[, lvl])
 
-Estimate of the standard error of the time series mean by performing a full binning analysis.
-
-"Full" binning means that we bin the data multiple times, considering all bin sizes compatible
-with the length of the time series.
+Calculates the mean for a given level in the Binning Analysis.
 """
-function std_error end
+mean(B::FullBinner, binsize = 1) = @views mean(B.x[1:fld(end, binsize)*binsize])
 
-std_error(F::FullBinner{<:Number}) = _std_error(F)
-function std_error(F::FullBinner{<:AbstractArray})
-    v = VectorOfArray(F)
-    r = similar(F[1], real(eltype(v))) # std error is always real
-    @inbounds for i in eachindex(F[1])
-        r[i] = _std_error(v[i,:]) # TODO: maybe a view might be faster here
+
+"""
+    var(B::LogBinner[, lvl])
+
+Calculates the variance of a given level in the Binning Analysis.
+"""
+var(B::FullBinner, binsize = _reliable_level(B)) = _var(B.x, binsize)
+
+"""
+    varN(B::LogBinner[, lvl])
+
+Calculates the variance/N of a given level in the Binning Analysis.
+"""
+function varN(B::FullBinner, binsize = _reliable_level(B))
+    return _var(B.x, binsize) / fld(length(B.x), binsize) 
+end
+
+
+
+# This uses Welford following the implementation in log binner
+function _var(A::Vector{T}, binsize) where {T <: Number}
+    δ = m1 = m2 = zero(T)
+    N = 0
+    for i in 1 : binsize : length(A) - binsize + 1
+        blockmean = @views mean(A[i : i+binsize-1])
+        δ = blockmean - m1
+        N += 1
+        m1 += δ / N
+        m2 += _prod(δ, blockmean - m1)
     end
-    return r
+
+    return __var(m2, N)
 end
 
+function _var(A::Vector{T}, binsize) where {T <: AbstractArray}
+    x = A[1]
+    δ  = zeros(eltype(x), size(x))
+    m1 = zeros(eltype(x), size(x))
+    m2 = zeros(eltype(x), size(x))
+    blockmean = zeros(eltype(x), size(x))
+    N = 0
+    for i in 1 : binsize : length(A) - binsize + 1
+        blockmean .= zero(eltype(x))
+        for j in i : i+binsize-1
+            blockmean .+= A[j]
+        end
+        blockmean ./= binsize
+        @. δ = blockmean - m1
+        N += 1
+        @. m1 += δ / N
+        @. m2 += _prod(δ, blockmean - m1)
+    end
 
-"""
-    tau(F::FullBinner[, std_error])
-
-Calculate the autocorrelation time tau.
-
-If `std_error` is provided, no binning is necessary (much faster).
-"""
-function tau(F::FullBinner) end
-
-tau(F::FullBinner{<:AbstractArray}, stderr = std_error(F)) = 0.5*(stderr.^2 * length(F) ./ var(F) .- 1)
-tau(F::FullBinner{<:Number}, stderr = std_error(F)) = 0.5*(stderr^2 * length(F) / var(F) - 1)
-_tau(Rvalue::Float64) = (Rvalue - 1)/2
-
-
-
-
-@inline _std_error(X::AbstractVector{<:Real}) = _std_error_from_R_function(X)
-@inline function _std_error(X::AbstractVector{<:Complex})
-    std_err_real = _std_error_from_R_function(real(X))
-    std_err_imag = _std_error_from_R_function(imag(X))
-    sqrt(std_err_real^2 + std_err_imag^2)
+    return __var.(m2, N)
 end
 
+__var(m2::Real, N) = m2 / (N - 1)
+__var(m2::Complex, N) = (real(m2) + imag(m2)) / (N - 1)
 
 
 
-"""
-Estimates the error coefficient `R` by considering `<R>(bss)` (averaged R values)
-and taking the largest value compatible with at least 32 bins.
-"""
-@inline function _std_error_from_R_function(X::AbstractVector{T}) where T<:Real
-    bss, Rs, means = R_function(X; min_nbins=32)
-    R = length(means) > 0 ? means[end] : 1.0
-    # conv = isconverged(X, means)
-    # bs = findfirst(r -> r >= R, Rs)
-    return _R2std_error(X, R)
+################################################################################
+### Unbinned Statistics
+################################################################################
+
+
+function correlation(sample, k)
+    # Stabilized correlation function χ(k) = χ(|i-j|) = ⟨xᵢxⱼ⟩ - ⟨xᵢ⟩⟨xⱼ⟩
+    # Following Welford derivation from https://changyaochen.github.io/welford/
+
+    M = length(sample)
+    corr = sumx = sumy = 0.0
+    for i in 1:M-k
+        # ̅xᵢ₊₁ = ̅xᵢ + (xᵢ₊₁ - ̅xᵢ) / (N+1)
+        # ̅yᵢ₊₁ = ̅yᵢ + (yᵢ₊₁ - ̅yᵢ) / (N+1)
+        # χᵢ₊₁ = χᵢ + [(xᵢ₊₁ - ̅xᵢ)(yᵢ₊₁ - ̅yᵢ₊₁) - χᵢ] / (i + 1)
+
+        invN = 1.0 / i
+        sumy += invN * (sample[i + k] - sumy)
+        sumx_delta = invN * (sample[i] - sumx)
+        corr += sumx_delta * (sample[i + k] - sumy) - invN * corr
+        sumx += sumx_delta
+    end
+    return corr
 end
 
+# QMCM eq 3.15
+function unbinned_tau(sample; truncate = true, max_rel_err = 0.1)
+    tau = 0.0
 
+    for k in 1:length(sample)-1
+        v = (1 - k/length(sample)) * correlation(sample, k)
+        tau += v
 
+        # We assume the worst case is a constant correlation for the tail.
+        # There are (length(sample) - k) values left
+        # The average prefactor is 0.5 * (1 - k/length(sample))
+        # If the sum of the tail is smaller than max_rel_err * tau, i.e. if tau
+        # can at most increase by a factor of max_rel_error, we stop the loop
+        if truncate && 0.5 * v * (length(sample) - k) < max_rel_err * tau
+            @info "Cancelled unbinned_tau summation after $k iterations."
+            break
+        end
+    end
 
-
-
-
-
-"""
-    all_binning_errors(X) -> bs, stds, cum_stds
-
-Returns all compatible bin sizes `bs`, the corresponding standard errors `stds`,
-and the cumulative standard errors `cum_stds` (reduced fluctuations).
-
-Only bin size that lead to at least 32 bins are considered.
-"""
-function all_binning_errors end
-
-all_binning_errors(F::FullBinner{<:Number}) = _all_binning_errors(F)
-
-
-function _all_binning_errors(X::AbstractVector{<:Real})
-    bss, Rs, means = R_function(X; min_nbins=32)
-    return bss, _R2std_error.(Ref(X), Rs), _R2std_error.(Ref(X), means)
+    return tau / correlation(sample, 0)
 end
-function _all_binning_errors(X::AbstractVector{<:Complex})
-    bss_real, stds_real, cum_stds_real = _all_binning_errors(real(X))
-    bss_imag, stds_imag, cum_stds_imag = _all_binning_errors(imag(X))
-    # @assert bss_real == bss_imag
-    stds = sqrt.(stds_real.^2 .+ stds_imag.^2)
-    cum_stds = sqrt.(cum_stds_real.^2 .+ cum_stds_imag.^2)
-    return bss_real, stds, cum_stds
-end
-
-
-
-
-
-
-
-
-
-
-
-# TODO: Improve this (until then, don't export)
-"""
-  isconverged(X)
-
-Checks if the estimation of the one sigma error is converged.
-
-Returns `true` once the mean `R` value is converged up to 0.1% accuracy.
-This corresponds to convergence of the error itself up to ~3% (sqrt).
-"""
-function isconverged(X::AbstractVector{T}) where T<:Real
-  bss, Rs, means = R_function(X)
-  return isconverged(X, means)
-end
-function isconverged(X::AbstractVector{T}, means::AbstractVector) where T<:Real
-    len = length(means)
-    len < 10 && (return false)
-    lastn = min(len, 200)
-    start = len-(lastn-1)
-    return @views maximum(abs.(diff(means[start:end])))<1e-3 # convergence condition
-end
-isconverged(X::AbstractVector{<:Complex}) = isconverged(real(X)) && isconverged(imag(X)) # check if that's really what we want here

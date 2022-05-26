@@ -11,7 +11,7 @@ function Base.append!(B::AbstractBinner, values::AbstractArray)
     for v in values
         push!(B, v)
     end
-    nothing
+    return
 end
 
 
@@ -93,7 +93,7 @@ function std_error(B::AbstractBinner{<: Number}, lvl = _reliable_level(B))
 end
 
 function std_error(B::AbstractBinner{<: AbstractArray}, lvl = _reliable_level(B))
-    return @. sqrt(max(0, varN(B, lvl)))
+    return sqrt.(max.(0, varN(B, lvl)))
 end
 
 
@@ -137,7 +137,7 @@ function tau(B::AbstractBinner{<: Number}, lvl = _reliable_level(B))
     return 0.5 * (varN(B, lvl) / varN(B, 1) - 1)
 end
 function tau(B::AbstractBinner{<: AbstractArray}, lvl = _reliable_level(B))
-    return @. 0.5 * (varN(B, lvl) / varN(B, 1) - 1)
+    return 0.5 .* (varN(B, lvl) ./ varN(B, 1) .- 1)
 end
 
 
