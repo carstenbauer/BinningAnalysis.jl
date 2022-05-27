@@ -44,63 +44,69 @@ end
 
 
 @testset "Scalars statistics" begin
-    # Real
-    StableRNGs.seed!(rng, 123)
-    let F = FullBinner(collect(1:10_000))
-        @test isapprox(std_error(F), 361.4079699881821)
-        bs = BinningAnalysis._eachlevel(F)
-        stds = all_std_errors(F)
-        @test bs == 1:312
-        @test isapprox(sum(stds), 106377.96306621947) # take sum as approx. hash
-        @test isapprox(tau(F), 77.86159630295694)
+    # Real, Complex
+    for F in (
+            FullBinner(collect(1:10_000)),
+            FullBinner(collect((1:10_000) .+ ((10_000:-1:1) .* im)))
+        )
 
-        # beta: convergence
-        @test !BinningAnalysis.isconverged(F)
+        # Unbinned Statistics vs Base
+        µ = mean(F.x)
+        v = var(F.x, mean = µ)
+        Δµ = sqrt(v / 10_000)
+
+        @test mean(F, 1) ≈ µ
+        @test var(F, 1) ≈ v
+        @test varN(F, 1) ≈ v / 10_000
+        @test std_error(F, 1) ≈ Δµ
+
+        # Binned stats (these values are strongly correlated)
+        binsize = BinningAnalysis._reliable_level(F)
+        @test binsize == div(length(F), 32)
+        @test BinningAnalysis._eachlevel(F) == 1:binsize
+        @test mean(F) ≈ µ
+        @test var(F) ≈ v rtol = 0.05
+        @test std_error(F) ≈ Δµ * sqrt(binsize) rtol = 0.05
+        @test tau(F) ≈ 0.5(binsize-1) rtol = 0.05
     end
-
-    # Test 0/0 bug in R_value
-    @test std_error(FullBinner(fill(1.0, 100))) == 0.0
-
-    # Complex
-    StableRNGs.seed!(rng, 123)
-    let F = FullBinner(collect((1:10_000) .+ ((10_000:-1:1) .* im)))
-        @test isapprox(std_error(F), 511.10805270701564)
-        bs = BinningAnalysis._eachlevel(F)
-        stds = all_std_errors(F)
-        @test bs == 1:312
-        @test isapprox(sum(stds), 150441.1581058718) # take sum as approx. hash
-        @test isapprox(tau(F), 77.86159630295694)
-
-        # beta: convergence
-        @test !BinningAnalysis.isconverged(F)
-    end
-
-    # R -> tau conversion
-    @test BinningAnalysis._tau(2.4) == 0.7
 end
 
 
 
 
 @testset "Arrays statistics" begin
-    # Real
-    StableRNGs.seed!(rng, 123)
-    let F = FullBinner([rand(rng, 2,3) for _ in 1:100])
-        @test length(F) == 100
-        @test isapprox(std_error(F), [0.03143740602417682 0.027704526977409927 0.030854857036671797; 0.030644671905884845 0.027310786213237917 0.027354755729282157])
-        @test isapprox(tau(F), [0.10870021011145892 0.0061711648482875026 0.11027212856462598; 0.01378233853009625 -0.042306404021438704 -0.007019406166005104])
-    end
+    for T in (Float64, ComplexF64)
+        StableRNGs.seed!(rng, 123)
+        F = FullBinner([rand(rng, T, 2, 3) for _ in 1:1000])
 
-    # Complex
-    StableRNGs.seed!(rng, 123)
-    let F = FullBinner([rand(rng, ComplexF64, 2,3) for _ in 1:100])
-        @test length(F) == 100
-        @test isapprox(std_error(F), [0.04307722433951857 0.038921014462829306 0.04216835617026453; 0.04084767913236551 0.04298458677617402 0.03860867715515041])
-        @test isapprox(tau(F), [0.043561275772290076 -0.024223023364989493 -0.019126929690185812; 0.006471156025580127 0.05209550936082041 -0.06035050880950349])
+        # Unbinned Statistics vs Base
+        µ = mean(F.x)
+        v = var(F.x, mean = µ)
+        Δµ = sqrt.(v ./ 1000)
+
+        @test mean(F, 1) ≈ µ
+        @test var(F, 1) ≈ v
+        @test varN(F, 1) ≈ v ./ 1000
+        @test std_error(F, 1) ≈ Δµ
+
+        # Binned stats (these values are uncorrelated)
+        # Note that the errors can be quite large due to the relatively small 
+        # sample size
+        binsize = BinningAnalysis._reliable_level(F)
+        @test binsize == div(length(F), 32)
+        @test BinningAnalysis._eachlevel(F) == 1:binsize
+        @test mean(F) ≈ µ
+        @test var(F) ≈ v/binsize rtol = 0.25
+        @test std_error(F) ≈ Δµ rtol = 0.15
+        @test all(tau(F) .< 1)
+
+        if T == Float64
+            @test var(F) ≈ [0.003208002497613544 0.0029222442318581378 0.002097985378538715; 0.0027042522201602293 0.0035246447808234393 0.003948312674521377]
+        else
+            @test var(F) ≈ [0.006091716418175418 0.0052399001679973665 0.007313376580285079; 0.0059813002774426445 0.006343840253127798 0.004989114094997521]
+        end
     end
 end
-
-
 
 
 
