@@ -9,8 +9,10 @@
     av = mean(uncorrelated)
     _var = var(uncorrelated)
     stderr = sqrt(_var/N_blocks)
-
+    
     correlated = [x for x in uncorrelated for _ in 1:N_corr]
+    @test BinningAnalysis.unbinned_tau(correlated) ≈ 7.5 rtol = 0.05
+
 
     @testset "FullBinner" begin
         B = FullBinner(correlated)

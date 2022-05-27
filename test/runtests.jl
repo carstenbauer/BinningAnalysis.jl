@@ -36,6 +36,14 @@ const rng = StableRNG(123)
         @test tau(x) ≈ tau(x; method=:log)
         @test tau(x; method=:log) ≈ 0.15572524869061377
         @test tau(x; method=:full) ≈ -0.026052535205771943
+        for constructor in (LogBinner, FullBinner, ErrorPropagator)
+            B = constructor(x)
+            @test autocorrelation(B) == tau(B)
+            @test autocorrelation_time(B) == tau(B)
+            _taus = all_taus(B)
+            @test all_autocorrelations(B) == _taus
+            @test all_autocorrelation_times(B) == _taus
+        end
 
         x = x .+ 1im
         @test std_error(x)≈ std_error(x; method=:log)
@@ -46,7 +54,14 @@ const rng = StableRNG(123)
         @test tau(x) ≈ tau(x; method=:log)
         @test tau(x; method=:log) ≈ 0.15572524869061377
         @test tau(x; method=:full) ≈ -0.026052535205771943
-
+        for constructor in (LogBinner, FullBinner, ErrorPropagator)
+            B = constructor(x)
+            @test autocorrelation(B) == tau(B)
+            @test autocorrelation_time(B) == tau(B)
+            _taus = all_taus(B)
+            @test all_autocorrelations(B) == _taus
+            @test all_autocorrelation_times(B) == _taus
+        end
 
         x = Array{Float64,2}[[0.311954 0.476706 0.314101; 0.420978 0.478085 0.0194284], [0.491386 0.493583 0.295477; 0.136896 0.1634 0.84641], [0.318536 0.705903 0.121377; 0.764174 0.240484 0.25894], [0.286923 0.172458 0.392881; 0.124348 0.140628 0.730131], [0.287451 0.221914 0.382938; 0.29568 0.249575 0.87685]]
         @test std_error(x) ≈ std_error(x; method=:log)
@@ -56,7 +71,15 @@ const rng = StableRNG(123)
         @test tau(x) ≈ tau(x; method=:log)
         @test tau(x; method=:log) ≈ [0.0 0.0 0.0; 0.0 0.0 0.0]
         @test tau(x; method=:full) ≈ [0.0 0.0 0.0; 0.0 0.0 0.0]
-
+        for constructor in (LogBinner, FullBinner, ErrorPropagator)
+            B = constructor(x)
+            @test autocorrelation(B) == tau(B)
+            @test autocorrelation_time(B) == tau(B)
+            _taus = all_taus(B)
+            @test all_autocorrelations(B) == _taus
+            @test all_autocorrelation_times(B) == _taus
+        end
+        
         x = ["this", "should", "error"]
         @test_throws ErrorException std_error(x, method=:jackknife)
         @test_throws ArgumentError std_error(x, method=:whatever)

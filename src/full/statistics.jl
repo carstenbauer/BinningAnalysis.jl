@@ -126,7 +126,7 @@ function unbinned_tau(sample; truncate = true, max_rel_err = 0.1)
         # If the sum of the tail is smaller than max_rel_err * tau, i.e. if tau
         # can at most increase by a factor of max_rel_error, we stop the loop
         if truncate && 0.5 * v * (length(sample) - k) < max_rel_err * tau
-            @info "Cancelled unbinned_tau summation after $k iterations."
+            @debug "Cancelled unbinned_tau summation after $k iterations."
             break
         end
     end
