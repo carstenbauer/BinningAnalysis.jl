@@ -132,3 +132,39 @@
         end
     end
 end
+
+@testset "Ising Energies" begin
+    # This data comes from an AFM Ising model on a triangular lattice, L = 8, T = 2.0
+    Es = open("test.data", "r") do f
+        [Float64(x) for x in readeach(f, Float64)]
+    end
+
+    av = mean(Es)
+    τ = BinningAnalysis.unbinned_tau(Es)
+    stderr = sqrt(var(Es) * (1 + 2τ) / length(Es))
+
+    @testset "FullBinner" begin
+        B = FullBinner(Es)
+        N = BinningAnalysis._reliable_level(B)
+
+        @test mean(B) ≈ av
+        @test tau(B) ≈ τ rtol=0.5
+        @test std_error(B) ≈ stderr rtol=0.3
+    end
+
+    @testset "LogBinner" begin
+        B = LogBinner(Es)
+
+        @test mean(B) ≈ av
+        @test tau(B) ≈ τ rtol=0.5
+        @test std_error(B) ≈ stderr rtol=0.3
+    end
+
+    @testset "ErrorPropagator" begin
+        B = ErrorPropagator(Es)
+
+        @test mean(B, 1) ≈ av
+        @test tau(B, 1) ≈ τ rtol=0.5
+        @test std_error(B, 1) ≈ stderr rtol=0.3
+    end
+end

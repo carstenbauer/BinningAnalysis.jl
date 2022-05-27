@@ -33,7 +33,7 @@ include("Jackknife.jl")
 include("ErrorPropagation/binning.jl")
 include("ErrorPropagation/statistics.jl")
 export ErrorPropagator
-export means, vars, varNs, taus, std_errors, covmat
+export means, vars, varNs, taus, std_errors, covmat, all_means
 
 
 include("incrementing/IncrementBinner.jl")

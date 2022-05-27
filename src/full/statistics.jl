@@ -113,10 +113,10 @@ function correlation(sample, k)
 end
 
 # QMCM eq 3.15
-function unbinned_tau(sample; truncate = true, max_rel_err = 0.1)
+function unbinned_tau(sample; truncate = true, max_rel_err = 0.1, min_sample_size = 32)
     tau = 0.0
 
-    for k in 1:length(sample)-1
+    for k in 1:length(sample) - max(1, min_sample_size)
         v = (1 - k/length(sample)) * correlation(sample, k)
         tau += v
 

@@ -36,7 +36,7 @@ const rng = StableRNG(123)
         @test tau(x) ≈ tau(x; method=:log)
         @test tau(x; method=:log) ≈ 0.15572524869061377
         @test tau(x; method=:full) ≈ -0.026052535205771943
-        for constructor in (LogBinner, FullBinner, ErrorPropagator)
+        for constructor in (LogBinner, FullBinner)
             B = constructor(x)
             @test autocorrelation(B) == tau(B)
             @test autocorrelation_time(B) == tau(B)
@@ -54,7 +54,7 @@ const rng = StableRNG(123)
         @test tau(x) ≈ tau(x; method=:log)
         @test tau(x; method=:log) ≈ 0.15572524869061377
         @test tau(x; method=:full) ≈ -0.026052535205771943
-        for constructor in (LogBinner, FullBinner, ErrorPropagator)
+        for constructor in (LogBinner, FullBinner)
             B = constructor(x)
             @test autocorrelation(B) == tau(B)
             @test autocorrelation_time(B) == tau(B)
@@ -71,14 +71,12 @@ const rng = StableRNG(123)
         @test tau(x) ≈ tau(x; method=:log)
         @test tau(x; method=:log) ≈ [0.0 0.0 0.0; 0.0 0.0 0.0]
         @test tau(x; method=:full) ≈ [0.0 0.0 0.0; 0.0 0.0 0.0]
-        for constructor in (LogBinner, FullBinner, ErrorPropagator)
-            B = constructor(x)
-            @test autocorrelation(B) == tau(B)
-            @test autocorrelation_time(B) == tau(B)
-            _taus = all_taus(B)
-            @test all_autocorrelations(B) == _taus
-            @test all_autocorrelation_times(B) == _taus
-        end
+        B = ErrorPropagator(x)
+        @test autocorrelation(B, 1) == tau(B, 1)
+        @test autocorrelation_time(B, 1) == tau(B, 1)
+        _taus = all_taus(B)
+        @test all_autocorrelations(B) == _taus
+        @test all_autocorrelation_times(B) == _taus
         
         x = ["this", "should", "error"]
         @test_throws ErrorException std_error(x, method=:jackknife)

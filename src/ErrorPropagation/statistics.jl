@@ -101,6 +101,8 @@ end
 function tau(B::ErrorPropagator{<: AbstractArray}, i::Integer, lvl = _reliable_level(B))
     return 0.5 * (varN(B, i, lvl) ./ varN(B, i, 1) .- 1)
 end
+autocorrelation(B::ErrorPropagator, i::Integer, lvl = _reliable_level(B)) = tau(B, i, lvl)
+autocorrelation_time(B::ErrorPropagator, i::Integer, lvl = _reliable_level(B)) = tau(B, i, lvl)
 
 
 
@@ -123,7 +125,7 @@ end
 ################################################################################
 
 
-for name in [:mean, :varN, :var, :tau, :std_error]
+for name in [:mean, :varN, :var, :tau, :std_error, :autocorrelation, :autocorrelation_time]
     # generates functions fs(B[, lvl]) = [f(B, 1, lvl), .., f(B, N_args, lvl)]
     @eval begin
         function $(Symbol(name, :s))(B::ErrorPropagator, lvl=_reliable_level(B))
