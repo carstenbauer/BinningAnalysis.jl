@@ -284,7 +284,7 @@ end
     # add it to the sums. Note that values pushed to the output arrays are not
     # added here until the array drops to the next level. (New compressors are
     # added)
-    Base.push!(B.accumulators[lvl], value)
+    _push!(B.accumulators[lvl], value)
 
     if !C.switch
         # Compressor has space -> save value
@@ -313,7 +313,7 @@ function _push!(
     ) where {N, T <: AbstractArray, S}
 
     C = B.compressors[lvl]
-    Base.push!(B.accumulators[lvl], value)
+    _push!(B.accumulators[lvl], value)
 
     if !C.switch
         C.value .= value

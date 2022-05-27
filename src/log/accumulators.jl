@@ -121,14 +121,14 @@ function var(V::FastVariance{<: AbstractArray{T, D}}) where {D, T <: Complex}
 end
 
 
-function Base.push!(V::FastVariance{T}, value::T) where T
+function _push!(V::FastVariance{T}, value::T) where T
     V.x_sum += value
     V.x2_sum += _prod(value, value)
     V.count += 1
     return V
 end
 
-function Base.push!(V::FastVariance{T}, value::T) where T <: AbstractArray
+function _push!(V::FastVariance{T}, value::T) where T <: AbstractArray
     V.x_sum .+= value
     @. V.x2_sum += _prod(value, value)
     V.count += 1
@@ -186,7 +186,7 @@ var(V::Variance{<: AbstractArray{T, D}}) where {D, T <: Real} =
 var(V::Variance{<: AbstractArray{T, D}}) where {D, T <: Complex} =
     @. (real(V.m2) + imag(V.m2)) / (V.count - 1)
 
-function Base.push!(V::Variance{T}, value::S) where {S, T}
+function _push!(V::Variance{T}, value::S) where {S, T}
     δ = value - mean(V)
     V.count += 1
     V.m1 += δ / V.count
@@ -195,7 +195,7 @@ function Base.push!(V::Variance{T}, value::S) where {S, T}
 end
 
 
-function Base.push!(V::Variance{T}, value::S) where {S, T <: AbstractArray}
+function _push!(V::Variance{T}, value::S) where {S, T <: AbstractArray}
     @. V.δ = value - V.m1
     V.count += 1
     @. V.m1 += V.δ / V.count
