@@ -136,7 +136,7 @@ end
 @testset "Ising Energies" begin
     # This data comes from an AFM Ising model on a triangular lattice, L = 8, T = 2.0
     Es = open("test.data", "r") do f
-        [Float64(x) for x in readeach(f, Float64)]
+        Float64[read(f, Float64) for _ in 1:2^14]
     end
 
     av = mean(Es)
