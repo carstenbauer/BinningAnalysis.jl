@@ -13,7 +13,7 @@
     correlated = [x for x in uncorrelated for _ in 1:N_corr]
 
     @testset "FullBinner" begin
-        BA = FullBinner(correlated)
+        B = FullBinner(correlated)
 
         # Strongly/Maximally correlated
 
@@ -34,11 +34,11 @@
         for binsize in 2 .^ (0:3)
             target = 0.5binsize - 0.5
 
-            @test mean(BA, binsize) ≈ av
-            @test var(BA, binsize) ≈ _var rtol=0.01
-            @test varN(BA, binsize) * N_blocks ≈ _var * binsize / N_corr rtol=0.01
-            @test std_error(BA, binsize) * sqrt(N_corr / binsize) ≈ stderr rtol=0.01
-            @test tau(BA, binsize) ≈ target rtol=0.01
+            @test mean(B, binsize) ≈ av
+            @test var(B, binsize) ≈ _var rtol=0.01
+            @test varN(B, binsize) * N_blocks ≈ _var * binsize / N_corr rtol=0.01
+            @test std_error(B, binsize) * sqrt(N_corr / binsize) ≈ stderr rtol=0.01
+            @test tau(B, binsize) ≈ target rtol=0.01
         end
 
         # Not correlated
@@ -66,27 +66,27 @@
         for binsize in 2 .^ (4:10)
             f = N_corr / binsize
 
-            @test mean(BA, binsize) ≈ av
-            @test var(BA, binsize) ≈ f * _var rtol=0.075
-            @test varN(BA, binsize) * N_blocks ≈ _var rtol=0.075
-            @test std_error(BA, binsize) ≈ stderr rtol=0.075
-            @test tau(BA, binsize) ≈ 0.5(N_corr - 1) rtol = 0.075
+            @test mean(B, binsize) ≈ av
+            @test var(B, binsize) ≈ f * _var rtol=0.075
+            @test varN(B, binsize) * N_blocks ≈ _var rtol=0.075
+            @test std_error(B, binsize) ≈ stderr rtol=0.075
+            @test tau(B, binsize) ≈ 0.5(N_corr - 1) rtol = 0.075
         end
     end
 
     @testset "LogBinner" begin
-        BA = LogBinner(correlated)
+        B = LogBinner(correlated)
 
         # Strongly/Maximally correlated
         for lvl in 1:4
             binsize = 2^(lvl-1)
             target = 0.5 * (binsize - 1)
 
-            @test mean(BA, lvl) ≈ av
-            @test var(BA, lvl) ≈ _var rtol=0.01
-            @test varN(BA, lvl) * N_blocks ≈ _var * binsize / N_corr rtol=0.01
-            @test std_error(BA, lvl) * sqrt(N_corr / binsize) ≈ stderr rtol=0.01
-            @test tau(BA, lvl) ≈ target rtol=0.01
+            @test mean(B, lvl) ≈ av
+            @test var(B, lvl) ≈ _var rtol=0.01
+            @test varN(B, lvl) * N_blocks ≈ _var * binsize / N_corr rtol=0.01
+            @test std_error(B, lvl) * sqrt(N_corr / binsize) ≈ stderr rtol=0.01
+            @test tau(B, lvl) ≈ target rtol=0.01
         end
 
         # Not correlated
@@ -94,11 +94,39 @@
             binsize = 2.0 ^ (lvl-1)
             f = N_corr / binsize
 
-            @test mean(BA, lvl) ≈ av
-            @test var(BA, lvl) ≈ f * _var rtol=0.05
-            @test varN(BA, lvl) * N_blocks ≈ _var rtol=0.05
-            @test std_error(BA, lvl) ≈ stderr rtol=0.05
-            @test tau(BA, lvl) ≈ 0.5(N_corr - 1) rtol = 0.05
+            @test mean(B, lvl) ≈ av
+            @test var(B, lvl) ≈ f * _var rtol=0.075
+            @test varN(B, lvl) * N_blocks ≈ _var rtol=0.075
+            @test std_error(B, lvl) ≈ stderr rtol=0.075
+            @test tau(B, lvl) ≈ 0.5(N_corr - 1) rtol = 0.075
+        end
+    end
+
+    @testset "ErrorPropagator" begin
+        B = ErrorPropagator(correlated)
+
+        # Strongly/Maximally correlated
+        for lvl in 1:4
+            binsize = 2^(lvl-1)
+            target = 0.5 * (binsize - 1)
+
+            @test mean(B, 1, lvl) ≈ av
+            @test var(B, 1, lvl) ≈ _var rtol=0.01
+            @test varN(B, 1, lvl) * N_blocks ≈ _var * binsize / N_corr rtol=0.01
+            @test std_error(B, 1, lvl) * sqrt(N_corr / binsize) ≈ stderr rtol=0.01
+            @test tau(B, 1, lvl) ≈ target rtol=0.01
+        end
+
+        # Not correlated
+        for lvl in 5:11
+            binsize = 2.0 ^ (lvl-1)
+            f = N_corr / binsize
+
+            @test mean(B, 1, lvl) ≈ av
+            @test var(B, 1, lvl) ≈ f * _var rtol=0.075
+            @test varN(B, 1, lvl) * N_blocks ≈ _var rtol=0.075
+            @test std_error(B, 1, lvl) ≈ stderr rtol=0.075
+            @test tau(B, 1, lvl) ≈ 0.5(N_corr - 1) rtol = 0.075
         end
     end
 end

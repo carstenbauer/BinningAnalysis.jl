@@ -13,11 +13,11 @@ function Base.isapprox(a::EPCompressor, b::EPCompressor; kwargs...)
     (a.switch == b.switch) && (a.switch || isapprox(a.values, b.values; kwargs...))
 end
 
-struct ErrorPropagator{T, N}
+struct ErrorPropagator{T, N} <: AbstractBinner{T}
     compressors::NTuple{N, EPCompressor{T}}
     # ∑x
     sums1D::NTuple{N, Vector{T}}
-    #∑xy
+    # ∑xy
     sums2D::NTuple{N, Matrix{T}}
 
     count::Vector{Int64}
@@ -25,7 +25,6 @@ end
 
 
 # Overload some basic Base functions
-Base.eltype(ep::ErrorPropagator{T,N}) where {T,N} = T
 Base.length(ep::ErrorPropagator) = ep.count[1]
 Base.ndims(ep::ErrorPropagator{T,N}) where {T,N} = ndims(eltype(ep))
 Base.isempty(ep::ErrorPropagator) = length(ep) == 0
@@ -60,7 +59,7 @@ end
 
 
 
-function _print_header(io::IO, ep::ErrorPropagator{T,N}) where {T,N}
+function _print_header(io::IO, ::ErrorPropagator{T,N}) where {T,N}
     print(io, "ErrorPropagator{$(T),$(N)}")
     nothing
 end

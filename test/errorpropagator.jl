@@ -352,7 +352,7 @@ end
     show(io, MIME"text/plain"(), ep)
 
     l = String(take!(io))
-    @test l == "ErrorPropagator{Float64,32}\n| Count: 1000\n| Means: [0.49387]\n| StdErrors: [0.00952]"
+    @test l == "ErrorPropagator{Float64,32}\n| Count: 1000\n| Means: [0.49413]\n| StdErrors: [0.00952]"
     @test length(readlines(io)) == 0
     close(io);
 end
@@ -415,5 +415,5 @@ end
     ep = ErrorPropagator(ts, ts2.^2)
     @test isapprox(mean(ep, g), 0.01459184115054761 + 0.015352631230090064im, atol=1e-4)
     @test isapprox(varN(ep, grad_g, 1), 0.0007026624982701395, atol=1e-5)
-    @test isapprox(std_error(ep, grad_g, 1), 0.026507781843642435, atol=1e-5)
+    @test isapprox(std_error(ep, grad_g, 1), 0.026538016921358373, atol=1e-5)
 end
