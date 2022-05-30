@@ -25,14 +25,15 @@ This package provides tools to estimate [standard errors](https://en.wikipedia.o
 
 **Binning tools:**
 
-* Logarithmic Binning
+* Logarithmic Binning (bins data directly in a logarithmic manner)
   * Size complexity: `O(log(N))`
   * Time complexity: `O(N)`
-* Full Binning (all bin sizes that work out evenly)
+* Full Binning (keeps all data and allows for any bin size)
+* ErrorPropagator (logarithmic binning, can calculate errors of functions of the inputs, experimental)
 
 **Statistical resampling methods:**
 
-* Jackknife resampling.
+* Jackknife resampling (calculates errors for subsamples of the original data)
 
 <br>
 
@@ -42,96 +43,153 @@ As per usual, you can install the registered package with
 ] add BinningAnalysis
 ```
 
-Note that there is [BinningAnalysisPlots.jl](https://github.com/carstenbauer/BinningAnalysisPlots.jl) which defines some [Plots.jl](https://github.com/JuliaPlots/Plots.jl) recipes for `LogBinner` and `FullBinner` to facilitate visualizing the error convergence.
+[**OUTDATED** as of v0.6] Note that there is [BinningAnalysisPlots.jl](https://github.com/carstenbauer/BinningAnalysisPlots.jl) which defines some [Plots.jl](https://github.com/JuliaPlots/Plots.jl) recipes for `LogBinner` and `FullBinner` to facilitate visualizing the error convergence.
 
 ## Binning tools
 
-### Logarithmic Binning
-
-```julia
-B = LogBinner()
-# As per default, 2^32-1 ≈ 4 billion values can be added to the binner. This value can be
-# tuned with the `capacity` keyword argument.
-
-push!(B, 4.2)
-append!(B, [1,2,3]) # multiple values at once
-
-x  = mean(B)
-Δx = std_error(B) # standard error of the mean
-tau_x = tau(B) # autocorrelation time
-
-# Alternatively you can provide a time series already in the constructor
-x = rand(100)
-B = LogBinner(x)
-
-Δx = std_error(B)
-```
-
-<!--
-# You can also get the standard error estimates for all binning levels individually.
-Δxs = all_std_errors(B)
-
-# BETA: Check whether a level has converged
-has_converged(B, 3)
-# This checks whether variance/N of level 2 and 3 is approximately the same.
-# To be sure that the binning analysis has converged, this criterion should be
-# true over multiple levels.
-# Note that this criterion is generally not true close to the maximum binning
-# level. Usually this is the result of the small effective sample size, rather
-# than a convergence failure.
-!-->
+All the different binners follow a common interface. 
 
 ### Full Binning
 
+The `FullBinner` is a thin wrapper around `Vector` which keeps track of a series of (correlated) data points. To estimate correlation free statistics the data is averaged in bins of variable size. This creates a smaller, less or optimally uncorrelated data set whose statistics are taken in place of the full data set. Since this method features no data compression the bin size can chosen freely.
+
+### Logarithmic Binning
+
+The `LogBinner` is a compressive binning structure. Rather than keeping all the data around, it only keeps data relevant to bin sizes 2^l where l is the binning level. Thus the memory usage drops to `O(log₂(N))` where N is the number of data points, and the choice of bin size becomes a choice of binning level. 
+
+### ErrorPropagator
+
+The `ErrorPropagator` is a derivative of `LogBinner`. It performs logarithmic binning of multiple samples at once, also keeping track of covariances between the samples. Through this errors of functions depending on multiple samples can be derived. The memory complexity of this tool is `O(∏ₖ Dₖ ⋅ log₂(N))` where Dₖ refers to the size of a data point in data set k.
+
+To derive statistics for a function `f` that applies to the samples in `ErrorPropagator` the gradient of `f` at the mean of those values is needed. 
+
 ```julia
-B = FullBinner() # <: AbstractVector (lightweight wrapper)
+# Function we want to evaluate
+# <x><y> / <xy>
+f(v) = v[1] * v[2] / v[3]  
 
-push!(B, 2.0)
-append!(B, [1,2,3])
+# gradient of f
+grad_f(v) = [v[2]/v[3], v[1]/v[3], -v[1]*v[2]/v[3]^2]
 
-x  = mean(B)
-Δx = std_error(B) # standard error of the mean
+# Error propagator with 3 samples
+ep = ErrorPropagator(N_args=3)
 
-# Alternatively you can provide a time series already in the constructor
+# Add measurements
 x = rand(100)
-F = FullBinner(x)
+y = rand(100)
+append!(ep, x, y, x .* y)
 
-push!(F, 2.0) # will modify x as F is just a thin wrapper
-
-Δx = std_error(F)
+# calculate mean and error of f
+g_mean = mean(ep, f)
+Δg = std_error(ep, grad_f)
 ```
 
-### Incremental Binning
+### Interface
+
+You can construct each binner with or without initial data:
 
 ```julia
-# Averages pushed values more and more, starting with no averaging
-# Averaging includes 2x more values for every blocksize averages saved
-B = IncrementBinner(0.0, blocksize=50)
+# Create an empty Binner
+FB = FullBinner()
 
-for x in rand(10_000)
-    push!(B, x)
-end
-
-# Returns the effective indices for the values saved
-# I.e. [1, 2, ...49, 50, 51.5, 53.5, ..., 146.5, 148.5, 151.5, ...]
-xs = indices(B)
-# Returns the averaged values saved
-ys = values(B)
+# Create a Binner with data
+x = rand(100)
+LB = LogBinner(x)
 ```
+
+The element type defaults to `Float64` but can also be adjusted in the constructor. Note that for Array inputs consistent data sizes are assumed and  `LogBinner` and `ErrorPropagator` need a "zero":
+
+```julia
+# Create an empty Binner accepting 2x2 Matrices
+EP = ErrorPropagator(zeros(2, 2), zeros(2, 2))
+
+# Create a Binner with Complex data
+x = rand(ComplexF64, 100)
+LB = LogBinner(x)
+
+# Create an empty Binner accepting Complex data
+FB = FullBinner(ComplexF64)
+```
+
+Further note that `LogBinner` and `ErrorPropagator` have a static capacity which can be set with the `capicity` keyword argument in the constructor. By default the capacity is set to 2^32 (about 4.3 billion values) or the next power of 2 above the `length(data)` when a data set is used to create the binner. Note that you can also create a copy of a binner with a different capacity via `LogBinner(old_binner, capacity = new_capacity)`.
+
+Beyond adding data on creation it can be pushed or appended to a binner:
+
+```julia
+FB = FullBinner(ComplexF64)
+LB = LogBinner(zeros(3))
+EP = ErrorPropagator(Float64, 2)
+
+# Add data
+push!(FB, 4.2 + 0.9im)
+push!(LB, rand(3))
+append!(EP, [1,2,3], [2,3,4])
+```
+
+And after all the data has been accumulated we can get statistics of binned data. By default the bin sizes/binning level is picked so that at least 32 bins are included:
+
+```julia
+# Get statistics with at least 32 bins
+x  = mean(LB)
+
+# Variance
+v = var(FB)
+
+# standard error of the mean
+Δx = std_error(LB) 
+
+# autocorrelation time
+tau_x = tau(FB) 
+```
+
+Note that for `ErrorPropagator` you need to specify the data set you want to get statistics from. Alternatively you can also ask for statistics of all included samples by adding an `s` to the functions:
+
+```julia
+# mean of first data set
+x = mean(EP, 1)
+
+# standard error of the mean for the second
+Δy = std_error(EP, 2)
+
+# the autocorrelation time for each data set
+tau_xy = taus(EP)
+```
+
+If you are interested in a different binning level you can specify it through an optional argument. You can also get statistics for all binning levels through functions with the `all_` prefix:
+
+```julia
+# Standard error with binsize 2^(3-1) = 4
+Δx4 = std_error(LB, 3)
+
+# autocorrelation time with binsize 7
+Δx7 = tau(FB, 7)
+
+# Variance for every binning levels
+vs = all_vars(LB)
+```
+
+Note that the `all_` functions include all bin sizes from 1 to `div(length(FB), 32)` for a `FullBinner`. For large samples this can be a lot, so it maybe preferable to sample bin sizes manually instead. For `LogBinner` and `ErrorPropagator` there are only `log₂(N)` binsizes so this shouldn't be a problem.
+
 
 ## Resampling methods
 
+The resampling methods currently only include jackknife.
+
 ### Jackknife
+
+The jackknife algorithm estimates the mean and standard error of a function applied to a sample `x`. A general k-jackknife does this by creating sub-samples with N-k values, applying the function to the means of these sub-samples and calculating statistics of the results. Our implementation uses `k = 1` and allows for any number of samples:
 
 ```julia
 x = rand(100)
 
-xmean, Δx = jackknife(identity, x) # jackknife estimates for mean and standard error of <x>
+# jackknife estimates for mean and standard error of <x>
+xmean, Δx = jackknife(identity, x)
 
 # in this example
 # isapprox(Δx, std(x)/sqrt(length(x))) == true
 
-x_inv_mean, Δx_inv = jackknife(identity, 1 ./ x) # # jackknife estimates for mean and standard error of <1/x>
+# jackknife estimates for mean and standard error of <1/x>
+x_inv_mean, Δx_inv = jackknife(identity, 1 ./ x) 
 
 # Multiple time series
 x = rand(100)
