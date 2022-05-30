@@ -40,4 +40,6 @@ include("incrementing/IncrementBinner.jl")
 export IncrementBinner
 export indices
 
+include("direct_tau.jl")
+
 end # module
