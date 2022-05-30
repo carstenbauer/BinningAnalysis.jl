@@ -1,4 +1,4 @@
-This documents contains notes on some comparisons between different methods of estimating and removing autocorrelations.
+This documents contains notes on the autocorrelations returned by different methods.
 
 # Methods used
 
@@ -49,7 +49,7 @@ fig
 
 With this setup we are guaranteed to hit a new uncorrelated value whenever we shift the current index by $\pm 16$. On average we will find a new uncorrelated value whenever we shift by $k = \pm 8$. So what is our autocorrelation time in this case? With the definitions from the Quantum Monte Carlo book it seems to be 7.5 - i.e. the mid point between "correlated on average" and "uncorrelated on average".
 
-#### Correlation Function and `unbinned_tau`
+### Correlation Function and `unbinned_tau`
 
 With 7.5 set as a target for the autocorrelation time, let us look at the different tools BinningAnalysis provides. First of we look at the most analytical approach - the `correlation` function and `unbinned_tau`. We expect the correlations to decrease with increasing distance k up to `k = N_corr`, where we are guaranteed to hit a new random value.
 
@@ -85,7 +85,7 @@ In the left plot we can nicely see how the correlations decrease up to the red l
 - `unbinned_tau(correlated)` yields $\tau \approx 7.48$
 
 
-#### `FullBinner`
+### FullBinner
 
 
 Next let us look at `FullBinner` where we can set an arbitrary bin size. The autocorrelation time we measure can not exceed `0.5(binsize - 1)` so we expect to see these values up to `binsize = N_corr`. Beyond that the autocorrelation time should oscillate around 7.5.
@@ -123,7 +123,7 @@ Let us use `binsize = N_corr + 1` as an example. With this we will always have a
 In the right plot we see a significant amount of variance which is likely just a result of the low number of bins (`binsize = 1e4` results in 209 bins). The average autocorrelation time (blue line) is 7.885 in this case which is reasonably close.
 
 
-#### `LogBinner`
+### LogBinner
 
 
 The LogBinner only includes bin sizes $2^l$, i.e. bin sizes which are compatible with the `N_corr` we picked. Thus we should generally see well fitting values.
@@ -154,3 +154,68 @@ Of course this nice correspondence is engineered by setting `N_corr` to a power 
 ![LogBinner Autocorrelation time 15](https://github.com/carstenbauer/BinningAnalysis.jl/blob/ff/cleanup/docs/src/assets/notes/blocks_LB_tau15.png)
 
 The initial growth no longer matches up and the plateau at 7.0 settles in quite a bit later, but we can still easily find the correct autocorrelation time. 
+
+## Real data
+
+Next let us look at some data generated from a Monte Carlo simulation of the Ising model. (More specifically these are energies from an Ising model with nearest neighbor hopping on a triangular lattice. The linear system size is L = 8 and the temperature T = 2.)
+
+```julia
+data = open(joinpath(pkgdir(BinningAnalysis), "test/test.data"), "r") do f
+    Float64[read(f, Float64) for _ in 1:2^14]
+end
+
+
+FB = FullBinner(data)
+LB = LogBinner(data)
+
+x = correlation(data, 0)
+ys = map(k -> (1 - k/length(data)) * correlation(data, k) / x, 1:2^14-32)
+_taus = cumsum(ys)
+
+fig = Figure(resolution = (1200, 400))
+ax1 = Axis(fig[1, 1], xlabel = "cutoff", ylabel = "Autocorrelation time τ")
+scatter!(ax1, _taus, color = :lightblue, markersize = 4, strokewidth = 1)
+
+ax2 = Axis(fig[1, 2], xlabel = "Bin size", ylabel = "Autocorrelation time τ")
+scatter!(ax2, all_taus(FB), color = :lightblue, markersize = 4, strokewidth = 1)
+
+ax3 = Axis(fig[1, 3], xlabel = "Bin size", ylabel = "Autocorrelation time τ")
+scatter!(ax3, all_taus(LB), color = :lightblue, markersize = 4, strokewidth = 1)
+
+ax1.title[] = "Unbinned"
+ax2.title[] = "FullBinner"
+ax3.title[] = "LogBinner"
+for ax in (ax1, ax2, ax3)
+    ylims!(ax, 0.0, 14.0)
+    hlines!(ax, 4.0, color = :black, linestyle = :dash)
+end
+
+fig
+```
+
+![Autocorrelation times](https://github.com/carstenbauer/BinningAnalysis.jl/blob/ff/cleanup/docs/src/assets/notes/data_combined_tau.png)
+
+In this example both binning methods agree on a autocorrelation time of roughly 4. The unbinned method on the other hand does not find a stable value. Let us look at the correlations in more detail.
+
+```julia
+ys = [correlation(data, k) for k in 1:2^14-32]
+
+fig = Figure(resolution = (900, 400))
+ax1 = Axis(fig[1, 1], xlabel = "Distance k", ylabel = "Correlation χ(k)")
+scatter!(ax1, ys, color = :lightblue, markersize = 4, strokewidth = 1)
+xlims!(ax1, -1, 100)
+
+ax2 = Axis(fig[1, 2], xlabel = "Distance k", ylabel = "Correlation χ(k)")
+scatter!(ax2, ys, color = :lightblue, markersize = 4, strokewidth = 1)
+xlims!(ax2, -3e2, 1.7e4)
+fig
+```
+
+![Correlations](https://github.com/carstenbauer/BinningAnalysis.jl/blob/ff/cleanup/docs/src/assets/notes/data_corelations.png)
+
+Like in the previous example the correlations start of large and decay, but the variance is larger than before. Furthermore the correlations don't average to 0 after the initial decay, resulting an increasing autocorrelation. If we cut off the summation early on we find a similar autocorrelation time as in the binned methods:
+
+- $k_{max} = 25$ yields $\tau \approx 3.80$
+- $k_{max} = 50$ yields $\tau \approx 3.99$
+- $k_{max} = 75$ yields $\tau \approx 4.19$
+- $k_{max} = 100$ yields $\tau \approx 4.41$
