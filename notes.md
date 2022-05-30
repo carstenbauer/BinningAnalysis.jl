@@ -45,7 +45,7 @@ ax.ylabel[] = "Sample value"
 fig
 ```
 
-![Sample distribution](https://github.com/carstenbauer/BinningAnalysis.jl/blob/master/docs/src/assets/notes/blocks_sample.png)
+![Sample distribution](https://github.com/carstenbauer/BinningAnalysis.jl/blob/ff/cleanup/docs/src/assets/notes/blocks_sample.png)
 
 With this setup we are guaranteed to hit a new uncorrelated value whenever we shift the current index by $\pm 16$. On average we will find a new uncorrelated value whenever we shift by $k = \pm 8$. So what is our autocorrelation time in this case? With the definitions from the Quantum Monte Carlo book it seems to be 7.5 - i.e. the mid point between "correlated on average" and "uncorrelated on average".
 
@@ -73,7 +73,7 @@ ylims!(right, -0.011, 0.011)
 fig
 ```
 
-![Correlations](https://github.com/carstenbauer/BinningAnalysis.jl/blob/master/docs/src/assets/notes/blocks_correlations.png)
+![Correlations](https://github.com/carstenbauer/BinningAnalysis.jl/blob/ff/cleanup/docs/src/assets/notes/blocks_correlations.png)
 
 In the left plot we can nicely see how the correlations decrease up to the red line, indicating a distance of `N_corr`. Beyond that we get a long tail of values close to 0. As we see in the right plot however these values are only about 100 times smaller than the largest correlation at k = 1. When calculating the autocorrelation time this may push us to different depending on the number of points we include. Here are some example values for $\tau$ following from these correlations:
 
@@ -114,7 +114,7 @@ ylims!(right, -0.5, 10.5)
 fig
 ```
 
-![FullBinner Autocorrelation time](https://github.com/carstenbauer/BinningAnalysis.jl/blob/master/docs/src/assets/notes/blocks_FB_tau.png)
+![FullBinner Autocorrelation time](https://github.com/carstenbauer/BinningAnalysis.jl/blob/ff/cleanup/docs/src/assets/notes/blocks_FB_tau.png)
 
 This plot shows a bunch of odd features: we don't follow `0.5(binsize - 1)` for all points before `binsize = N_corr` and afterwards only some points agree with $\tau = 7.5$. Both of these can be explained by comparing the binsize with `N_corr`.
 
@@ -145,12 +145,12 @@ ylims!(ax, -0.5, 10.5)
 fig
 ```
 
-![LogBinner Autocorrelation time](https://github.com/carstenbauer/BinningAnalysis.jl/blob/master/docs/src/assets/notes/blocks_LB_tau.png)
+![LogBinner Autocorrelation time](https://github.com/carstenbauer/BinningAnalysis.jl/blob/ff/cleanup/docs/src/assets/notes/blocks_LB_tau.png)
 
 In this case the values for the autocrrelation time nicely match up with `0.5(binsize-1)` (orange line) up to `binsize = N_corr = 2^4` where they saturate at 7.5 (red dashed lines). Beyond that the autocorrelation time remains stable for a while and then starts varying due to statistic fluctuations. BinningAnalysis sets the cutoff for those at 32 bins, which is indicated by the black dashed line.
 
 Of course this nice correspondence is engineered by setting `N_corr` to a power of 2. If we set it to 15, for example, we get this:
 
-![LogBinner Autocorrelation time 15](https://github.com/carstenbauer/BinningAnalysis.jl/blob/master/docs/src/assets/notes/blocks_LB_tau15.png)
+![LogBinner Autocorrelation time 15](https://github.com/carstenbauer/BinningAnalysis.jl/blob/ff/cleanup/docs/src/assets/notes/blocks_LB_tau15.png)
 
 The initial growth no longer matches up and the plateau at 7.0 settles in quite a bit later, but we can still easily find the correct autocorrelation time. 
