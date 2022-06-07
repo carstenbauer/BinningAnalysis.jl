@@ -8,7 +8,7 @@ mutable struct Compressor{T}
 end
 
 
-struct LogBinner{T, N, V <: AbstractVarianceAccumulator{T}}
+struct LogBinner{T, N, V <: AbstractVarianceAccumulator{T}} <: AbstractBinner{T}
     # list of Compressors, one per level
     compressors::NTuple{N, Compressor{T}}
 
@@ -25,7 +25,6 @@ end
 
 
 # Overload some basic Base functions
-Base.eltype(B::LogBinner{T,N}) where {T,N} = T
 Base.count(B::LogBinner, lvl::Int=1) = B.accumulators[lvl].count
 Base.length(B::LogBinner) = count(B, 1)
 Base.ndims(B::LogBinner{T,N}) where {T,N} = ndims(eltype(B))
@@ -79,12 +78,12 @@ Base.:(!=)(a::LogBinner{T, N}, b::LogBinner{T, M}) where {T, N, M} = !(a == b)
 
 
 
-function _print_header(io::IO, B::LogBinner{T,N}) where {T,N}
+function _print_header(io::IO, ::LogBinner{T,N}) where {T,N}
     print(io, "LogBinner{$(T),$(N)}")
     nothing
 end
 
-function _println_body(io::IO, B::LogBinner{T,N}) where {T,N}
+function _println_body(io::IO, B::LogBinner)
     n = length(B)
     println(io)
     print(io, "| Count: ", n)
@@ -266,22 +265,8 @@ function LogBinner(
 end
 
 
-# TODO typing?
 """
-    append!(LogBinner, values)
-
-Adds an array of values to the binner by `push!`ing each element.
-"""
-function Base.append!(B::LogBinner, values::AbstractArray)
-    @inbounds for i in eachindex(values)
-        _push!(B, 1, values[i])
-    end
-    nothing
-end
-
-
-"""
-    push!(LogBinner, value)
+    push!(B::LogBinner, value)
 
 Pushes a new value into the Binning Analysis.
 """
@@ -299,7 +284,7 @@ end
     # add it to the sums. Note that values pushed to the output arrays are not
     # added here until the array drops to the next level. (New compressors are
     # added)
-    Base.push!(B.accumulators[lvl], value)
+    _push!(B.accumulators[lvl], value)
 
     if !C.switch
         # Compressor has space -> save value
@@ -328,7 +313,7 @@ function _push!(
     ) where {N, T <: AbstractArray, S}
 
     C = B.compressors[lvl]
-    Base.push!(B.accumulators[lvl], value)
+    _push!(B.accumulators[lvl], value)
 
     if !C.switch
         C.value .= value

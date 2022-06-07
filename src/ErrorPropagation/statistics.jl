@@ -1,359 +1,304 @@
-# see log/statistics.jl
-function _reliable_level(ep::ErrorPropagator{T,N})::Int64 where {T,N}
-    isempty(ep) && (return 1)                # results in NaN in std_error
-    i = findlast(x -> x >= 32, ep.count)
-    something(i, 1)
+################################################################################
+### For generic methods
+################################################################################
+
+
+# Heuristic for selecting the level with the (presumably) most reliable
+# standard error estimate:
+# Take the highest lvl with at least 32 bins.
+# (Chose 32 based on https://doi.org/10.1119/1.3247985)
+function _reliable_level(B::ErrorPropagator{T,N})::Int64 where {T,N}
+    isempty(B) && (return 1)                # results in NaN in std_error
+    i = findlast(x -> x >= 32, B.count)
+    return something(i, 1)
 end
 
-"""
-    varN(ep::ErrorPropagator, i[, lvl])
 
-Calculates the variance/N for the i-th argument of the error propagator at a
-given binning level.
+_eachlevel(B::ErrorPropagator) = 1:findlast(x -> x > 1, B.count)
+
+
+################################################################################
+### Statistics
+################################################################################
+
+
+
 """
-function varN(ep::ErrorPropagator, i::Integer, lvl::Integer = _reliable_level(ep))
-    n = ep.count[lvl]
-    var(ep, i, lvl) / n
+    mean(B::ErrorPropagator, i[, lvl = 1])
+
+Calculates the mean for the i-th argument of the error propagator at an optional
+binning level.
+"""
+function mean(B::ErrorPropagator, i::Integer, lvl = 1)
+    return B.sums1D[lvl][i] / B.count[lvl]
 end
 
+
+
 """
-    var(ep::ErrorPropagator, i[, lvl])
+    var(B::ErrorPropagator, i[, lvl])
 
 Calculates the variance for the i-th argument of the error propagator at a given
 binning level.
 """
-function var(
-        ep::ErrorPropagator{T,N},
-        i::Integer,
-        lvl::Integer = _reliable_level(ep)
-    ) where {N, T <: Real}
-
-    n = ep.count[lvl]
-    X = ep.sums1D[lvl][i]
-    X2 = ep.sums2D[lvl][i, i]
+function var(B::ErrorPropagator{<: Real}, i::Integer, lvl = _reliable_level(B))
+    n = B.count[lvl]
+    X = B.sums1D[lvl][i]
+    X2 = B.sums2D[lvl][i, i]
 
     # lvl = 1 <=> original values
     # correct variance:
     # (∑ xᵢ^2) / (N-1) - (∑ xᵢ)(∑ xᵢ) / (N(N-1))
-    X2 / (n - 1) - X^2 / (n*(n - 1))
+    return X2 / (n - 1) - X^2 / (n*(n - 1))
 end
 
-function var(
-        ep::ErrorPropagator{T,N},
-        i::Integer,
-        lvl::Integer = _reliable_level(ep)
-    ) where {N, T <: Complex}
+function var(B::ErrorPropagator{<: Complex}, i::Integer, lvl = _reliable_level(B))
+    n = B.count[lvl]
+    X = B.sums1D[lvl][i]
+    X2 = B.sums2D[lvl][i, i]
 
-    n = ep.count[lvl]
-    X = ep.sums1D[lvl][i]
-    X2 = ep.sums2D[lvl][i, i]
-
-    # lvl = 1 <=> original values
-    (real(X2) + imag(X2)) / (n - 1) - (real(X)^2 + imag(X)^2) / (n*(n - 1))
+    return (real(X2) + imag(X2)) / (n - 1) - (real(X)^2 + imag(X)^2) / (n*(n - 1))
 end
 
-function var(
-        ep::ErrorPropagator{<: AbstractArray{T, D}, N},
-        i::Integer,
-        lvl::Integer = _reliable_level(ep)
-    ) where {N, D, T <: Real}
+function var(B::ErrorPropagator{<: AbstractArray{<: Real}}, i::Integer, lvl = _reliable_level(B))
+    n = B.count[lvl]
+    X = B.sums1D[lvl][i]
+    X2 = B.sums2D[lvl][i, i]
 
-    n = ep.count[lvl]
-    X = ep.sums1D[lvl][i]
-    X2 = ep.sums2D[lvl][i, i]
-
-    @. X2 / (n - 1) - X^2 / (n*(n - 1))
+    return @. X2 / (n - 1) - X^2 / (n*(n - 1))
 end
 
-function var(
-        ep::ErrorPropagator{<: AbstractArray{T, D}, N},
-        i::Integer,
-        lvl::Integer = _reliable_level(ep)
-    ) where {N, D, T <: Complex}
+function var(B::ErrorPropagator{<: AbstractArray{<: Complex}}, i::Integer, lvl = _reliable_level(B))
+    n = B.count[lvl]
+    X = B.sums1D[lvl][i]
+    X2 = B.sums2D[lvl][i, i]
 
-    n = ep.count[lvl]
-    X = ep.sums1D[lvl][i]
-    X2 = ep.sums2D[lvl][i, i]
-
-    @. (real(X2) + imag(X2)) / (n - 1) - (real(X)^2 + imag(X)^2) / (n*(n - 1))
+    return @. (real(X2) + imag(X2)) / (n - 1) - (real(X)^2 + imag(X)^2) / (n*(n - 1))
 end
 
-# NOTE works for all types of ErrorPropagators
-"""
-    mean(ep::ErrorPropagator, i[, lvl])
-
-Calculates the mean for the i-th argument of the error propagator at a given
-binning level.
-"""
-function mean(ep::ErrorPropagator, i::Integer, lvl::Integer = 1)
-    ep.sums1D[lvl][i] / ep.count[lvl]
-end
 
 """
-    tau(ep::ErrorPropagator, i[, lvl])
+    varN(B::ErrorPropagator, i[, lvl])
+
+Calculates the variance/N for the i-th argument of the error propagator at a
+given binning level.
+"""
+function varN(B::ErrorPropagator, i::Integer, lvl = _reliable_level(B))
+    return var(B, i, lvl) / B.count[lvl]
+end
+
+
+
+"""
+    tau(B::ErrorPropagator, i[, lvl])
 
 Calculates the autocorrelation time tau for the i-th argument of the error
 propagator at a given binning level.
 """
-function tau(
-        ep::ErrorPropagator{T,N},
-        i::Integer,
-        lvl::Integer = _reliable_level(ep)
-    ) where {N , T <: Number}
-
-    var_0 = varN(ep, i, 1)
-    var_l = varN(ep, i, lvl)
-    0.5 * (var_l / var_0 - 1)
+function tau(B::ErrorPropagator{<: Number}, i::Integer, lvl = _reliable_level(B))
+    return 0.5 * (varN(B, i, lvl) / varN(B, i, 1) - 1)
 end
-function tau(
-        ep::ErrorPropagator{T,N},
-        i::Integer,
-        lvl::Integer = _reliable_level(ep)
-    ) where {N , T <: AbstractArray}
-
-    var_0 = varN(ep, i, 1)
-    var_l = varN(ep, i, lvl)
-    @. 0.5 * (var_l / var_0 - 1)
+function tau(B::ErrorPropagator{<: AbstractArray}, i::Integer, lvl = _reliable_level(B))
+    return 0.5 * (varN(B, i, lvl) ./ varN(B, i, 1) .- 1)
 end
+autocorrelation(B::ErrorPropagator, i::Integer, lvl = _reliable_level(B)) = tau(B, i, lvl)
+autocorrelation_time(B::ErrorPropagator, i::Integer, lvl = _reliable_level(B)) = tau(B, i, lvl)
+
 
 
 """
-    std_error(ep::ErrorPropagator, i[, lvl])
+    std_error(B::ErrorPropagator, i[, lvl])
 
 Calculates the standard error of the mean for the i-th argument of the error
 propagator at a given binning level.
 """
-function std_error(
-        ep::ErrorPropagator{T,N},
-        i::Integer,
-        lvl::Integer=_reliable_level(ep)
-    ) where {N, T <: Number}
-
-    sqrt(varN(ep, i, lvl))
+function std_error(B::ErrorPropagator{<: Number}, i::Integer, lvl=_reliable_level(B))
+    return sqrt(varN(B, i, lvl))
 end
-function std_error(
-        ep::ErrorPropagator{T,N},
-        i::Integer,
-        lvl::Integer=_reliable_level(ep)
-    ) where {N, T <: AbstractArray}
-
-    sqrt.(varN(ep, i, lvl))
+function std_error(B::ErrorPropagator{<: AbstractArray}, i::Integer, lvl=_reliable_level(B))
+    return sqrt.(varN(B, i, lvl))
 end
 
 
+################################################################################
+### Additional methods
+################################################################################
 
-# Generated functions
-for name in [:varN, :var, :tau, :std_error]
-    # generates functions fs(ep[, lvl]) = [f(ep, 1, lvl), .., f(ep, N_args, lvl)]
+
+for name in [:mean, :varN, :var, :tau, :std_error, :autocorrelation, :autocorrelation_time]
+    # generates functions fs(B[, lvl]) = [f(B, 1, lvl), .., f(B, N_args, lvl)]
     @eval begin
-        function $(Symbol(name, :s))(ep::ErrorPropagator, lvl=_reliable_level(ep))
-            [$name(ep, i, lvl) for i in eachindex(ep.sums1D[1])]
+        function $(Symbol(name, :s))(B::ErrorPropagator, lvl=_reliable_level(B))
+            return [$name(B, i, lvl) for i in eachindex(B.sums1D[1])]
         end
     end
 
-    # generates functions
     # all_fs(ep) = [[f(ep, 1, lvl), .., f(ep, N_args, lvl)] for lvl in eachlvl]
     @eval begin
-        function $(Symbol(:all_, name, :s))(ep::ErrorPropagator{T, N}) where {T, N}
-            [$(Symbol(name, :s))(ep, lvl) for lvl in 1:N if ep.count[lvl] > 1]
+        function $(Symbol(:all_, name, :s))(B::ErrorPropagator)
+            return [$(Symbol(name, :s))(B, lvl) for lvl in _eachlevel(B)]
         end
     end
 end
 
-# These should not default to _reliable_level, so keep them out of the
-# function generation above
-function means(ep::ErrorPropagator, lvl=1)
-    [mean(ep, i, lvl) for i in eachindex(ep.sums1D[1])]
-end
-function all_means(ep::ErrorPropagator{T, N}) where {T, N}
-    [means(ep, lvl) for lvl in 1:N if ep.count[lvl] > 1]
-end
 
 # Docs
 @doc """
-    varNs(ep::ErrorPropagator[, lvl])
+    varNs(B::ErrorPropagator[, lvl])
 
 Calculates the variance/N for each argument of the error propagator at a given
 binning level.
 """ varNs
 @doc """
-    vars(ep::ErrorPropagator[, lvl])
+    vars(B::ErrorPropagator[, lvl])
 
 Calculates the variance for each argument of the error propagator at a given
 binning level.
 """ vars
 @doc """
-    means(ep::ErrorPropagator[, lvl])
+    means(B::ErrorPropagator[, lvl])
 
 Calculates the mean for each argument of the error propagator at a given
 binning level.
 """ means
 @doc """
-    std_errors(ep::ErrorPropagator[, lvl])
+    std_errors(B::ErrorPropagator[, lvl])
 
 Calculates the standard error of the mean for each argument of the error
 propagator at a given binning level.
 """ std_errors
 
 
-@doc """
-    all_varNs(ep::ErrorPropagator)
-
-Calculates the variance/N for each argument and binning level of the error
-propagator. The result is indexed as `all_varNs(ep)[lvl][arg_idx]`.
-""" all_varNs
-@doc """
-    all_vars(ep::ErrorPropagator)
-
-Calculates the variance for each argument and binning level of the error
-propagator. The result is indexed as `all_vars(ep)[lvl][arg_idx]`.
-""" all_vars
-@doc """
-    all_means(ep::ErrorPropagator)
-
-Calculates the mean for each argument and binning level of the error propagator.
-The result is indexed as `all_means(ep)[lvl][arg_idx]`.
-""" all_means
-@doc """
-    all_std_errors(ep::ErrorPropagator)
-
-Calculates the standard error of the mean for each argument and binning level of
-the error propagator. The result is indexed as `all_varNs(ep)[lvl][arg_idx]`.
-""" all_std_errors
-
-
-# Special Error Propagator functions
-
-
 """
-    covmat(ep::ErrorPropagator[, lvl])
+    covmat(B::ErrorPropagator[, lvl])
 
 Returns the covariance matrix for a given level of the error propgator.
 """
 function covmat(
-        ep::ErrorPropagator{T, N}, lvl = _reliable_level(ep)
+        B::ErrorPropagator{T, N}, lvl = _reliable_level(B)
     ) where {N , T <: Number}
 
-    invN = 1.0 / ep.count[lvl]
-    invN1 = 1.0 / (ep.count[lvl] - 1)
-    [
+    invN = 1.0 / B.count[lvl]
+    invN1 = 1.0 / (B.count[lvl] - 1)
+    return [
         (
-            ep.sums2D[lvl][i, j] -
-            ep.sums1D[lvl][i] * conj(ep.sums1D[lvl][j]) * invN
+            B.sums2D[lvl][i, j] -
+            B.sums1D[lvl][i] * conj(B.sums1D[lvl][j]) * invN
         ) * invN1
-        for i in eachindex(ep.sums1D[lvl]), j in eachindex(ep.sums1D[lvl])
+        for i in eachindex(B.sums1D[lvl]), j in eachindex(B.sums1D[lvl])
     ]
 end
 function covmat(
-        ep::ErrorPropagator{T, N}, lvl = _reliable_level(ep)
+        B::ErrorPropagator{T, N}, lvl = _reliable_level(B)
     ) where {N , T <: AbstractArray}
 
-    invN = 1.0 / ep.count[lvl]
-    invN1 = 1.0 / (ep.count[lvl] - 1)
-    [
+    invN = 1.0 / B.count[lvl]
+    invN1 = 1.0 / (B.count[lvl] - 1)
+    return [
         (
-            ep.sums2D[lvl][i, j] -
-            ep.sums1D[lvl][i] .* conj(ep.sums1D[lvl][j]) * invN
+            B.sums2D[lvl][i, j] -
+            B.sums1D[lvl][i] .* conj(B.sums1D[lvl][j]) * invN
         ) * invN1
-        for i in eachindex(ep.sums1D[lvl]), j in eachindex(ep.sums1D[lvl])
+        for i in eachindex(B.sums1D[lvl]), j in eachindex(B.sums1D[lvl])
     ]
 end
 
 
 """
-    var(ep::ErrorPropagator, gradient[, lvl])
+    var(B::ErrorPropagator, gradient[, lvl])
 
 Gives the first-order variance estimate of a function `f` acting on the
 arguments of the error propagator. `gradient` is either the gradient of `f` (a
-function) or a vector `∇f(means(ep))`. To get an estimate mean value of `f`,
-`mean(ep, f)` can be used.
+function) or a vector `∇f(means(B))`. To get an estimate mean value of `f`,
+`mean(B, f)` can be used.
 """
 function var(
-        ep::ErrorPropagator{T, N},
+        B::ErrorPropagator{T, N},
         gradient::Vector,
-        lvl = _reliable_level(ep)
+        lvl = _reliable_level(B)
     ) where {T <: Real, N}
 
     result = 0.0
-    invN = 1.0 / ep.count[lvl]
-    # invNN1 = 1.0 / (ep.count[lvl] * (ep.count[lvl] - 1))
-    invN1 = 1.0 / (ep.count[lvl] - 1)
-    for i in eachindex(ep.sums1D[lvl])
-        for j in eachindex(ep.sums1D[lvl])
+    invN = 1.0 / B.count[lvl]
+    # invNN1 = 1.0 / (B.count[lvl] * (B.count[lvl] - 1))
+    invN1 = 1.0 / (B.count[lvl] - 1)
+    for i in eachindex(B.sums1D[lvl])
+        for j in eachindex(B.sums1D[lvl])
             result += gradient[i] * gradient[j] * (
-                ep.sums2D[lvl][i, j] -
-                ep.sums1D[lvl][i] * ep.sums1D[lvl][j] * invN
+                B.sums2D[lvl][i, j] -
+                B.sums1D[lvl][i] * B.sums1D[lvl][j] * invN
             ) * invN1
         end
     end
 
-    result
+    return result
 end
+
 function var(
-        ep::ErrorPropagator{T, N},
+        B::ErrorPropagator{T, N},
         gradient::Vector,
-        lvl = _reliable_level(ep)
+        lvl = _reliable_level(B)
     ) where {T <: Complex, N}
 
     result = 0.0 * 0.0im
-    invN = 1.0 / ep.count[lvl]
-    # invNN1 = 1.0 / (ep.count[lvl] * (ep.count[lvl] - 1))
-    invN1 = 1.0 / (ep.count[lvl] - 1)
-    for i in eachindex(ep.sums1D[lvl])
-        for j in eachindex(ep.sums1D[lvl])
+    invN = 1.0 / B.count[lvl]
+    # invNN1 = 1.0 / (B.count[lvl] * (B.count[lvl] - 1))
+    invN1 = 1.0 / (B.count[lvl] - 1)
+    for i in eachindex(B.sums1D[lvl])
+        for j in eachindex(B.sums1D[lvl])
             result += gradient[i] * conj(gradient[j]) * (
-                ep.sums2D[lvl][i, j] -
-                ep.sums1D[lvl][i] * conj(ep.sums1D[lvl][j]) * invN
+                B.sums2D[lvl][i, j] -
+                B.sums1D[lvl][i] * conj(B.sums1D[lvl][j]) * invN
             ) * invN1
         end
     end
 
-    abs(result)
+    return abs(result)
 end
 
 # Wrappers
-function var(ep::ErrorPropagator, gradient::Function, lvl = _reliable_level(ep))
-    grad = gradient(means(ep))
+function var(B::ErrorPropagator, gradient::Function, lvl = _reliable_level(B))
+    grad = gradient(means(B))
     if typeof(grad) <: AbstractArray
-        return var(ep, grad, lvl)
+        return var(B, grad, lvl)
     else
-        return var(ep, [grad], lvl)
+        return var(B, [grad], lvl)
     end
 end
 
 """
-    varN(ep::ErrorPropagator, gradient[, lvl])
+    varN(B::ErrorPropagator, gradient[, lvl])
 
     Gives the first-order variance/N estimate of a function `f` acting on the
     arguments of the error propagator. `gradient` is either the gradient of `f` (a
-    function) or a vector `∇f(means(ep))`. To get an estimate mean value of `f`,
-    `mean(ep, f)` can be used.
+    function) or a vector `∇f(means(B))`. To get an estimate mean value of `f`,
+    `mean(B, f)` can be used.
 """
-function varN(ep::ErrorPropagator, gradient::Function, lvl = _reliable_level(ep))
-    var(ep, gradient, lvl) / ep.count[lvl]
+function varN(B::ErrorPropagator, gradient::Function, lvl = _reliable_level(B))
+    return var(B, gradient, lvl) / B.count[lvl]
 end
 
 """
-    std_error(ep::ErrorPropagator, gradient[, lvl])
+    std_error(B::ErrorPropagator, gradient[, lvl])
 
 
 Gives the first-order standard error estimate of a function `f` acting on the
 arguments of the error propagator. `gradient` is either the gradient of `f` (a
-function) or a vector `∇f(means(ep))`. To get an estimate mean value of `f`,
-`mean(ep, f)` can be used.
+function) or a vector `∇f(means(B))`. To get an estimate mean value of `f`,
+`mean(B, f)` can be used.
 """
-function std_error(ep::ErrorPropagator, gradient, lvl = _reliable_level(ep))
-    sqrt(var(ep, gradient, lvl) / ep.count[lvl])
+function std_error(B::ErrorPropagator, gradient::Function, lvl = _reliable_level(B))
+    return sqrt(var(B, gradient, lvl) / B.count[lvl])
 end
 
 """
-    mean(ep, f[, lvl=1])
+    mean(B, f[, lvl=1])
 
 Returns an estimate for the mean value of `f`, where `f` is a function acting
 on the sample pushed the error porpagator. `f` must be of the form `f(v)`, where
 `v = [mean_arg1, mean_arg2, ..., mean_argN]` is a vector containing the averages
 of each argument pushed to the error propagator.
 """
-function mean(ep::ErrorPropagator, f::Function, lvl = 1)
-    f(means(ep, lvl))
+function mean(B::ErrorPropagator, f::Function, lvl = 1)
+    return f(means(B, lvl))
 end

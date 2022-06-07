@@ -37,17 +37,6 @@ varN(V::AbstractVarianceAccumulator{T}) where T = var(V) / V.count
 
 
 """
-    std_error(V::AbstractVarianceAccumulator)
-
-Calculates the standard error of the mean for a given variance accumulator.
-"""
-function std_error(::AbstractVarianceAccumulator) end
-
-std_error(V::AbstractVarianceAccumulator{T}) where {T <: Number} = sqrt(max(0, varN(V)))
-std_error(V::AbstractVarianceAccumulator{T}) where {T <: AbstractArray} = sqrt.(max.(0, varN(V)))
-
-
-"""
     var(V::AbstractVarianceAccumulator)
 
 Calculates the variance of a given variance accumulator.
@@ -95,51 +84,51 @@ FastVariance() = FastVariance{Float64}()
 function Base.empty!(V::FastVariance)
     V.x_sum, V.x2_sum = zero(V.x_sum), zero(V.x2_sum)
     V.count = zero(Int)
-    V
+    return V
 end
 function Base.isapprox(a::FastVariance{T}, b::FastVariance{T}; kwargs...) where T
-    isapprox(a.x_sum, b.x_sum; kwargs...) && 
-    isapprox(a.x2_sum, b.x2_sum; kwargs...) && 
-    isapprox(a.count, b.count; kwargs...)
+    return isapprox(a.x_sum, b.x_sum; kwargs...) && 
+           isapprox(a.x2_sum, b.x2_sum; kwargs...) && 
+           isapprox(a.count, b.count; kwargs...)
 end
 function Base.:(==)(a::FastVariance{T}, b::FastVariance{T}) where T
-    (a.x_sum == b.x_sum) && (a.x2_sum == b.x2_sum) && (a.count == b.count)
+    return (a.x_sum == b.x_sum) && (a.x2_sum == b.x2_sum) && (a.count == b.count)
 end
 function Base.copy(V::FastVariance{T}) where T
-    FastVariance{T}(copy(V.x_sum), copy(V.x2_sum), copy(V.count))
+    return FastVariance{T}(copy(V.x_sum), copy(V.x2_sum), copy(V.count))
 end
 
 mean(V::FastVariance) = isempty(V) ? zero(V.x_sum) : V.x_sum / V.count
 
 function var(V::FastVariance{T}) where {T <: Real}
     n, X, X2 = V.count, V.x_sum, V.x2_sum
-    X2 / (n - 1) - X^2 / (n*(n - 1))
+    return X2 / (n - 1) - X^2 / (n*(n - 1))
 end
 
 function var(V::FastVariance{T}) where {T <: Complex}
     n, X, X2 = V.count, V.x_sum, V.x2_sum
-    (real(X2) + imag(X2)) / (n - 1) - abs2(X) / (n*(n - 1))
+    return (real(X2) + imag(X2)) / (n - 1) - abs2(X) / (n*(n - 1))
 end
 
 function var(V::FastVariance{<: AbstractArray{T, D}}) where {D, T <: Real}
     n, X, X2 = V.count, V.x_sum, V.x2_sum
-    @. X2 / (n - 1) - X^2 / (n*(n - 1))
+    return @. X2 / (n - 1) - X^2 / (n*(n - 1))
 end
 
 function var(V::FastVariance{<: AbstractArray{T, D}}) where {D, T <: Complex}
     n, X, X2 = V.count, V.x_sum, V.x2_sum
-    @. (real(X2) + imag(X2)) / (n - 1) - abs2(X) / (n*(n - 1))
+    return @. (real(X2) + imag(X2)) / (n - 1) - abs2(X) / (n*(n - 1))
 end
 
 
-function Base.push!(V::FastVariance{T}, value::T) where T
+function _push!(V::FastVariance{T}, value::T) where T
     V.x_sum += value
     V.x2_sum += _prod(value, value)
     V.count += 1
     return V
 end
 
-function Base.push!(V::FastVariance{T}, value::T) where T <: AbstractArray
+function _push!(V::FastVariance{T}, value::T) where T <: AbstractArray
     V.x_sum .+= value
     @. V.x2_sum += _prod(value, value)
     V.count += 1
@@ -173,19 +162,19 @@ Variance() = Variance{Float64}()
 function Base.empty!(V::Variance)
     V.m1, V.m2 = zero(V.m1), zero(V.m2)
     V.count = zero(Int)
-    V
+    return V
 end
 
 function Base.isapprox(a::Variance{T}, b::Variance{T}; kwargs...) where T
-    isapprox(a.m1, b.m1; kwargs...) && 
-    isapprox(a.m2, b.m2; kwargs...) && 
-    isapprox(a.count, b.count; kwargs...)
+    return isapprox(a.m1, b.m1; kwargs...) && 
+           isapprox(a.m2, b.m2; kwargs...) && 
+           isapprox(a.count, b.count; kwargs...)
 end
 function Base.:(==)(a::Variance{T}, b::Variance{T}) where T
-    (a.m1 == b.m1) && (a.m2 == b.m2) && (a.count == b.count)
+    return (a.m1 == b.m1) && (a.m2 == b.m2) && (a.count == b.count)
 end
 function Base.copy(V::Variance{T}) where T
-    Variance{T}(copy(V.δ), copy(V.m1), copy(V.m2), copy(V.count))
+    return Variance{T}(copy(V.δ), copy(V.m1), copy(V.m2), copy(V.count))
 end
 
 mean(V::Variance) = V.m1
@@ -197,7 +186,7 @@ var(V::Variance{<: AbstractArray{T, D}}) where {D, T <: Real} =
 var(V::Variance{<: AbstractArray{T, D}}) where {D, T <: Complex} =
     @. (real(V.m2) + imag(V.m2)) / (V.count - 1)
 
-function Base.push!(V::Variance{T}, value::S) where {S, T}
+function _push!(V::Variance{T}, value::S) where {S, T}
     δ = value - mean(V)
     V.count += 1
     V.m1 += δ / V.count
@@ -206,7 +195,7 @@ function Base.push!(V::Variance{T}, value::S) where {S, T}
 end
 
 
-function Base.push!(V::Variance{T}, value::S) where {S, T <: AbstractArray}
+function _push!(V::Variance{T}, value::S) where {S, T <: AbstractArray}
     @. V.δ = value - V.m1
     V.count += 1
     @. V.m1 += V.δ / V.count
