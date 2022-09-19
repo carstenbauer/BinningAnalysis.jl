@@ -23,8 +23,10 @@ end
 ### Util
 ################################################################################
 
-Base.count(B::PreBinner, lvl::Int = 1) = B.N * count(B.binner, max(1, lvl-1)) + (lvl == 1) * B.n
-Base.length(B::PreBinner) = count(B, 1)
+function Base.count(B::PreBinner{T, <: LogBinner}, lvl::Integer = 1) where T
+    return B.N * count(B.binner, max(1, lvl-1)) + (lvl == 1) * B.n
+end
+Base.length(B::PreBinner) = B.N * length(B.binner) + B.n
 Base.ndims(B::PreBinner) = ndims(B.binner)
 Base.isempty(B::PreBinner) = length(B) == 0
 
@@ -48,7 +50,7 @@ function Base.show(io::IO, B::PreBinner{T, BT}) where {T, BT}
     print(io, "PreBinner{$(T), $(BT.name.name)}()")
 end
 # verbose version (shows up in the REPL)
-function Base.show(io::IO, m::MIME"text/plain", B::PreBinner)
+function Base.show(io::IO, ::MIME"text/plain", B::PreBinner)
     print(io, "PreBinned ($(B.N)) ")
     _print_header(io, B.binner)
     
