@@ -84,6 +84,12 @@ g_mean = mean(ep, f)
 Δg = std_error(ep, grad_f)
 ```
 
+### PreBinner
+
+`PreBinner(binner, K)` is a wrapper for other binners. It acts as an initial averaging stage, calculating averages of K pushed values before forwarding them to wrapper binner. This removes are certain number of low binning levels (With the unbinned statistics still present in PreBinner) reducing overall memory requirements. 
+
+`PreBinner` follows the common interface with a few adjustments. As examplified above the constructor takes another binner and there is no method for directly processing a time series. The interpretation of binning levels/bin sizes is slightly adjusted, so that 1 refers to unbinned statistics of the PreBinner and 2..N+1 to the levels/bin sizes 1..N in the wrapper binner. 
+
 ### Interface
 
 You can construct each binner with or without initial data:

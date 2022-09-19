@@ -4,9 +4,9 @@
         F2 = FullBinner()
         @test typeof(F) <: BinningAnalysis.AbstractBinner{Float64}
         @test eltype(F) == Float64
-        @test ndims(F) == 1
+        @test ndims(F) == 0
         @test length(F) == 0
-        @test size(F) == (0,)
+        @test_throws BoundsError size(F)
         @test lastindex(F) == 0
         @test axes(F) == (Base.OneTo(0),)
         @test isempty(F)
