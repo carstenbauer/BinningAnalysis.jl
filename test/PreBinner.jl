@@ -32,7 +32,7 @@ for wrapped in (LogBinner, FullBinner)
         if wrapped == LogBinner
             @test count(B) == 0
             @test BinningAnalysis.nlevels(B) == 1 + BinningAnalysis.nlevels(B.binner)
-            @test BinningAnalysis.capacity(B) == length(B)
+            @test BinningAnalysis.capacity(B) == B.N * BinningAnalysis.capacity(B.binner) + B.N - 1
         end
         @test ndims(B) == 0
         @test isempty(B)

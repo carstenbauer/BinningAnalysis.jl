@@ -32,13 +32,13 @@ Base.isempty(B::PreBinner) = length(B) == 0
 
 function Base.isapprox(a::PreBinner{T, BT}, b::PreBinner{T, BT}; kwargs...) where {T, BT}
     ((a.n == b.n) && (a.N == b.N)) || return false
-    isapprox(a.accumulator, b.accumulator; kwargs...) || return false
+    ((a.n == 0) || isapprox(a.accumulator, b.accumulator; kwargs...)) || return false
     return isapprox(a.binner, b.binner; kwargs...)
 end
 
 function Base.:(==)(a::PreBinner{T, BT}, b::PreBinner{T, BT}) where {T, BT}
     ((a.n == b.n) && (a.N == b.N)) || return false
-    a.accumulator == b.accumulator || return false
+    ((a.n == 0) || (a.accumulator == b.accumulator)) || return false
     return a.binner == b.binner
 end
 
@@ -72,7 +72,7 @@ function Base.empty!(B::PreBinner)
 end
 
 nlevels(B::PreBinner) = 1 + nlevels(B.binner)
-capacity(B::PreBinner) = B.N * capacity(B.binner) + B.n
+capacity(B::PreBinner) = B.N * capacity(B.binner) + B.N - 1
 
 ################################################################################
 ### Pushing
