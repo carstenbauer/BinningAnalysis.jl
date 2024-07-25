@@ -185,7 +185,7 @@ Values can be added using `push!` and `append!`.
 Creates a new `LogBinner` and adds all elements from the given timeseries.
 """
 function LogBinner(x::T;
-        capacity::Int64 = _nlvls2capacity(32),
+        capacity::Int = _nlvls2capacity(32),
         accumulator::Type{<:AbstractVarianceAccumulator} = Variance
     ) where {T <: Union{Number, AbstractArray}}
 
@@ -233,7 +233,7 @@ end
 Creates a new `LogBinner` from an existing LogBinner, copying the data inside.
 The new LogBinner may be larger or smaller than the given one.
 """
-function LogBinner(B::LogBinner{S, M}; capacity::Int64 = _nlvls2capacity(32)) where {S, M}
+function LogBinner(B::LogBinner{S, M}; capacity::Int = _nlvls2capacity(32)) where {S, M}
     N = _capacity2nlvls(capacity)
     B.accumulators[min(M, N)].count > 1 && throw(OverflowError(
         "The new LogBinner is too small to reconstruct the given LogBinner. " *
@@ -277,7 +277,7 @@ function Base.push!(B::LogBinner{T,N}, value::S) where {N, T, S}
 end
 
 # recursion, back-end function
-@inline function _push!(B::LogBinner{T,N}, lvl::Int64, value::S) where {N, T <: Number, S}
+@inline function _push!(B::LogBinner{T,N}, lvl::Int, value::S) where {N, T <: Number, S}
     C = B.compressors[lvl]
 
     # any value propagating through this function is new to lvl. Therefore we
@@ -308,7 +308,7 @@ end
 
 function _push!(
         B::LogBinner{T,N},
-        lvl::Int64,
+        lvl::Int,
         value::S
     ) where {N, T <: AbstractArray, S}
 

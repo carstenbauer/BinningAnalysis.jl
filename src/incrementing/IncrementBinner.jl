@@ -1,11 +1,11 @@
 mutable struct IncrementBinner{T}
-    keep::Int64         # number of values per block
-    compression::Int64  # current N-mean
-    stage::Int64        # stage * keep == current max length
-    
+    keep::Int         # number of values per block
+    compression::Int  # current N-mean
+    stage::Int        # stage * keep == current max length
+
     # for local averages
     sum::T
-    count::Int64
+    count::Int
 
     output::Vector{T}
 end
@@ -24,9 +24,9 @@ Base.show(io::IO, B::IncrementBinner{T}) where {T} = print(io, "IncrementBinner{
 
 Creates an `IncrementBinner` from a `zero_element` numeric type `T`.
 
-Values pushed to an `IncrementBinner` are averaged in stages. For the first 
+Values pushed to an `IncrementBinner` are averaged in stages. For the first
 `blocksize` values pushed no averaging happens. After that `2blocksize` elements
-are averaged 2 at a time, then `4blocksize` element 4 at a time, etc. This means 
+are averaged 2 at a time, then `4blocksize` element 4 at a time, etc. This means
 values pushed become progressively more compressed and smoothed.
 """
 IncrementBinner(::Type{T} = Float64; kw...) where {T} = IncrementBinner(zero(T); kw...)
@@ -105,7 +105,7 @@ function indices(B::IncrementBinner)
     out[1] = 1
     for i in 2:length(B.output)
         if i % B.keep == 1
-            out[i] = out[i-1] + 1.5step 
+            out[i] = out[i-1] + 1.5step
             step *= 2
         else
             out[i] = out[i-1] + step

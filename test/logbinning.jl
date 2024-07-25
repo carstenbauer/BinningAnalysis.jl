@@ -295,11 +295,11 @@ end
 
 @testset "Sum-type heuristic" begin
     # numbers
-    @test typeof(LogBinner(zero(Int64))) == LogBinner{Float64, 32, BinningAnalysis.Variance{Float64}}
+    @test typeof(LogBinner(zero(Int))) == LogBinner{Float64, 32, BinningAnalysis.Variance{Float64}}
     @test typeof(LogBinner(zero(ComplexF16))) == LogBinner{ComplexF64, 32, BinningAnalysis.Variance{ComplexF64}}
 
     # arrays
-    @test typeof(LogBinner(zeros(Int64, 2,2))) == LogBinner{Matrix{Float64}, 32, BinningAnalysis.Variance{Matrix{Float64}}}
+    @test typeof(LogBinner(zeros(Int, 2,2))) == LogBinner{Matrix{Float64}, 32, BinningAnalysis.Variance{Matrix{Float64}}}
     @test typeof(LogBinner(zeros(ComplexF16, 2,2))) == LogBinner{Matrix{ComplexF64}, 32, BinningAnalysis.Variance{Matrix{ComplexF64}}}
 end
 

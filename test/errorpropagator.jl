@@ -278,11 +278,11 @@ end
 
 @testset "Sum-type heuristic" begin
     # numbers
-    @test typeof(ErrorPropagator(zero(Int64))) == ErrorPropagator{Float64, 32}
+    @test typeof(ErrorPropagator(zero(Int))) == ErrorPropagator{Float64, 32}
     @test typeof(ErrorPropagator(zero(ComplexF16))) == ErrorPropagator{ComplexF64, 32}
 
     # arrays
-    @test typeof(ErrorPropagator(zeros(Int64, 2,2))) == ErrorPropagator{Matrix{Float64}, 32}
+    @test typeof(ErrorPropagator(zeros(Int, 2,2))) == ErrorPropagator{Matrix{Float64}, 32}
     @test typeof(ErrorPropagator(zeros(ComplexF16, 2,2))) == ErrorPropagator{Matrix{ComplexF64}, 32}
 end
 

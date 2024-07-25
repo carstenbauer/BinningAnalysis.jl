@@ -7,7 +7,7 @@
 # standard error estimate:
 # Take the highest lvl with at least 32 bins.
 # (Chose 32 based on https://doi.org/10.1119/1.3247985)
-function _reliable_level(B::LogBinner{T,N})::Int64 where {T,N}
+function _reliable_level(B::LogBinner{T,N})::Int where {T,N}
     isempty(B) && (return 1)                # results in NaN in std_error
     i = findlast(x -> x.count >= 32, B.accumulators)
     return something(i, 1)

@@ -20,7 +20,7 @@ struct ErrorPropagator{T, N} <: AbstractBinner{T}
     # ∑xy
     sums2D::NTuple{N, Matrix{T}}
 
-    count::Vector{Int64}
+    count::Vector{Int}
 end
 
 
@@ -32,7 +32,7 @@ Base.isempty(ep::ErrorPropagator) = length(ep) == 0
 Base.:(!=)(a::ErrorPropagator, b::ErrorPropagator) = !(a == b)
 function Base.:(==)(a::ErrorPropagator, b::ErrorPropagator)
     length(a.count) > length(b.count) && return b == a
-    
+
     for i in eachindex(a.count)
         a.compressors[i] == b.compressors[i] || return false
         a.sums1D[i] == b.sums1D[i] || return false
@@ -45,7 +45,7 @@ end
 
 function Base.isapprox(a::ErrorPropagator, b::ErrorPropagator; kwargs...)
     length(a.count) > length(b.count) && return b == a
-    
+
     for i in eachindex(a.count)
         isapprox(a.compressors[i], b.compressors[i]; kwargs...) || return false
         isapprox(a.sums1D[i], b.sums1D[i]; kwargs...) || return false
@@ -154,7 +154,7 @@ for each of `N_args` inputs of type `T`.
 
 The default is `T = Float64`, `N_args = 2` and `capacity = 2^32-1 ≈ 4e9`.
 """
-function ErrorPropagator(::Type{T} = Float64; N_args::Int64 = 2, kw...) where T
+function ErrorPropagator(::Type{T} = Float64; N_args::Int = 2, kw...) where T
     ErrorPropagator([zero(T) for _ in 1:N_args]...; kw...)
 end
 
@@ -176,7 +176,7 @@ Creates a new `ErrorPropagator` and adds all elements from each given timeseries
 """
 function ErrorPropagator(
             xs::T...;
-            capacity::Int64 = _nlvls2capacity(32)
+            capacity::Int = _nlvls2capacity(32)
         ) where {T <: Union{Number, AbstractArray}}
 
     # check keyword args
@@ -211,7 +211,7 @@ function ErrorPropagator(
             [copy(el) for _ in 1:length(xs), __ in 1:length(xs)]
             for __ in 1:N
         ]...),
-        zeros(Int64, N)
+        zeros(Int, N)
     )
 
     got_timeseries && append!(ep, xs...)
@@ -262,7 +262,7 @@ end
 @inline _mult(x::AbstractArray, y::AbstractArray) = _mult.(x, y)
 
 # recursion, back-end function
-@inline function _push!(ep::ErrorPropagator{T, N}, lvl::Int64, args) where {T, N}
+@inline function _push!(ep::ErrorPropagator{T, N}, lvl::Int, args) where {T, N}
     @boundscheck begin
         (length(args) == length(ep.sums1D[1])) || throw(DimensionMismatch(
             "Number of arguments $(length(args)) does not match the number " *
