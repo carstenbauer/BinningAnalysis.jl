@@ -6,7 +6,7 @@ end
 FullBinner(::Type{T} = Float64) where T = FullBinner(Vector{T}(undef, 0))
 
 
-@forward FullBinner.x (Base.length, Base.size, Base.lastindex, Base.ndims, Base.iterate,
+@forward FullBinner.x (Base.length, Base.lastindex,  Base.iterate,
                         Base.getindex, Base.setindex!, Base.view, Base.axes,
                         Base.resize!, Base.sizehint!, Base.empty!, Base.isempty)
 
@@ -16,7 +16,8 @@ function Base.isapprox(a::FullBinner, b::FullBinner; kwargs...)
     (length(a) == length(b)) && (isempty(a) || isapprox(a.x, b.x; kwargs...))
 end
 
-
+Base.ndims(::FullBinner{T}) where T = ndims(T)
+Base.size(B::FullBinner) = size(first(B.x))
 # Cosmetics
 
 function _print_header(io::IO, B::FullBinner{T,A}) where {T, A}
